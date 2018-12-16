@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OSAI :: Cliente</title>
+    <!-- <js> -->
+    <script type="text/javascript" src="../assets/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="../assets/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../assets/js/lobibox.js"></script>
+    <script type="text/javascript" src="../assets/js/md5.js"></script>
+
+    <script src="assets/js/toolbox.js"></script>
+    <script src="assets/js/userDATOS.js"></script>
+    <script src="assets/js/pyrus.js"></script>
+    <!-- </js> -->
+
+    <!-- <css> -->
+    <link rel="stylesheet" href="../assets/css/bootstrap.css">
+    <link rel="stylesheet" href="../assets/css/lobibox.css">
+    <link rel="stylesheet" href="../assets/css/fontawesome-all.css">
+    <!-- </css> -->
+    <style media="screen">
+    @import url('https://fonts.googleapis.com/css?family=Quicksand');
+    body { font-size: 25px; font-family: 'Quicksand', sans-serif; }
+      .blue { background-color: #4267b2; color: #ffffff; }
+      .bg-img { background-image: url(../assets/images/b_01.jpg); background-position: center center; background-repeat: no-repeat; background-attachment: fixed; background-size: cover; background-color: #464646; }
+      @media (min-width: @screen-sm-min) and (max-width: @screen-sm-max) {
+
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row w-100 h-100 position-absolute">
+        <div class="col-12 col-sm-5 d-flex bg-img"></div>
+        <div class="col-12 col-sm-7 border-left border-dark d-flex blue text-white align-items-center">
+          <div class="container">
+            <div class="row justify-content-center">
+              <div class="col-12 col-sm-7">
+                <h1>Bienvenido</h1>
+                <p class="pb-3">Ingresá tus datos para operar</p>
+                <form novalidate="" id="frm" onsubmit="event.preventDefault(); userDATOS.submit(this);" method="POST" action="ajax/cliente.php?t=login" class="" accept-charset="utf-8">
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col col-12">
+                        <input required="true" ng-name="frm_user" name="frm_user" id="frm_user" class="form-control border-0 texto-text" type="text" placeholder="USUARIO">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col col-12">
+                        <input required="true" ng-name="frm_pass" name="frm_pass" id="frm_pass" class="form-control border-0 texto-password" type="password" placeholder="CONTRASEÑA">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="" style="padding-top: .5em">
+                    <div class="form-group text-left">
+                      <button type="submit" class="btn btn-white text-uppercase font-weight-bold">acceso</button>
+                    </div>
+                  </div>
+                </form>
+                <p class="m-0 pt-4 text-center"><small><a href="#" class="text-white">¿Olvidaste tu contraseña?</a></small></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+    Pyrus_dato = new Pyrus();
+    if(userDATOS.verificar(0)) {
+      userDATOS.submit = function(t) {
+        let OBJ_data = {};
+        let aux = $( t ).serializeArray();
+
+        for(var i in aux)
+          OBJ_data[aux[i]["name"]] = aux[i]["value"];
+
+        if(userDATOS.validar("#" + t.id)) {
+          let NEW_busqueda = userDATOS.busqueda(t.frm_user.value,"osai_usuario",false,"user");
+
+          if(NEW_busqueda.data === null) userDATOS.notificacion("Datos incorrectos","error");
+          else {
+            //DOBLE validación
+            if(NEW_busqueda.data.user != t.frm_user.value)
+              userDATOS.notificacion("Datos incorrectos","error");
+            else {
+              if(parseInt(NEW_busqueda.data["activo"])) {
+                if(NEW_busqueda.data["pass"] == md5(t.frm_pass.value)) {
+                  Pyrus_dato.query( 'NS_login',
+                      {'dato':NEW_busqueda.data,'access':true },
+                      function(m){ $("#div").removeClass("d-none"); window.location = 'home.html'; },
+                      function(m){ console.log(m) });
+                } else {
+                  userDATOS.notificacion("Datos incorrectos","error");
+                }
+              } else userDATOS.notificacion("Usuario bloqueado. Contacte al administrador","warning");
+            }
+          }
+        } else userDATOS.notificacion("Faltan datos","error");
+      };
+    } else window.location = "home.html";
+
+    $(document).ready(function() {
+      $("#div").addClass("d-none");
+    });
+    </script>
+  </body>
+</html>

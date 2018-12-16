@@ -1,0 +1,38 @@
+<div class="container">
+  <div class="border bg-white mb-5 shadow-sm">
+    <div class="row">
+      <div class="col-4 text-center border-right" style="height:120px;">
+        <div class="number">
+          {{TOTAL_noticias}}
+        </div>
+        <div class="text">
+          Noticias en vista <i title="Registros totales de noticias: {{ noticias.totalBD }}" class="fas fa-exclamation-circle"></i>
+        </div>
+      </div>
+      <div class="col-4 text-center border-right" style="height:120px;">
+        <div class="number">
+          {{TOTAL_actores}}
+        </div>
+        <div class="text">
+          Actores
+        </div>
+      </div>
+      <div class="col-4 text-center" style="height:120px;">
+        <div class="number">
+          {{TOTAL_clientes}}
+        </div>
+        <div class="text">
+          Clientes
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-columns mt-5">
+    <div class="card shadow-sm bg-light mb-3" ng-repeat="(nombre,medio) in medios">
+      <img class="card-img-top d-block mx-auto card-img w-50" ng-src="{{medio.image}}" onError="this.src='assets/images/no-img.png'" />
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item text-white bg-info" ng-repeat="noticia in medio.noticias | reverse | limitTo:3">{{noticia}}</li>
+      </ul>
+    </div>
+  </div>
+</div>

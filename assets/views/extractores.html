@@ -1,0 +1,15 @@
+<div class="container text-dark">
+  <div class="pb-2" style="font-size:1.3em;"><strong>Última extracción:</strong> {{ extraccion }}</div>
+  <div class="card-columns">
+    <div class="card shadow-sm bg-light mb-3" ng-repeat="(nombre,medio) in medios">
+      <div class="card-header">{{medio.medio}}</div>
+      <img class="card-img-top d-block mx-auto card-img w-50" ng-src="{{medio.image}}" onError="this.src='assets/images/no-img.png'" />
+      <div class="card-footer text-muted text-center">
+        <a target="blank" href="espacio/?medio={{nombre}}">
+          <strong><i class="fas fa-external-link-alt"></i> Extractor</strong>
+        </a>
+        <!--<i title="Ver instancias" ng-click="modal(medio)" class="fas text-success fa-eye btn-click"></i>-->
+      </div>
+    </div>
+  </div>
+</div>

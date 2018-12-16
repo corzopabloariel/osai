@@ -1,0 +1,98 @@
+<div class="container text-dark">
+  <fieldset class="w-50 mx-auto" style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+    <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">informes del sistema</legend>
+    <div class="card shadow-sm bg-white text-dark rounded-0 mt-2">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-4">
+            <h3 class="m-0 text-center">Desde</h3>
+          </div>
+          <div class="col-4">
+            <h3 class="m-0 text-center">Hasta</h3>
+          </div>
+          <div class="col-4">
+            <h3 class="m-0 text-center">U. Análisis</h3>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-4">
+            <input type="date" class="form-control rounded-0" id="fecha_min" value="">
+          </div>
+          <div class="col-4">
+            <input type="date" class="form-control rounded-0" id="fecha_max" value="">
+          </div>
+          <div class="col-4 d-flex flex-column align-items-center">
+            <div class="w-100">
+              <div class="input-group w-100">
+                <select class="custom-select w-100 select__2" name="select_unidad" id="select_unidad" style="" data-placeholder="Seleccione">
+                  <option value=""></option>
+                  <option ng-repeat="(id,u) in unidad" value="{{id}}">{{u}}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-12">
+            <table class="table m-0">
+              <thead>
+                <th>Enlace</th>
+                <th>Descripción</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 1</a></td>
+                  <td>Actores agrupados por atributos</td>
+                </tr>
+                <tr>
+                  <td><a data-version="2" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 2</a></td>
+                  <td>Actores agrupados por oposición / oficialismo</td>
+                </tr>
+                <tr>
+                  <td><a data-version="4" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 4</a></td>
+                  <td>Actores agrupados por partido</td>
+                </tr>
+                <tr>
+                  <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_2.html" target="_blank">Gráfico 2</a></td>
+                  <td>Por medio - Anillo de barras</td>
+                </tr>
+                <tr>
+                  <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_3.html" target="_blank">Gráfico 3</a></td>
+                  <td>Actores agrupados por favorabilidad y tema</td>
+                </tr>
+                <tr>
+                  <td><a data-tipo="fecha" href="http://93.188.164.27/informes/grafico_4.php" target="_blank">Gráfico 4</a></td>
+                  <td>Vista de actores (referidos y emisores)</td>
+                </tr>
+                <tr>
+                  <td><a data-tipo="fecha" href="http://93.188.164.27/informes/grafico_5.php" target="_blank">Gráfico 5</a></td>
+                  <td>Comparación de temas entre partidos</td>
+                </tr>
+                <tr>
+                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=1" target="_blank">Gráfico 6 - vista 1</a></td>
+                  <td>Temas de noticias contemplando favorabilidad</td>
+                </tr>
+                <tr>
+                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=2" target="_blank">Gráfico 6 - vista 2</a></td>
+                  <td>Mención de actores con favorabilidad</td>
+                </tr>
+                <tr>
+                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=3" target="_blank">Gráfico 6 - vista 3</a></td>
+                  <td>Mención de instituciones con favorabilidad</td>
+                </tr>
+                <tr>
+                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=4" target="_blank">Gráfico 6 - vista 4</a></td>
+                  <td>Cantidad de noticias con su favorabilidad</td>
+                </tr>
+                <tr>
+                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=5" target="_blank">Gráfico 6 - vista 5</a></td>
+                  <td>Medios con su favorabilidad</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+</div>

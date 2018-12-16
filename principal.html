@@ -1,0 +1,294 @@
+<!-- Página HOME OSAI -->
+<!-- última revisión 09.12.2018 23:00 | PABLO -->
+<!DOCTYPE html>
+<html lang="es" dir="ltr" ng-app="simat-app" ng-controller="jsonController">
+  <head>
+    <meta charset="utf-8">
+    <title>OSAI</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="assets/js/popper.min.js"></script>
+    <script type="text/javascript" src="assets/js/jquery.idle.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+      crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-route.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-sanitize.js"></script>
+    <script type="text/javascript" src="assets/js/lobibox.js"></script>
+    <script type="text/javascript" src="assets/js/messagebox.js"></script>
+    <script type="text/javascript" src="assets/js/select2.min.js"></script>
+    <!--<script type="text/javascript" src="assets/js/datatables.js"></script>-->
+    <script type="text/javascript" src="https://nicescroll.areaaperta.com/wp-content/plugins/jnicescroll/js/jquery.nicescroll.min.js?ver=1"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.18/af-2.3.0/b-1.5.2/b-colvis-1.5.2/b-flash-1.5.2/b-html5-1.5.2/b-print-1.5.2/fc-3.2.5/fh-3.1.4/kt-2.4.0/r-2.2.2/rr-1.2.4/sc-1.5.0/sl-1.2.6/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.bootstrap.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script type="text/javascript" src="https://d3js.org/d3.v5.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.10/summernote.js"></script>
+    <script type="text/javascript" src="assets/js/bootstrap3-typeahead.js"></script>
+    <script type="text/javascript" src="assets/js/md5.js"></script>
+    <script type="text/javascript" src="assets/js/declaration.js"></script>
+    <script type="text/javascript" src="assets/js/toolbox.js"></script>
+    <script type="text/javascript" src="assets/js/pyrus.js"></script>
+    <script type="text/javascript" src="assets/js/userDATOS.js"></script>
+
+    <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/css/lobibox.css">
+    <link rel="stylesheet" href="assets/css/messagebox.css">
+    <link rel="stylesheet" href="assets/css/select2.min.css">
+    <link rel="stylesheet" href="assets/css/fontawesome-all.css">
+    <!--<link rel="stylesheet" href="assets/css/datatables.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.18/af-2.3.0/b-1.5.2/b-colvis-1.5.2/b-flash-1.5.2/b-html5-1.5.2/b-print-1.5.2/fc-3.2.5/fh-3.1.4/kt-2.4.0/r-2.2.2/rr-1.2.4/sc-1.5.0/sl-1.2.6/datatables.min.css"/>
+
+    <link rel="stylesheet" href="assets/css/style.css">
+
+  </head>
+  <body class="scroll-osai" onKeyDown="javascript:noF5()">
+
+    <!-- LOADER -->
+    <div id="div_img" class="position-fixed d-none justify-content-center w-100 h-100 bg-white" style="z-index: 10000;">
+      <p class="m-0 cursor-pointer position-absolute text-primary text-uppercase" style="left:20px; top: 20px; letter-spacing: initial;" onclick="userDATOS.cancelarApertura()">[cancelar]</p>
+      <img src="http://93.188.164.27/assets/images/loading.gif" class="align-self-center">
+    </div>
+    <div id="div" class="position-fixed w-100 h-100 bg-white" ng-show="isViewLoading">
+    	<div class="spinner">
+    		<div class="bounce1"></div>
+    		<div class="bounce2"></div>
+    		<div class="bounce3"></div>
+    	</div>
+    </div>
+    <!--/ LOADER -->
+
+    <!-- MODALES -->
+    <div class="modal text-dark" role="dialog" id="modal">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title"></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form id="modal_form" name="modal_form" onsubmit="event.preventDefault(); userDATOS.submit(this)" novalidate>
+            <div class="modal-body"></div>
+            <div class="modal-footer bg-light rounded-bottom"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal text-dark" role="dialog" id="modalPasarNoticia">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title">PASAR NOTICIA</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form id="modal_formPasarNoticia" name="modal_formPasarNoticia" onsubmit="event.preventDefault(); userDATOS.submit(this)" novalidate>
+            <div class="modal-body">
+              <p class="m-0">Se pasará de forma inmediata al cliente </p>
+              <div class="form-group">
+                <div class="row">
+                  <div class="col col-12">
+                    <textarea required="true" class="form-control" placeholder="Descripción (200 caracteres)"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer bg-light rounded-bottom">
+              <button type="submit" class="btn btn-block btn-success text-uppercase">PASAR</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal text-dark" role="dialog" id="modalUsuario">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title">Configuración de <strong>usuario</strong></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form ng-submit="submitUsuario(this)" novalidate>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="claveActual">Contraseña actual</label>
+                <input required="true" type="password" class="form-control" ng-model="claveActual" name="claveActual" id="claveActual">
+              </div>
+              <div class="form-group">
+                <label for="claveNueva">Contraseña nueva</label>
+                <input required="true" type="password" class="form-control" ng-model="claveNueva" name="claveNueva" id="claveNueva">
+              </div>
+            </div>
+            <div class="modal-footer bg-light rounded-bottom">
+              <div class="form-group w-100 mb-0">
+                <button type="submit" class="btn btn-block btn-primary text-uppercase">cambiar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal text-dark bd-example-modal-lg" role="dialog" id="modalNoticia">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content text-dark">
+          <div class="modal-header bg-light rounded-0">
+            <h5 class="modal-title">Vista previa de <strong>NOTICIAS</strong></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-notificacion p-3 bg-light border-bottom"></div>
+          <div class="modal-body"></div>
+          <button ng-click="procesarNoticia()" type="button" title="Relevar noticia" class="btn btn-primary text-uppercase position-absolute text-center rounded-0" style="left:-50px; top:0; width: 50px; "><i class="far fa-hourglass"></i></button>
+          <button ng-click="eliminarNoticia()" type="button" title="Eliminar noticia" class="btn btn-danger text-uppercase position-absolute text-center rounded-0" style="left:-50px; top:38px; width: 50px;  "><i class="fas fa-trash-alt"></i></button>
+          <button ng-click="pasarNoticia()" type="button" title="Pasar noticia" class="btn btn-success text-uppercase position-absolute text-center rounded-0" style="left:-50px; top:76px; width: 50px;  "><i class="fas fa-exclamation"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="modal text-dark" role="dialog" id="modalNotificacion">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title">NOTIFICACIONES</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form onsubmit="userDATOS.filterNotificacion(0,this,'#tabla_notificacion_viejas')" novalidate>
+            <div class="modal-body">
+              <table class="table table-striped w-100">
+                <thead>
+                  <th>TIPO</th>
+                  <th class="w-25"><input onchange="if($(this).is(':checked')) { $(this).closest('.modal-content').find('.modal-footer button').attr('disabled',false);$(this).closest('table').find('tbody input').prop('checked', true); } else { $(this).closest('.modal-content').find('.modal-footer button').attr('disabled',true);$(this).closest('table').find('tbody input').prop('checked', false); }" type="checkbox" checked /></th>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Visto</td>
+                    <td><input onclick="if($(this).closest('tbody').find('input:checked').length == 4) { $(this).closest('table').find('thead input').prop('checked', true); } if($(this).closest('tbody').find('input:checked').length == 0) { $(this).closest('table').find('thead input').prop('checked', false);$(this).closest('.modal-content').find('.modal-footer button').attr('disabled',true); } else { $(this).closest('.modal-content').find('.modal-footer button').attr('disabled',false); }" type="checkbox" name="input-visto" checked /></td>
+                  </tr>
+                  <tr>
+                    <td>A relevar</td>
+                    <td><input onclick="if($(this).closest('tbody').find('input:checked').length == 4) { $(this).closest('table').find('thead input').prop('checked', true); } if($(this).closest('tbody').find('input:checked').length == 0) { $(this).closest('table').find('thead input').prop('checked', false);$(this).closest('.modal-content').find('.modal-footer button').attr('disabled',true); } else { $(this).closest('.modal-content').find('.modal-footer button').attr('disabled',false); }" type="checkbox" name="input-a_relevar" checked /></td>
+                  </tr>
+                  <tr>
+                    <td>Sin leer</td>
+                    <td><input onclick="if($(this).closest('tbody').find('input:checked').length == 4) { $(this).closest('table').find('thead input').prop('checked', true); }if($(this).closest('tbody').find('input:checked').length == 0) { $(this).closest('table').find('thead input').prop('checked', false);$(this).closest('.modal-content').find('.modal-footer button').attr('disabled',true); } else { $(this).closest('.modal-content').find('.modal-footer button').attr('disabled',false); }" type="checkbox" name="input-sin_leer" checked /></td>
+                  </tr>
+                  <tr>
+                    <td>Eliminado</td>
+                    <td><input onclick="if($(this).closest('tbody').find('input:checked').length == 4) { $(this).closest('table').find('thead input').prop('checked', true); } if($(this).closest('tbody').find('input:checked').length == 0) { $(this).closest('table').find('thead input').prop('checked', false);$(this).closest('.modal-content').find('.modal-footer button').attr('disabled',true); } else { $(this).closest('.modal-content').find('.modal-footer button').attr('disabled',false); }" type="checkbox" name="input-eliminado" checked /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer bg-light rounded-bottom">
+              <button type="submit" class="btn btn-block btn-success text-uppercase">filtrar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal text-dark" role="dialog" id="modalAlarma">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title"></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form ng-submit="alarmaEdit(this)" novalidate>
+            <div class="modal-body"></div>
+            <div class="modal-footer bg-light rounded-bottom">
+              <button type="submit" class="btn btn-block btn-success text-uppercase">guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- / MODALES -->
+    <span class="body position-absolute w-100 h-100" style="z-index:1000;">
+      <a id="clipping" class="text-white rounded-circle bg-primary position-fixed px-3 py-2" href="#!clipping" title="Clipping"><i class="fas fa-paperclip"></i></a>
+      <aside class="w-100 position-relative" style="z-index:1100;">
+        <div class="row m-0 bg-light position-fixed w-100 border-bottom" style="top:0; left:0;">
+          <div class="col-12 d-flex justify-content-between">
+            <p class="m-0 text-uppercase bg-white d-flex align-items-stretch border-left border-right pl-3"><span class="d-flex align-items-center">osai</span><span class="ml-3 px-2 d-flex align-items-center" id="status">ACTIVO</span></p>
+            <ul class="m-0 list-inline d-flex bg-white justify-content-end ul-nav-osai">
+              <li data-vista="eliminado" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="eliminado" href="#!eliminado"><i class="fas fa-eraser mr-1"></i> eliminado</a></li>
+              <li data-vista="informe" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="informe" href="#!informes"><i class="fas fa-chart-bar mr-1"></i> informes</a></li>
+              <li data-vista="notificacion_root" class="list-inline-item d-flex align-items-stretch mr-0"><a class="d-flex align-items-center pl-3 pr-2 cursor-pointer" href="#!notificaciones">notificaciones</a></li>
+              <li data-vista="notificacion" id="dropdown-notificacion" style="background-color:#64acfb;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="list-inline-item border-right p-1 position-relative d-flex align-items-center mr-0">
+                <div class="">
+                  <p class="m-0 cursor-pointer text-white position-relative d-flex flex-column justify-content-center"><i class="fas fa-bell d-flex justify-content-center"></i><span data-notificacion="numero" class="badge">0</span></p>
+                  <div class="dropdown-menu dropdown-menu-right p-0 bg-light rounded-0" aria-labelledby="dropdown-notificacion" style="width:400px; top:10px !important">
+                    <p class="m-0 p-2 bg-white">Notificaciones</p>
+                    <p class="m-0 p-2 text-left text-uppercase bg-dark text-white">nuevas</p>
+                    <div style="overflow-y:scroll; max-height:200px;" class="container-fluid" id="tabla_notificacion">
+                      <div class="row loading_notificacion"><div class="col py-2 text-uppercase text-center bg-white">Sin novedades</div></div>
+                    </div>
+                    <p class="m-0 p-2 text-left notificacion_anterior text-uppercase bg-dark text-white">anteriores<i onclick="userDATOS.filterNotificacion(1);" class="fas fa-filter float-right cursor-pointer"></i></p>
+                    <div style="overflow-y:scroll; max-height:200px;" class="container-fluid notificacion_anterior" id="tabla_notificacion_viejas">
+                      <div class="row loading_notificacion"><div class="col py-2 text-uppercase text-center bg-white">Sin novedades</div></div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li data-vista="alertas" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="alertas" href="#!alertas" name="button_cog"><i class="mr-1 fas fa-exclamation-triangle"></i> alertas</a></li>
+              <li data-vista="usuarios" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="usuarios" href="#!usuarios" name="button_cog"><i class="mr-1 fas fa-address-book"></i> usuarios</a></li>
+              <li data-vista="ajustes" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="ajustes" href="#!ajustes" name="button_cog"><i class="mr-1 fas fa-cogs"></i> ajustes</a></li>
+              <li class="list-inline-item d-flex align-items-stretch border-right">
+                <div class="cursor-pointer d-flex align-items-stretch px-3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <p class="d-flex align-items-center m-0"><i class="fas fa-user-circle mr-1"></i> <span class="text-uppercase" id="user-log"></span></p>
+                  <div class="dropdown-menu dropdown-menu-right rounded-0">
+                    <p class="pl-4 pr-4"><strong>Tipo:</strong> {{ tipo_user }}</p>
+                    <a class="dropdown-item cursor-pointer" onclick="userDATOS.cambiarClave()">Cambiar contraseña</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-uppercase cursor-pointer" onclick="userDATOS.logout()">salir <span class="float-right"><i class="text-danger fas fa-power-off"></i></span></a>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <ul class="nav_ul mb-0 p-0 d-flex justify-content-center font-weight-light" id="ul_nav_header">
+          <li data-vista="noticias" class=""><!-- Todas las NOTICIAS -->
+            <a class="a_link" data-url="noticias" href="#!"><i class="far fa-newspaper"></i>Noticias</a>
+          </li>
+          <li data-vista="extractores" class="">
+            <a class="a_link" data-url="extractores" href="#!extractores"><i class="fab fa-elementor"></i>Extractores</a>
+          </li>
+          <li data-vista="clientes" class="">
+            <a class="a_link" data-url="clientes" href="#!clientes"><i class="fas fa-users"></i>Clientes</a>
+          </li>
+          <li data-vista="actores" class="">
+            <a class="a_link" data-url="actores" href="#!actores"><i class="far fa-address-card"></i>Actores</a>
+          </li>
+          <li data-vista="instituciones" class="">
+            <a class="a_link" data-url="institucion" href="#!instituciones"><i class="fas fa-university"></i>Instituciones</a>
+          </li>
+        </ul>
+      </aside>
+      <section class="pt-3 pb-3">
+        <ng-view></ng-view>
+      </section>
+    </span>
+    <script type="text/javascript" src="assets/js/renderer.js"></script>
+    <script type="text/javascript">
+		// hago uso de la variable user
+		setInterval(function(){
+			// cada 10 segundos aviso al servidor que el usuario esta logueado
+			user_id = user['id'];
+			$.get("/lib/userLoginTimeOut.php?user=" + user_id + "&ping",function(m){console.log('Se aviso al servidor que estas logueado todavia [' + m + ']');});
+		},10000);
+    </script>
+  </body>
+</html>

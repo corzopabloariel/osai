@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr" ng-app="simat-app" ng-controller="jsonController">
+  <head>
+    <meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OSAI :: Cliente</title>
+    <!-- <js> -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="../assets/js/popper.min.js"></script>
+    <script type="text/javascript" src="../assets/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-route.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-sanitize.js"></script>
+
+    <script src="assets/js/declaration.js"></script>
+    <script src="assets/js/toolbox.js"></script>
+    <script src="assets/js/pyrus.js"></script>
+    <script src="assets/js/userDATOS.js"></script>
+    <!-- </js> -->
+
+    <!-- <css> -->
+    <link rel="stylesheet" href="../assets/css/bootstrap.css">
+    <link rel="stylesheet" href="../assets/css/fontawesome-all.css">
+    <!-- </css> -->
+    <style media="screen">
+    @import url('https://fonts.googleapis.com/css?family=Quicksand');
+    body { font-size: 20px; font-family: 'Quicksand', sans-serif; background-color: #e9ebee; color: #1d2129; }
+    section { font-size:16px; }
+    header a, header a:hover { text-decoration: none; }
+    .header { min-height: 96px; background-color: #2e4a84; top: 0; left: 0; }
+    .header + div { min-height: 300px; background-color: #5dacd5; }
+    .blue { color: #ffffff; border-bottom: 1px solid #29487d; }
+    .card + .card { margin-top: 10px; }
+    .card-columns .card + .card { margin-top: 0; }
+    .bg-llight { background-color: #f7f7f7; }
+    .bg-img { background-image: url(../assets/images/bg-cliente.jpg); background-position: center center; background-repeat: no-repeat; background-attachment: fixed; background-size: cover; background-color: #464646; }
+    .bg-blue { background-color: #4267b2; }
+    .cursor-pointer { cursor: pointer;  }
+
+    .dropdown-menu:before, .dropdown-menu:after { border-left: 7px solid transparent; border-right: 7px solid transparent; top:-7px; content: " "; position: absolute; display: block; width: 0; height: 0; }
+    .dropdown-menu:after { border-bottom: 8px solid #f8f9fa; left: 6px; top: -8px; z-index: 2; }
+    .dropdown-menu:before { border-bottom: 7px solid #dee2e6; left: 7px; z-index: 1; }
+    @media (min-width: @screen-sm-min) and (max-width: @screen-sm-max) {
+
+    }
+    </style>
+  </head>
+  <body>
+    <header class="position-fixed shadow w-100 bg-blue blue" style="z-index:1">
+      <div class="container-fluid">
+        <div class="d-flex justify-content-between">
+
+          <div class="d-flex">
+            <ul class="list-inline m-0 d-flex justify-content-end">
+              <li class="list-inline-item px-1 ml-2 d-flex"><a href="#!" class="text-white d-flex align-self-stretch"><pan class="d-flex align-self-center">inicio</span></a></li>
+              <li class="list-inline-item px-1 d-flex align-items-stretch position-relative">
+                <div class="d-flex align-items-center cursor-pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span class="badge bg-danger badge-pill position-absolute" style="right:0; bottom:5px; font-size:10px;">14</span>
+                  <p class="m-0 px-1"><i class="fas fa-bell"></i></p>
+                  <div class="dropdown-menu dropdown-menu-right rounded-0">
+                  </div>
+                </div>
+              </li>
+              <li class="list-inline-item px-1 d-flex align-items-stretch">
+                <div class="d-flex align-items-center cursor-pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <p class="dropdown-toggle m-0 px-2 dropdown-toggle-split"></p>
+                </div>
+                <div class="dropdown-menu rounded-0" aria-labelledby="dropdownMenu">
+                  <p class="" style="padding: 0.25rem 1.5rem;" id="user_name"></p>
+                  <a class="dropdown-item" href="#!perfil">Perfil</a>
+                  <a class="dropdown-item">Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <button onclick="userDATOS.logout();" class="dropdown-item position-relative cursor-pointer" type="button">Salir<i class="text-danger position-absolute fas fa-power-off" style="right: 1.5rem;top: 0.5rem;"></i></button>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="">
+            <p class="m-0 py-2 text-uppercase" id="ubicacion"></p>
+          </div>
+
+          <div class="">
+            <p class="m-0 py-2">OSAI</p>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="header position-absolute w-100"></div>
+    <!-- <div class="bg-img">
+
+    </div> -->
+    <section class="pt-3 pb-3">
+      <ng-view></ng-view>
+    </section>
+
+    <script src="assets/js/renderer.js" type="text/javascript"></script>
+  </body>
+</html>

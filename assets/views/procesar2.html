@@ -1,0 +1,225 @@
+<!-- PANTALLA MODAL -->
+<div class="position-fixed bg-light w-100 h-100 d-none" id="pantalla">
+  <div class="body-noticia position-absolute h-100 text-dark">
+    <div id="noticia-detalle" class="position-absolute d-none w-100 p-2 text-white">
+      <div class="row justify-content-center">
+        <div class="col col-12"></div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="container pb-3 pt-3">
+        <div class="row mb-3">
+          <div class="col col-12">
+            <p class="m-0 d-flex align-items-stretch" data-noticia data-tipo="titulo"></p>
+          </div>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col col-6 d-none">
+            <p class="m-0 d-flex align-items-stretch" data-noticia data-tipo="subtitulo"></p>
+          </div>
+          <div class="col col-6 d-none">
+            <img src="" class="w-100 mb-3" data-tipo="imagen" onError="this.src='assets/images/no-img.png'" alt="IMG noticia">
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col col-12">
+            <div class="p-2" id="tipo_cuerpo" data-noticia data-tipo="cuerpo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="etiquetas border-left bg-white position-fixed text-dark">
+    <h2 class="text-center text-uppercase p-3 mb-0 shadow position-relative">etiquetas</h2>
+    <span onclick="userDATOS.pantalla_cerrar()" class="close position-absolute" style="" aria-hidden="true">&times;</span>
+    <div class="scroll">
+      <div class="p-3">
+        <button ng-click="buscar()" id="btn_procesar" data-noticia="existente" type="button" class="btn btn-block btn-info text-uppercase rounded-0 mb-3">procesar</button>
+        <button ng-click="unidadAnalisis()" id="btn_cliente" data-noticia type="button" ng-class="{'btn-success': window.ARR_cliente !== undefined}" class="btn btn-block text-uppercase rounded-0 mb-3">unidad de análisis</button>
+        <button ng-click="actor()" id="btn_actor" data-noticia type="button" class="btn btn-block text-uppercase rounded-0 mb-3">actor</button>
+        <button ng-click="institucion()" id="btn_institucion" data-noticia type="button" class="btn btn-block text-uppercase rounded-0 mb-3">Institución</button>
+        <div class="input-group mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 w-100 bg-light" for="">Medio Emisor</label>
+          <select disabled="true" class="custom-select w-100 select__2" name="select_medio" id="select_medio" style="" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value=""></option>
+            <option ng-repeat="medio in medios track by medio.id" value="{{medio.id}}">{{medio.medio}}</option>
+          </select>
+        </div>
+        <div class="input-group d-flex mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Medio - Alcance</label>
+          <select class="custom-select w-100 select__2" name="select_medioAlcance" id="select_medioAlcance" style="" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value=""></option>
+            <option ng-repeat="(nombre,medio) in mediosAlcance" value="{{medio.id}}">{{medio.nombre}}</option>
+          </select>
+        </div>
+        <div class="input-group d-flex">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Medio - Tipo</label>
+          <select class="custom-select w-100 select__2" name="select_medioTipo" id="select_medioTipo" style="" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value=""></option>
+            <option ng-repeat="(nombre,medio) in mediosTipo" value="{{medio.id}}">{{medio.nombre}}</option>
+          </select>
+        </div>
+        <hr>
+        <div class="input-group d-flex mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Destaque</label>
+          <select class="custom-select w-100 select__2" name="select_destaque" id="select_destaque" style="" data-allow-clear="true" data-placeholder="Seleccione"></select>
+        </div>
+        <div class="input-group d-flex mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Sección</label>
+          <select class="custom-select w-100 select__2" name="select_seccion" id="select_seccion" style="" data-allow-clear="true" data-placeholder="Seleccione"></select>
+        </div>
+        <div class="d-none" id="video_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Video</label>
+          <div class="border p-2 text-truncate"></div>
+        </div>
+        <div class="d-none mt-3" id="url_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Link</label>
+          <div class="border p-2 text-truncate"></div>
+        </div>
+        <div class="d-none mt-3" id="periodista_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Periodista</label>
+          <div class="border p-2 text-truncate w-100"></div>
+        </div>
+        <div class="input-group d-none mt-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Periodista</label>
+          <select class="custom-select w-100 select__2" name="select_periodista" id="select_periodista" style="" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value=""></option>
+            <option ng-repeat="periodista in periodistas track by periodista.id" value="{{periodista.id}}">{{periodista.nombre}}</option>
+          </select>
+        </div>
+        <div class="d-none mt-3" id="fecha_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Fecha</label>
+          <div class="border p-2  w-100"><input type="datetime-local" class="form-control" name="frm_fecha" /></div>
+        </div>
+        <p class="p-2 bg-dark text-uppercase mb-0 mt-5 text-white text-center">atributos</p>
+        <div id="noticiaATTR" name="noticiaATTR" class="border border-dark p-2 d-flex align-content-around flex-wrap" style="min-height:73px;"></div>
+        <form id="form_ATTR" onsubmit="event.preventDefault(); userDATOS.noticiaATTR(this)">
+          <input placeholder="Ingrese Etiqueta" type="text" class="form-control shadow-none border border-dark rounded-0" style="margin-top:-1px">
+        </form>
+        <button ng-click="procesar()" id="btn_guardar" type="button" class="btn btn-block btn-success text-uppercase rounded-0 mt-5"><big>guardar <i class="far fa-save"></i></big></button>
+        <button ng-click="eliminar()" id="btn_eliminar" type="button" class="btn btn-block btn-danger text-uppercase rounded-0"><big>desechar <i class="fas fa-trash-alt"></i></big></button>
+      </div>
+    </div>
+  </div>
+</div>
+<!--/ PANTALLA MODAL -->
+
+<div class="container text-dark">
+  <div class="shadow-sm bg-white rounded-0 mb-3">
+    <div class="">
+      <aside class="bg-light position-relative" style="z-index:0" id="menu_noticias">
+        <div ng-bind-html="noticiasVALOR" data-url="noticiasVALOR" class="position-absolute pr-2" style="z-index:2; right:0; top:0;"></div>
+        <ul class="list-inline nav_ul m-0 p-0 d-flex justify-content-center font-weight-light submenu">
+          <li class="" style="width:33.33%">
+            <a class="a_link" data-url="relevo" href="#!">Relevar <span class="badge">{{ noticias.relevo }}</span></a>
+          </li>
+          <li class="" style="width:33.33%">
+            <a class="a_link active" data-url="aprocesar" href="#!procesar">A procesar <span class="badge">{{ noticias.procesar }}</span></a>
+          </li>
+          <li class="" style="width:33.33%">
+            <a class="a_link" data-url="procesadas" href="#!procesadas">Procesadas <span class="badge">{{ noticias.procesadas }}</span></a>
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+  <div class="card shadow-sm bg-white rounded-0">
+    <div class="card-body">
+
+      <!-- BUSCADOR -->
+      <div class="pb-4 d-none" id="date_filter">
+
+        <div class="row justify-content-center">
+          <div class="col-8 d-flex flex-column align-items-center">
+
+            <div class="row w-100">
+              <div class="col-6 pl-0">
+                <div class="w-100">
+                  <h3 class="text-center">Desde</h3>
+                  <input type="date" class="form-control rounded-0" id="fecha_min" value="">
+                </div>
+              </div>
+              <div class="col-6 pr-0">
+                <div class="w-100">
+                  <h3 class="text-center">Hasta</h3>
+                  <input type="date" class="form-control rounded-0" id="fecha_max" value="">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-4 d-flex flex-column align-items-center">
+            <div class="w-100">
+              <h3 class="text-center">Sección / Secciones</h3>
+              <div class="input-group w-100">
+                <select class="custom-select w-100 select__2" name="select_seccionBUSCADOR[]" id="select_seccionBUSCADOR" style="" data-placeholder="Seleccione" multiple>
+                  <option value=""></option>
+                  <option ng-repeat="(id,seccion) in seccionSELECT" value="{{id}}">{{seccion}}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row justify-content-center pt-3">
+          <div class="col-4">
+            <div class="input-group">
+              <select class="custom-select w-100 select__2" name="select_medioNOTICIA" id="select_medioNOTICIA" style="" data-allow-clear="true" data-placeholder="MEDIO">
+                <option value=""></option>
+                <option ng-repeat="(id,medio) in mediosSELECT" value="{{id}}">{{medio}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="input-group">
+              <select class="custom-select w-100 select__2" name="select_medioTipoNOTICIA" id="select_medioTipoNOTICIA" style="" data-allow-clear="true" data-placeholder="TIPO DE MEDIO">
+                <option value=""></option>
+                <option ng-repeat="(id,medio) in mediostipoSELECT" value="{{id}}">{{medio}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-4">
+            <input type="text" class="form-control rounded-0" id="titulo" placeholder="TÍTULO / CUERPO" value="">
+          </div>
+        </div>
+
+        <div class="row justify-content-center pt-3">
+          <div class="col-4">
+            <div class="input-group">
+              <select class="custom-select w-100 select__2" name="select_unidadNOTICIA" id="select_unidadNOTICIA" style="" data-allow-clear="true" data-placeholder="UNIDAD DE ANÁLISIS">
+                <option value=""></option>
+                <option ng-repeat="(id,unidad) in unidadSELECT" value="{{id}}">{{unidad}}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row pt-3">
+          <div class="col-6">
+            <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_filtro">filtrar <i class="fas fa-filter"></i></button>
+          </div>
+          <div class="col-6">
+            <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_limpiar">limpiar <i class="fas fa-sync-alt"></i></button>
+          </div>
+        </div>
+
+      </div>
+      <!-- /BUSCADOR -->
+
+      <table class="animate-flicker table mb-0 table-hover w-100" id="t_data" data-tipo="1" datatable="ng">
+        <thead class="thead-light text-uppercase">
+          <th>id</th>
+          <th>Fecha</th>
+          <th>Unidad de Análisis</th>
+          <th>Tipo</th>
+          <th>Medio</th>
+          <th>Sección</th>
+          <th>Título</th>
+          <th>Estado</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <div><div class="h"></div><div class="b"></div><div class="f"></div></div>
+    </div>
+  </div>
+</div>

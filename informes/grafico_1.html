@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>OSAI - INFORMES</title>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript" src="../assets/js/popper.min.js"></script>
+        <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-route.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-sanitize.js"></script>
+        <script type="text/javascript" src="../assets/js/lobibox.js"></script>
+        <script type="text/javascript" src="../assets/js/messagebox.js"></script>
+        <script type="text/javascript" src="../assets/js/select2.min.js"></script>
+        <!--<script type="text/javascript" src="../assets/js/datatables.js"></script>-->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.18/af-2.3.0/b-1.5.2/b-colvis-1.5.2/b-flash-1.5.2/b-html5-1.5.2/b-print-1.5.2/fc-3.2.5/fh-3.1.4/kt-2.4.0/r-2.2.2/rr-1.2.4/sc-1.5.0/sl-1.2.6/datatables.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.bootstrap.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+        <!--<script type="text/javascript" src="https://d3js.org/d3.v5.js"></script>-->
+        <script src="//d3js.org/d3.v3.min.js"></script>
+        <!--<script src="//d3js.org/d3.v4.min.js"></script>-->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.10/summernote.js"></script>
+        <script type="text/javascript" src="../assets/js/bootstrap3-typeahead.js"></script>
+        <script type="text/javascript" src="../assets/js/md5.js"></script>
+        <script type="text/javascript" src="../assets/js/declaration.js"></script>
+        <script type="text/javascript" src="../assets/js/toolbox.js"></script>
+        <script type="text/javascript" src="../assets/js/pyrus.js"></script>
+        <script type="text/javascript" src="../assets/js/userDATOS.js"></script>
+
+        <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="../assets/css/lobibox.css">
+        <link rel="stylesheet" href="../assets/css/messagebox.css">
+        <link rel="stylesheet" href="../assets/css/select2.min.css">
+        <link rel="stylesheet" href="../assets/css/fontawesome-all.css">
+        <!--<link rel="stylesheet" href="../assets/css/datatables.css">-->
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.18/af-2.3.0/b-1.5.2/b-colvis-1.5.2/b-flash-1.5.2/b-html5-1.5.2/b-print-1.5.2/fc-3.2.5/fh-3.1.4/kt-2.4.0/r-2.2.2/rr-1.2.4/sc-1.5.0/sl-1.2.6/datatables.min.css"/>
+
+        <link rel="stylesheet" href="../assets/css/style.css">
+        <style media="screen">
+            text { font-size: 14px; }
+            .node { cursor: pointer; stroke: #444; stroke-width: 1px; }
+            .label { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 20px; text-anchor: middle; text-shadow: 0 1px 0 #fafafa, 1px 0 0 #fafafa, -1px 0 0 #fafafa, 0 -1px 0 #fafafa; }
+            .label,
+            .node--root,
+            .node--leaf { pointer-events: none; }
+            .node--root { fill: white !important; stroke: #000; stroke-width: 1px; }
+        </style>
+    </head>
+    <body class="scroll-osai text-dark">
+        <!-- LOADER -->
+        <div id="div_img" class="position-fixed d-none justify-content-center w-100 h-100 bg-white" style="z-index: 10000;">
+            <img src="http://93.188.164.27/assets/images/loading.gif" class="align-self-center">
+        </div>
+        <div id="div" class="position-fixed w-100 h-100 bg-white" ng-show="isViewLoading">
+            <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+        </div>
+        <!--/ LOADER -->
+
+        <span class="body position-absolute w-100 h-100" style="z-index:1000;overflow-x: hidden;">
+            <!-- <aside class="w-100 position-relative shadow-sm" style="z-index:1100;">
+                <div class="border-bottom row m-0">
+                    <div class="col-12 text-right">
+                    <p class="m-0 p-2 text-uppercase float-left"><?php echo $name ?></p>
+                    </div>
+                </div>
+            </aside> -->
+            <!-- <MENU> -->
+            <aside class="w-100 position-relative" style="z-index:1100;">
+                <div class="row m-0 bg-light position-fixed shadow-sm w-100 border-bottom" style="top:0; left:0;">
+                    <div class="col-12 d-flex justify-content-between" style="min-height: 44.59px">
+                        <p class="m-0 text-uppercase bg-white d-flex align-items-stretch border-left border-right pl-3">
+                            <span class="d-flex align-items-center">osai</span>
+                            <span class="ml-3 px-2 d-flex align-items-center" id="status">ACTIVO</span>
+                        </p>
+                        <ul class="m-0 list-inline d-flex bg-white justify-content-end ul-nav-osai">
+                            <li class="list-inline-item d-flex align-items-stretch border-right">
+                                <div class="cursor-pointer d-flex align-items-stretch px-3" data-toggle="dropdown" aria-haspopup="true"
+                                    aria-expanded="false">
+                                    <p class="d-flex align-items-center m-0"><i class="fas fa-user-circle mr-1"></i> <span class="text-uppercase"
+                                            id="user-log"></span></p>
+                                    <div class="dropdown-menu dropdown-menu-right rounded-0">
+                                        <a class="dropdown-item text-uppercase cursor-pointer" onclick="window.close()">volver
+                                            <span class="float-right"><i class="text-warning fas fa-long-arrow-alt-left"></i></span></a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+            <!-- </MENU> -->
+            <section class="pb-3" style="padding-top:60px; ">
+            <script>
+            getRandomColor = function() {
+                var letters = '0123456789ABCDEF';
+                var color = '#';
+                for (var i = 0; i < 6; i++)
+                    color += letters[Math.floor(Math.random() * 16)];
+                return color;
+            }
+            u = userDATOS.user();
+            $("#user-log").text(u.user);
+            // const version = 1;
+            // const min = "2018-11-01";
+            // const max = "2018-12-05";
+            var dates = {
+                convert:function(d) {
+                    return (
+                        d.constructor === Date ? d :
+                        d.constructor === Array ? new Date(d[0],d[1],d[2]) :
+                        d.constructor === Number ? new Date(d) :
+                        d.constructor === String ? new Date(d) :
+                        typeof d === "object" ? new Date(d.year,d.month,d.date) :
+                        NaN
+                    );
+                },
+                compare:function(a,b) {
+                    return ((a.getTime() === b.getTime()) ? 0 : ((a.getTime() > b.getTime()) ? 1 : - 1));
+                }
+            }
+            /* <Funciones & Variables básicas> */
+            const version = window.localStorage.getItem("version");
+            const min = window.localStorage.getItem("fecha_min");
+            const max = window.localStorage.getItem("fecha_max");
+            const partidos = userDATOS.busquedaTabla("attr_partido");
+            const temas = userDATOS.busquedaTabla("attr_temas");
+            const alianzas = userDATOS.busquedaTabla("attr_alianza");
+            let dataBD = userDATOS.dataBD("grafico_1", { "f_min": min, "f_max": max }, "#loader");
+            let actores = {};
+            let dataAUX = dataAUX_2 = dataAUX_3 = undefined;
+
+            if(dataBD.estado) {
+                let data = dataBD.data;
+                for (var i in data) {
+                    data[i]["data_actor"] = userDATOS.parseJSON(data[i]["data_actor"]);
+                    data[i]["tema"] = userDATOS.parseJSON(data[i]["tema"]);
+                    data[i]["valoracion"] = userDATOS.parseJSON(data[i]["valoracion"]);
+
+                    //////
+                    actores[data[i]["id_actor"]] = {}
+                    actores[data[i]["id_actor"]]["id"] = data[i]["id_actor"];
+                    actores[data[i]["id_actor"]]["cantidad"] = 0;
+                    actores[data[i]["id_actor"]]["nombre"] = data[i]["actor"];
+                    actores[data[i]["id_actor"]]["emisor"] = 0;
+                    actores[data[i]["id_actor"]]["imagen"] = 0;
+                    actores[data[i]["id_actor"]]["valor"] = {};
+                    actores[data[i]["id_actor"]]["valor"]["positivo"] = 0;
+                    actores[data[i]["id_actor"]]["valor"]["neutro"] = 0;
+                    actores[data[i]["id_actor"]]["valor"]["negativo"] = 0;
+                    actores[data[i]["id_actor"]]["campo"] = userDATOS.parseJSON(data[i]["campo"]);//oficialismo
+                    actores[data[i]["id_actor"]]["partido"] = userDATOS.parseJSON(data[i]["partido"]);//partido
+                    actores[data[i]["id_actor"]]["alianza"] = userDATOS.parseJSON(data[i]["alianza"]);//alianza
+
+                    if (actores[data[i]["id_actor"]]["cliente"] === undefined) {
+                        actores[data[i]["id_actor"]]["cliente"] = data[i]["cliente"];
+                        actores[data[i]["id_actor"]]["cliente_noticias"] = [];
+                    }
+                    actores[data[i]["id_actor"]]["cliente_noticias"].push({"data": data[i]["data_actor"],"tema": data[i]["tema"], "valoracion": data[i]["valoracion"]});
+                }
+                actores[data[i]["id_actor"]]["cantidad"] ++;
+                actores[data[i]["id_actor"]]["emisor"] += parseInt(data[i]["data_actor"]["frm_emisor"]);
+                actores[data[i]["id_actor"]]["imagen"] += parseInt(data[i]["data_actor"]["frm_img"]);
+                if (data[i]["data_actor"]["frm_valor"] !== undefined) {
+                    switch (parseInt(data["frm_valor"])) {
+                        case 1:
+                            actores[data[i]["id_actor"]]["valor"]["positivo"] ++;
+                            break;
+                        case 0:
+                            actores[data[i]["id_actor"]]["valor"]["neutro"] ++;
+                            break;
+                        case -1:
+                            actores[data[i]["id_actor"]]["valor"]["negativo"] ++;
+                            break;
+                    }
+                }
+                console.log(actores);
+            }
+            if (version == 1) {
+                dataAUX = {};
+                dataAUX["name"] = "Unidades de Análisis";
+                dataAUX["children"] = [];
+                ARR_background = {}
+                colorAUX = [];
+                for (var x in actores) {
+                    aux = {}
+                    aux["name"] = actores[x]["nombre"];
+                    aux["children"] = [];
+
+                    if (actores[x]["partido"].length != 0) {
+                        for (var p in actores[x]["partido"]) {
+                            partido = actores[x]["partido"][p];
+                            aux["color"] = partidos[partido]["color"];//
+                        }
+                    }
+
+                    for (var y in actores[x]["cliente_noticias"]) {
+                        data = actores[x]["cliente_noticias"][y]["tema"];
+                        if (data !== undefined) {
+                            for (var i in data) {
+                                auxTemas = {}
+                                id_tema = i.substring(9);
+                                if (id_tema == "") continue;
+                                if(temas[id_tema] === undefined) continue;
+                                tema = temas[id_tema];
+                                if (ARR_background[id_tema] === undefined) {
+                                    do {
+                                        color = getRandomColor();
+                                    } while (colorAUX.indexOf(color) > 0);
+                                    ARR_background[id_tema] = {}
+                                    ARR_background[id_tema]["color"] = color;
+                                    ARR_background[id_tema]["nombre"] = tema.nombre;
+                                }
+                                d = aux["children"].find(x => x["name"] === tema.nombre);
+                                if (d === undefined) {
+                                    auxTemas["name"] = tema.nombre
+                                    auxTemas["size"] = 1;
+                                    auxTemas["color"] = ARR_background[id_tema]["color"];
+                                    aux["children"].push(auxTemas)
+                                } else d["size"]++;
+                            }
+                        }
+                    }
+
+                    dataAUX["children"].push(aux)
+                }
+            }
+            if (version == 2) {
+                dataAUX_2 = {};
+                dataAUX_2["name"] = "Oposición / Oficialismo";
+                dataAUX_2["children"] = [];
+                ARR_background = {}
+                colorAUX = [];
+                for (var x in actores) {
+                    if (actores[x]["alianza"].length != 0) {
+                        for (var a in actores[x]["alianza"]) {
+                            alianza = alianzas[actores[x]["alianza"][a]];
+                            d = dataAUX_2["children"].find(x => x["name"] === alianza.nombre);
+                            if (d === undefined) {
+                                aux_2 = {}
+                                aux_2["name"] = alianza.nombre;
+                                aux_2["size"] = 1;
+                                dataAUX_2["children"].push(aux_2);
+                            } else d["size"] ++;
+                        }
+                    } else {
+                        d = dataAUX_2["children"].find(x => x["name"] === "Sin alianza");
+                        if (d === undefined) {
+                            aux_2 = {}
+                            aux_2["name"] = "Sin alianza";
+                            aux_2["size"] = 1;
+                            dataAUX_2["children"].push(aux_2);
+                        } else d["size"] ++;
+                    }
+                }
+            }
+            if (version == 4) {
+                dataAUX_3 = {};
+                dataAUX_3["name"] = "Partido político";
+                dataAUX_3["children"] = [];
+                ARR_background = {}
+                colorAUX = [];
+                for (var x in actores) {
+                    if (actores[x]["partido"].length != 0) {
+                        for (var p in actores[x]["partido"]) {
+                            partido = partidos[actores[x]["partido"][p]];
+                            d = dataAUX_3["children"].find(x => x["name"] === partido.nombre);
+                            if (d === undefined) {
+                                if (partido.color === null) partido["color"] = "#DEDEDE";
+                                if (colorAUX.indexOf(partido.color) < 0) colorAUX.push(partido.color)
+                                aux_3 = {}
+                                aux_3["name"] = partido.nombre;
+                                aux_3["color"] = partido.color;
+                                aux_3["size"] = 1;
+                                dataAUX_3["children"].push(aux_3);
+                            } else d["size"] ++;
+                        }
+                    } else {
+                        d = dataAUX_3["children"].find(x => x["name"] === "Sin partido");
+                        if (d === undefined) {
+                            aux_3 = {}
+                            aux_3["name"] = "Sin partido";
+                            aux_3["size"] = 1;
+                            dataAUX_3["children"].push(aux_3);
+                        } else d["size"] ++;
+                    }
+                }
+            }
+            </script>
+            <div id="body_grafico"></div>
+      </section>
+    </span>
+
+
+    <script type="text/javascript">
+///////////////////// Funciones básicas
+var margin_G1 = 20,
+    diameter_G1 = window.innerWidth / 2;
+
+// var calculateTextFontSize = function(d) {
+//     return Math.min(2 * d.r, (2 * d.r - 8) / this.getComputedTextLength() * 11) + "px";
+// }
+// var color = d3.scale.linear().domain([-1, 18]).interpolate(d3.interpolateHcl);
+$(document).ready(function() {
+    //////////////////////////////
+    if(dataAUX !== undefined) {
+        html = '<h3 class="mb-0">Temas por Actor</h3>';
+        html += '<div class="position-relative" id = "grafico_1">';
+        html += '<div id="etiquetas" class="position-absolute border border-right-0 bg-light p-2" style="right:0; top:0;">';
+        html += '<h3>Etiquetas</h3>';
+        html += '</div>';
+        html += '</div>';
+        $("#body_grafico").html(html);
+        //////////
+        html = "";
+        for (var i in ARR_background)
+            html += "<p class='m-0'><span class='d-inline px-2 mr-1' style='background:" + ARR_background[i]["color"] + "'></span>" + ARR_background[i]["nombre"] + "</p>"
+        
+        $("#etiquetas").append(html);
+        grafico_GLOBO("#grafico_1",dataAUX,diameter_G1,margin_G1);
+    }
+    if(dataAUX_2 !== undefined) {
+        html = '<h3 class="mb-0">Oposición / Oficialismo</h3>';
+        html += '<div class="position-relative" id="grafico_2"></div>';
+        $("#body_grafico").html(html);
+        grafico_GLOBO("#grafico_2",dataAUX_2,diameter_G1,margin_G1);
+    }
+    if(dataAUX_3 !== undefined) {
+        html = '<h3 class="mb-0">Partido político</h3>';
+        html += '<div class="position-relative" id="grafico_3"></div>';
+        $("#body_grafico").html(html);
+        grafico_GLOBO("#grafico_3",dataAUX_3,diameter_G1,margin_G1);
+    }
+    // d3.select(self.frameElement).style("height", diameter_G1 + "px");
+    //////////////////////////////////////////
+
+    //////////////////////////////////////////
+    $("#div").addClass("d-none");
+});
+grafico_GLOBO = function(target,data,diameter_G1,margin_G1) {
+    let pack = d3.layout.pack().padding(2).size([diameter_G1 - margin_G1, diameter_G1 - margin_G1]).value(function(d) { return d.size; })
+    let circleFill = function(d) {
+        if (d['color']) return d.color;
+        else return d.children ? "#DEDEDE" : getRandomColor();
+    }
+
+    let svg = d3.select(target).append("svg")
+        .attr("width", window.innerWidth)
+        .attr("height", diameter_G1)
+        .append("g")
+        .attr("transform", "translate(" + window.screen.width / 2 + "," + diameter_G1 / 2 + ")");
+    let root = data
+    let focus = root,
+        nodes = pack(root),
+        view;
+    let circle = svg.selectAll("circle")
+        .data(nodes)
+        .enter().append("circle")
+        .attr("class", function(d) {
+            return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
+        })
+        .style("fill", circleFill)
+        .on("click", function(d) {
+            if (focus !== d) zoom(d), d3.event.stopPropagation();
+        });
+
+    circle.append("svg:title").text(function(d) {
+        texto = d.name;
+        if(d.size !== undefined) texto += " (" + d.size + ")";
+        return texto;
+    })
+
+    let text = svg.selectAll("text")
+        .data(nodes)
+        .enter().append("text")
+        .attr("class", "label")
+        .style("fill-opacity", function(d) {
+            return d.parent === root ? 1 : 0;
+        })
+        .style("display", function(d) {
+            return d.parent === root ? null : "none";
+        })
+        .text(function(d) {
+            texto = d.name;
+            if(d.size !== undefined) texto += " (" + d.size + ")";
+            return texto;
+        })
+        .style("font-size", "18px")
+        .attr("dy", ".35em");
+
+    let node = svg.selectAll("circle,text");
+
+    zoomTo([root.x, root.y, root.r * 2 + margin_G1]);
+
+    d3.select(target)
+        .on("click", function() {
+            zoom(root);
+        });
+
+    function zoom(d) {
+        var focus0 = focus;
+        focus = d;
+
+        let transition = d3.transition()
+            .duration(d3.event.altKey ? 7500 : 750)
+            .tween("zoom", function(d) {
+                let i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin_G1]);
+                return function(t) {
+                    zoomTo(i(t));
+                };
+            });
+
+        transition.selectAll("text")
+            .filter(function(d) {
+                return d.parent === focus || this.style.display === "inline";
+            })
+            .style("fill-opacity", function(d) {
+                return d.parent === focus ? 1 : 0;
+            })
+            .each("start", function(d) {
+                if (d.parent === focus) this.style.display = "inline";
+            })
+            .each("end", function(d) {
+                console.log(d.parent !== focus);
+                
+                if (d.parent !== focus) this.style.display = "none";
+            });
+    }
+
+    function zoomTo(v) {
+        let k = diameter_G1 / v[2];
+        view = v;
+        node.attr("transform", function(d) {
+            return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
+        });
+        circle.attr("r", function(d) {
+            return d.r * k;
+        });
+    }
+}
+    </script>
+  </body>
+</html>

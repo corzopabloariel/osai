@@ -1,0 +1,71 @@
+<!-- PANTALLA MODAL -->
+<div class="position-fixed bg-light w-100 h-100 d-none" id="pantalla">
+  <div class="body-noticia position-absolute h-100 w-100 text-dark">
+    <span onclick="userDATOS.pantalla_cerrarSIMPLE()" class="close position-absolute" style="" aria-hidden="true">&times;</span>
+    <div id="noticia-detalle" class="position-absolute d-none w-100 p-2 text-white">
+      <div class="row justify-content-center">
+        <div class="col col-12"></div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="container pb-3 pt-3">
+        <div class="row mb-3">
+          <div class="col col-12">
+            <p class="m-0 d-flex align-items-stretch" data-noticia data-tipo="titulo"></p>
+          </div>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col col-6 d-none">
+            <p class="m-0 d-flex align-items-stretch" data-noticia data-tipo="subtitulo"></p>
+          </div>
+          <div class="col col-6 d-none">
+            <img src="" class="w-100 mb-3" data-tipo="imagen" onError="this.src='assets/images/no-img.png'" alt="IMG noticia">
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col col-12">
+            <div class="p-2" id="tipo_cuerpo" data-noticia data-tipo="cuerpo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!--/ PANTALLA MODAL -->
+
+<div class="container-fluid text-dark">
+  <div class="card shadow-sm bg-white rounded-0 mb-2">
+    <div class="card-body">
+      <h3>Notificaciones del sistema</h3>
+    </div>
+  </div>
+  <div class="card shadow-sm bg-white rounded-0">
+    <div class="card-body">
+      <table class="animate-flicker table mb-0 table-hover w-100" id="t_data_e" data-tipo="0" datatable="ng">
+        <thead class="thead-light text-uppercase">
+          <th>Fecha</th>
+          <th>Mensaje</th>
+          <th>Noticia</th>
+          <th>Medio</th>
+          <th>Tipo</th>
+          <th>Usuario</th>
+          <th>Estado</th>
+        </thead>
+        <tbody>
+        </tbody>
+        <!--<tfoot>
+          <tr>
+            <th>id</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Medio</th>
+            <th>seccion</th>
+            <th>input</th>
+            <th>Estado</th>
+          </tr>
+        </tfoot>-->
+      </table>
+      <div><div class="h"></div><div class="b"></div><div class="f"></div></div>
+    </div>
+  </div>
+</div>

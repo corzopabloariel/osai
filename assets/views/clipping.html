@@ -1,0 +1,109 @@
+<!-- PANTALLA MODAL -->
+<div class="position-fixed bg-light w-100 h-100 d-none" id="pantalla">
+  <div class="body-noticia position-absolute h-100 w-100 text-dark">
+    <span onclick="userDATOS.pantalla_cerrarSIMPLE()" class="close position-absolute" style="right:15px;top:5px;" aria-hidden="true">&times;</span>
+    <div id="noticia-detalle" class="position-absolute d-none w-100 p-2 text-white">
+      <div class="row justify-content-center">
+        <div class="col col-12"></div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="container pb-3 pt-3">
+        <div class="row mb-3">
+          <div class="col col-12">
+            <p class="m-0 d-flex align-items-stretch" data-noticia data-tipo="titulo"></p>
+          </div>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col col-6 d-none">
+            <p class="m-0 d-flex align-items-stretch" data-noticia data-tipo="subtitulo"></p>
+          </div>
+          <div class="col col-6 d-none">
+            <img src="" class="w-100 mb-3" data-tipo="imagen" onError="this.src='assets/images/no-img.png'" alt="IMG noticia">
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col col-12">
+            <div class="p-2" id="tipo_cuerpo" data-noticia data-tipo="cuerpo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!--/ PANTALLA MODAL -->
+<div class="container-fluid text-dark">
+  <fieldset style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+    <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">clipping</legend>
+    <div class="card shadow-sm bg-white rounded-0">
+      <div class="card-body">
+
+        <!-- BUSCADOR -->
+        <div class="pb-4 d-none" id="date_filter">
+
+          <div class="row justify-content-center">
+            <div class="col-8 d-flex flex-column align-items-center">
+
+              <div class="row w-100">
+                <div class="col-6 pl-0">
+                  <div class="w-100">
+                    <h3 class="text-center">Desde</h3>
+                    <input type="date" class="form-control rounded-0" id="fecha_min" value="">
+                  </div>
+                </div>
+                <div class="col-6 pr-0">
+                  <div class="w-100">
+                    <h3 class="text-center">Hasta</h3>
+                    <input type="date" class="form-control rounded-0" id="fecha_max" value="">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-4">
+              <div class="input-group">
+                <select class="custom-select w-100 select__2" name="select_medioNOTICIA" id="select_medioNOTICIA" style="" data-allow-clear="true" data-placeholder="MEDIO">
+                  <option value=""></option>
+                  <option ng-repeat="(id,medio) in mediosSELECT" value="{{id}}">{{medio}}</option>
+                </select>
+              </div>
+
+              <div class="input-group mt-2">
+                <select class="custom-select w-100 select__2" name="select_unidadNOTICIA" id="select_unidadNOTICIA" style="" data-allow-clear="true" data-placeholder="CLIENTE FINAL">
+                  <option value=""></option>
+                  <option ng-repeat="(id,unidad) in unidadSELECT" value="{{id}}">{{unidad}}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row pt-3">
+            <div class="col-6">
+              <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_filtro">filtrar <i class="fas fa-filter"></i></button>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_limpiar">limpiar <i class="fas fa-sync-alt"></i></button>
+            </div>
+          </div>
+
+        </div>
+        <!-- /BUSCADOR -->
+
+        <table class="animate-flicker table mb-0 table-hover w-100" id="t_data" data-tipo="0" datatable="ng">
+          <thead class="thead-light text-uppercase">
+            <th>Fecha</th>
+            <th>Fecha Pub.</th>
+            <th>Clientes</th>
+            <th>U. Análisis</th>
+            <th>Medio</th>
+            <th>Estado</th>
+            <th style="width:250px;">Título</th>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <div><div class="h"></div><div class="b"></div><div class="f"></div></div>
+      </div>
+    </div>
+  </fieldset>
+</div>

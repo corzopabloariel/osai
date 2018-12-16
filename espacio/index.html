@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="/assets/css/bootstrap.css">
+		<link rel="stylesheet" href="/assets/css/fontawesome-all.css">
+		<link rel="stylesheet" href="/assets/css/messagebox.css">
+		<link rel="stylesheet" href="/assets/css/lobibox.css">
+		<link rel="stylesheet" href="assets/css/vis-network.min.css">
+		<title>Visualización de grafo</title>
+
+		<script src="/assets/js/jquery-3.3.1.min.js"></script>
+		<script src="/assets/js/bootstrap.min.js"></script>
+		<script src="/assets/js/messagebox.js"></script>
+		<script src="/assets/js/lobibox.js"></script>
+		<script src="assets/js/vis.js"></script>
+
+<style>
+*::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); background-color: #CCCCCC; }
+*::-webkit-scrollbar { width: 8px; background-color: #CCCCCC; }
+*::-webkit-scrollbar-thumb { -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3); background-color: #000; }
+
+.__body     { width: 100%; height: 100vh; top:0; left: 0; z-index: -1; overflow-y: hidden;}
+.__b-2E64FE		{ background-color: #2E64FE; }
+.__b-FFFFFF		{ background-color: #FFFFFF; }
+.__b-FAFAFA		{ background-color: #FAFAFA; }
+.__b-EFEFEF		{ background-color: #EFEFEF; }
+.__b-0b6dc1		{ background-color: #0b6dc1; }
+.__b-EB5E28		{ background-color: #EB5E28; }
+#nombre_diario { z-index: 10; top: 10px; left: 10px; padding: 10px; }
+#nombre_diario i { cursor: pointer; }
+#div { top:0; left: 0; opacity: .7; z-index: 200; }
+.messagebox_overlay { z-index: 100; }
+.span-border-top	{ width: calc(100% - 20px); top: 0; left: 10px; }
+.info__dato		{ bottom: 0; left: 0; height: 200px; }
+.info__dato > div { padding: 10px; }
+.iframe 	{ margin: 10px; height: calc(100% - 20px); width: calc(100% - 20px); }
+.over 		{ overflow-y: scroll; height: inherit; }
+.padding-left-0 { padding-left: 0; }
+.flecha 	{ bottom: 0; left: calc(50% - 25px); font-size: 40px; padding: 10px; width: 50px; text-align: center; line-height: 40px; cursor: pointer; }
+.flecha_info { top: -62px; left: calc(50% - 25px); font-size: 40px; padding: 10px; width: 50px; text-align: center; line-height: 40px; cursor: pointer; }
+div[data-tipo="LOGO"] img,
+div[data-tipo="IMAGEN"] img { background-color: #CCCCCC; }
+/*
+ * LOADING
+ */
+
+.spinner { width: 70px; text-align: center; position: absolute; top: calc(50% - 14.5px); left: calc(50% - 35px); }
+.spinner > div { width: 18px; height: 18px; background-color: #333; border-radius: 100%; display: inline-block; -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both; animation: sk-bouncedelay 1.4s infinite ease-in-out both; }
+.spinner .bounce1 { -webkit-animation-delay: -0.32s; animation-delay: -0.32s; }
+.spinner .bounce2 { -webkit-animation-delay: -0.16s; animation-delay: -0.16s; }
+
+@-webkit-keyframes sk-bouncedelay { 0%, 80%, 100% { -webkit-transform: scale(0) } 40% { -webkit-transform: scale(1.0) } }
+
+@keyframes sk-bouncedelay { 0%, 80%, 100% { -webkit-transform: scale(0); transform: scale(0); } 40% { -webkit-transform: scale(1.0); transform: scale(1.0); } }
+</style>
+<script>
+	$(document).ready(function() {
+		$(".flecha").click(function() {
+			$(".info__dato").removeClass("d-none");
+		});
+		$(".flecha_info").click(function() {
+			$(".info__dato").addClass("d-none");
+		});
+	})
+</script>
+	</head>
+	<body>
+
+		<div id="div" class="position-absolute w-100 h-100 bg-white">
+			<div class="spinner">
+				<div class="bounce1"></div>
+				<div class="bounce2"></div>
+				<div class="bounce3"></div>
+			</div>
+		</div>
+		<div class="__body __b-FAFAFA">
+			<div class="bg-white border border-secondary position-absolute" id="nombre_diario">
+				<span></span> <i class="far fa-times-circle" onclick="userDATOS.cerrar()"></i>
+			</div>
+			<div id="grafo" class="__b-EFEFEF border border-secondary iframe">
+				<!--<iframe src="" class="__b-EFEFEF border border-secondary w-100 h-100"></iframe> -->
+			</div>
+			<div class="position-fixed flecha __b-EFEFEF border border-secondary border-bottom-0">
+				<i class="fas fa-angle-double-up"></i>
+			</div>
+			<div class="position-fixed w-100 info__dato __b-FAFAFA d-none">
+				<span class="border-top border-secondary position-absolute span-border-top"></span>
+				<div class="position-absolute flecha_info border border-secondary __b-FAFAFA">
+					<i class="fas fa-angle-double-down"></i>
+				</div>
+				<div class="h-100">
+					<div class="row d-flex align-items-stretch h-100">
+						<div class="col col-2" data-tipo="LOGO">
+							<img src="assets/images/no-img.png" id="img_diario" class="w-100 h-100" alt="LOGO">
+						</div>
+						<div class="col col-3 h-100 padding-left-0" data-tipo="DETALLE">
+							<div class="over">
+								<ul class="list-group" id="lista_atributos">
+									<!-- aca van los elementos agregados -->
+								</ul>
+							</div>
+						</div>
+						<div class="col col-5 border-left border-secondary h-100" data-tipo="CUERPO">
+							<div class="over" id="cuerpo">
+								<p style="margin:0; padding: 0;" class=""></p>
+							</div>
+						</div>
+						<div class="col col-2 padding-left-0" data-tipo="IMAGEN">
+							<img src="assets/images/no-img.png" class="w-100 h-100" alt="IMAGEN" id="imagen">
+						</div>
+						<!--<div class="col col-2 padding-left-0" data-tipo="BUFFER">
+							BUFFER
+						</div> -->
+					</div>
+				</div>
+			</div>
+		</div>
+<script>
+userDATOS = {};
+//--------------
+userDATOS.cerrar = function() {
+	$.MessageBox({
+		buttonDone  : "Si",
+		buttonFail  : "No",
+		message   : "¿Está seguro de cerrar la pestaña?"
+	}).done(function(){
+		window.close();
+	}).fail(function(){});
+};
+userDATOS.notificacion = function (mensaje,tipo = 'info',dlay = true){
+	// Available types 'warning', 'info', 'success', 'error'
+	Lobibox.notify(tipo, {
+		size: 'mini',
+		icon: false,
+		delayIndicator: dlay,
+		msg: mensaje,
+		sound: false
+	});
+};
+
+
+window.SIMAT_AREA = document.getElementById("grafo");
+let ARR_extractores = {};
+
+ARR_extractores["noticiasurbanas"]  = {"IMAGE":"http://www.noticiasurbanas.com.ar/wp-content/themes/nu-theme/images/icon-nu.svg","NOMBRE": "Noticias Urbanas"};
+ARR_extractores["parlamentario"]  = {"IMAGE":"http://parlamentario.com/graficos/home/parlamentario.png","NOMBRE": "Parlamentario"};
+ARR_extractores["infocielo"]  = {"IMAGE":"https://infocielo.com/images/Infocielo-Logo-Web.svg","NOMBRE": "Infocielo"};
+ARR_extractores["revistaque"]  = {"IMAGE":"http://www.revistaque.com/5/images/logo_empresa.png?v=2","NOMBRE": "Revista Qué"};
+ARR_extractores["letrap"]  = {"IMAGE":"https://www.letrap.com.ar/img/nd_logo.png","NOMBRE": "Letra P"};
+ARR_extractores["urgente24"]  = {"IMAGE":"https://cdn.urgente24.com/sites/all/themes/urgente24/images/logo-footer.png","NOMBRE": "Urgente24"};
+ARR_extractores["lapoliticaonline"]  = {"IMAGE":"https://upload.wikimedia.org/wikipedia/commons/4/4c/La_Politica_Online.png","NOMBRE": "La Política Online"};
+ARR_extractores["diariopopular"]  = {"IMAGE":"https://media.diariopopular.com.ar/adjuntos/143/imagenes/004/793/0004793269.png","NOMBRE": "Diario Popular"};
+ARR_extractores["cronica"]  = {"IMAGE":"https://upload.wikimedia.org/wikipedia/commons/f/fb/Cr%C3%B3nica_TV_logotipo_%282016%29.png","NOMBRE": "Crónica"};
+ARR_extractores["ambitofinanciero"]  = {"IMAGE":"http://ccb.consejo.org.ar/wp-content/files_mf/cache/th_d15ca006a1f06a08a6ed10efe5d181ed_Diario-ambito-financiero.jpg","NOMBRE": "Ámbito Financiero"};
+ARR_extractores["infobae"]  = {"IMAGE":"https://www.infobae.com/resources/assets/img/logo_infobae_naranja.svg","NOMBRE": "Infobae"};
+ARR_extractores["pagina12"]  = {"IMAGE":"https://www.pagina12.com.ar/assets/media/logos/logo_pagina_12_n.svg","NOMBRE": "Página 12"};
+ARR_extractores["lanacion"]  = {"IMAGE":"https://d1.awsstatic.com/case-studies/LATAM/La_Nacion_Logo.svg.d8b82ae7bb763cda05bf77d2306ee96925c56a20.png","NOMBRE": "La Nación"};
+ARR_extractores["clarin"]  = {"IMAGE":"https://images.clarin.com/collections/static/logo_clarin.svg","NOMBRE": "Clarín"};
+
+window.server_extractor = "http://93.188.164.198/";
+
+getGrafo = function(nombre,callback = undefined){
+	$.getJSON(
+		window.server_extractor + "/extractores/getGraph.php?medio=" + nombre + "&getgrafo",
+		function(r){
+			window.SIMAT_NODOS = r.data.nodos;
+			window.SIMAT_PUENTES = r.data.puentes;
+			if(callback != undefined)
+				callback();
+			}
+		);
+};
+
+getNodo = function(id,callback = undefined){
+	$.getJSON(
+		window.server_extractor + "/extractores/getGraph.php?medio=" + window.SIMAT_EXTRACTOR + "&getnodo=" + id,
+		function(r){
+			window.r = r;
+			if(!r.data.exito) return false;
+			titulo = document.getElementById("titulo");
+			autor = document.getElementById("autor");
+			url = document.getElementById("url");
+			imagen = document.getElementById("imagen");
+			cuerpo = document.getElementById("cuerpo");
+			bajada = document.getElementById("bajada");
+			categoria = document.getElementById("categoria");
+			n = r.data.nodo;
+			// console.log(n);
+			try { cuerpo.innerHTML = n.data.cuerpo; } catch(err) {}
+			try { imagen.src = n.data.imagen; } catch(err) {}
+			// limpio la lista de atributos
+			$("#lista_atributos").empty();
+			// los atributos van en orden de insercion
+			try {
+				insertAtributo("titulo",n.data.titulo); } catch(err) {}
+			try {
+				insertAtributo("enlace","<a target=\"_blank\" href=\"" + n.url + "\">ir al elemento <i class=\"fas fa-external-link-alt\"></i></a>"); } catch(err) {}
+			try {
+				if(n.data.bajada != undefined) insertAtributo("bajada",n.data.bajada); } catch(err) {}
+			try {
+				if(n.data.autor != undefined) insertAtributo("autor",n.data.autor); } catch(err) {}
+			}
+		);
+};
+
+
+
+insertAtributo = function(tipo,data){
+	// inserta un dato en el campo atributos
+	$("#lista_atributos").append("<li class=\"list-group-item\"><strong class=\"text-uppercase\" id=\"" + tipo + "\">" + data + "</strong></li>");
+};
+
+behavior = function(){
+	// funcion comportamiento, hace de intermediaria
+	nodos = [];
+	// convierto a nodos usables
+	for(var x in window.SIMAT_NODOS){
+		tmp = {};
+		tmp['group'] = 0;
+		tmp['chosen'] = { label: false, node: accionNodo };
+		tmp['id'] = window.SIMAT_NODOS[x]['id'];
+		tmp['_id'] = window.SIMAT_NODOS[x]['_id'];
+
+		/*
+		tmp['titulo'] = window.SIMAT_NODOS[x]['titulo'];
+		tmp['autor'] = window.SIMAT_NODOS[x]['autor'];
+		tmp['url'] = window.SIMAT_NODOS[x]['url'];*/
+
+		nodos.push(tmp);
+	}
+	puentes = [];
+	for(var x in window.SIMAT_PUENTES){
+		tmp = {};
+
+		tmp['from'] = window.SIMAT_PUENTES[x]['padre'];
+		tmp['to'] = window.SIMAT_PUENTES[x]['hijo'];
+		//console.log(tmp);
+		puentes.push(tmp);
+
+	}
+
+	drawGrafo(window.SIMAT_AREA,nodos,puentes);
+};
+
+drawGrafo = function(area,nodos,puentes){
+	var color = 'gray';
+	var len = undefined;
+
+	var container = area;
+	var data = {
+		nodes: nodos,
+		edges: puentes
+	};
+	var options = {
+		nodes: {
+			shape: 'dot',
+			size: 30,
+			font: {
+				size: 32,
+				color: '#ffffff'
+			},
+			borderWidth: 2
+		},
+		edges: {
+			width: 2
+		},
+		layout: {
+			improvedLayout: false
+		}
+	};
+	network = new vis.Network(container, data, options);
+	setTimeout(function() {
+		document.getElementById("div").classList.add("d-none");
+		userDATOS.notificacion("Cargando escenario");
+	},700);
+};
+
+var accionNodo = function (ctx, values, id) {
+	if(window.SIMAT_CURRENT_NODO != this){
+		window.SIMAT_CURRENT_NODO = this;
+		getNodo(this.options._id.$id);
+	} else {
+		console.log("se accede pero el nodo ya fue cargado");
+		return false;
+	}
+	/*titulo = document.getElementById("titulo");
+	autor = document.getElementById("autor");
+	url = document.getElementById("url");
+	titulo.innerText = this.options.titulo;
+	autor.innerText = this.options.autor;
+	url.href = this.options.url;*/
+};
+
+function getSearchParameters() {
+	var prmstr = window.location.search.substr(1);
+	return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
+}
+
+function transformToAssocArray( prmstr ) {
+	var params = {};
+	var prmarr = prmstr.split("&");
+	for ( var i = 0; i < prmarr.length; i++) {
+		var tmparr = prmarr[i].split("=");
+		params[tmparr[0]] = tmparr[1];
+	}
+	return params;
+}
+
+
+var main = function(nombre){
+	window.SIMAT_EXTRACTOR = nombre;
+	document.getElementById("img_diario").src = ARR_extractores[nombre]["IMAGE"];
+	div_nombre = document.getElementById("nombre_diario");
+	div_nombre.getElementsByTagName("span")[0].textContent = ARR_extractores[nombre]["NOMBRE"];
+	getGrafo(window.SIMAT_EXTRACTOR,behavior);
+};
+
+if(getSearchParameters().medio != null){
+	main(getSearchParameters().medio);
+}
+
+</script>
+
+	</body>
+</html>

@@ -1,0 +1,92 @@
+<div class="container text-dark">
+  <div class="card shadow-sm bg-white rounded-0">
+    <div class="card-body">
+
+      <!-- BUSCADOR -->
+      <div class="pb-4 d-none" id="date_filter">
+
+        <div class="row justify-content-center">
+          <div class="col-8 d-flex flex-column align-items-center">
+
+            <div class="row w-100">
+              <div class="col-6 pl-0">
+                <div class="w-100">
+                  <h3>Desde</h3>
+                  <input type="date" class="form-control rounded-0" id="fecha_min" value="">
+                </div>
+              </div>
+              <div class="col-6 pr-0">
+                <div class="w-100">
+                  <h3>Hasta</h3>
+                  <input type="date" class="form-control rounded-0" id="fecha_max" value="">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-4 d-flex flex-column align-items-center">
+            <div class="w-100">
+              <h3 class="text-center">Sección</h3>
+              <div class="input-group w-100">
+                <select class="custom-select w-100 select__2" name="select_seccion[]" id="select_seccion" style="" data-placeholder="Seleccione" multiple>
+                  <option value=""></option>
+                  <option ng-repeat="(id,seccion) in seccionSELECT" value="{{id}}">{{seccion}}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row justify-content-center pt-3">
+          <div class="col-4">
+            <h3 class="text-center">Medio</h3>
+            <div class="input-group">
+              <select class="custom-select w-100 select__2" name="select_medioNOTICIA" id="select_medioNOTICIA" style="" data-allow-clear="true" data-placeholder="Seleccione">
+                <option value=""></option>
+                <option ng-repeat="(id,medio) in mediosSELECT" value="{{id}}">{{medio}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-4">
+            <h3 class="text-center">Tipo</h3>
+            <div class="input-group">
+              <select class="custom-select w-100 select__2" name="select_medioTipoNOTICIA" id="select_medioTipoNOTICIA" style="" data-allow-clear="true" data-placeholder="Seleccione">
+                <option value=""></option>
+                <option ng-repeat="(id,medio) in mediostipoSELECT" value="{{id}}">{{medio}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-4">
+            <h3 class="text-center">Título / Cuerpo</h3>
+            <input type="text" class="form-control rounded-0" id="titulo" value="">
+          </div>
+        </div>
+
+        <div class="row pt-5">
+          <div class="col-6">
+            <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_filtro">filtrar <i class="fas fa-filter"></i></button>
+          </div>
+          <div class="col-6">
+            <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_limpiar">limpiar <i class="fas fa-sync-alt"></i></button>
+          </div>
+        </div>
+
+      </div>
+      <!-- /BUSCADOR -->
+
+      <table class="animate-flicker table mb-0 table-hover w-100" id="t_data" datatable="ng">
+        <thead class="thead-light text-uppercase">
+          <th>id</th>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Medio</th>
+          <th>Sección</th>
+          <th>Título</th>
+          <th>Estado</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <div><div class="h"></div><div class="b"></div><div class="f"></div></div>
+    </div>
+  </div>
+</div>

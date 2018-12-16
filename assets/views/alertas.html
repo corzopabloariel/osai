@@ -1,0 +1,41 @@
+<div class="container-fluid text-dark">
+  <div class="mx-auto">
+    <fieldset style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+      <legend style="width: auto; padding: 0 .5em; margin: 0;"><button ng-click="addPalabra()" class="btn btn-outline-primary btn-primary text-uppercase">alertas<span class="ml-1 badge badge-primary"><i class="fas fa-plus"></i></span></button></legend>
+      <div class="card-columns mt-3" id="alarmasF">
+        <div class="card shadow-sm bg-light mb-3" data-id="{{id}}" ng-model="cliente" ng-repeat="(id,alarmaF) in alarmas">
+          <div class="card-header">{{ alarmaF.nombre}}<span class="float-right" ng-click="deleteAlarma( alarmaF )"><i class="fas fa-trash-alt text-danger cursor-pointer"></i></span></div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item border-bottom-0"><form ng-submit="submitAlarma(this, alarmaF)" novalidate><input required class="form-control" ng-model="text" type="text" placeholder="Atributos"/></form></li>
+          </ul>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item" ng-repeat="attr in alarmaF.atributos track by $index">{{ attr }} <span class="float-right"><i onclick="userDATOS.atributoNegativo(this,'alarmaF')" data-estado="0" class="fas fa-list-alt mr-1 cursor-pointer"></i><i ng-click="deleteATTRalarma($index,alarmaF)" class="fas fa-trash-alt text-danger cursor-pointer"></i></span></li>
+          </ul>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item border-top-0"><button ng-click="estadoAlarma( alarmaF )" ng-class="{'btn-success': alarmaF.estado == 1,'btn-danger':alarmaF.estado == 0}" type="button" class="btn btn-block text-uppercase">{{ alarmaF.estado == 1 ? "encendida" : "apagada" }}</button></li>
+          </ul>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="mx-auto">
+    <fieldset style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+      <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">Clientes</legend>
+      <div class="card-columns mt-3" id="alarmas">
+        <div class="card shadow-sm bg-light mb-3" ng-model="cliente" ng-repeat="(id,cliente) in alarmasCLIENTE">
+          <div class="card-header">{{ cliente.nombre}}</div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item border-bottom-0"><form ng-submit="submit(this, cliente)" novalidate><input required class="form-control" ng-model="text" type="text" placeholder="Atributos"/></form></li>
+          </ul>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item" ng-repeat="attr in cliente.atributos track by $index">{{ attr }} <span class="float-right"><i onclick="userDATOS.atributoNegativo(this,'cliente')" data-estado="0" class="fas fa-list-alt mr-1 cursor-pointer"></i><i ng-click="delete( $index, cliente )" class="fas fa-trash-alt text-danger cursor-pointer"></i></span></li>
+          </ul>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item border-top-0"><button ng-click="alarma( cliente )" ng-class="{'btn-success': cliente.estado == 1,'btn-danger':cliente.estado == 0}" type="button" class="btn btn-block text-uppercase">{{ cliente.estado == 1 ? "encendida" : "apagada" }}</button></li>
+          </ul>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+</div>
