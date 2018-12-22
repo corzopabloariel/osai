@@ -15,6 +15,23 @@ ini_set('display_errors', 1);
 
 
 switch ($_POST["accion"]) {
+  case 'selectOption':
+    $jsondata["html"] = "";
+    $entidad = $_POST["entidad"];
+    if(empty($entidad)) {
+      $data = Array();
+      $data[1] = "Medios papel";
+      $data[2] = "Medios web";
+      foreach($data AS $k => $v)
+        $jsondata["html"] .= "<option value='{$k}'>{$v}</option>";
+    } else {
+      $column = $_POST["column"];
+      $data = R::findAll($entidad,"elim = 0");
+      foreach($data AS $k => $v) {
+        $jsondata["html"] .= "<option value='{$k}'>{$v[$column]}</option>";
+      }
+    }
+    break;
   case 'dataDB':
     $jsondata["data"] = Array();
     $jsondata["estado"] = 0;
@@ -168,7 +185,7 @@ switch ($_POST["accion"]) {
     $sql = "SELECT c.id,c.nombre,ou.user,ou.activo FROM cliente AS c ";
       $sql .= "LEFT JOIN osai_usuario AS ou ON ";
       $sql .= "(ou.id_cliente = c.id AND ou.elim = 0 AND ou.activo = 1) ";
-    $sql .= "WHERE c.elim = 0";
+    $sql .= "WHERE c.elim = 0 AND c.todos = 0";
     if($queryRecords = $mysqli->query($sql)) {
       while($cliente = $queryRecords->fetch_assoc()) {
         if(is_null($cliente["activo"])) $cliente["activo"] = "";
@@ -375,6 +392,7 @@ switch ($_POST["accion"]) {
         $jsondata["html"] .= "<p class='m-0 text-truncate' title='{$notificacion["mensaje"]}'>{$notificacion["mensaje"]}</p>";
         $jsondata["html"] .= "<p class='m-0 text-truncate' title='{$titulo["titulo"]}'><strong class='mr-1'>Título:</strong>{$titulo["titulo"]}</p>";
         $jsondata["html"] .= "<p class='m-0'><strong class='mr-1'>Estado:</strong>{$n}</p>";
+        $jsondata["html"] .= "<p class='m-0 text-right'>" . date("d/m/Y H:i",strtotime($notificacion["autofecha"])). "</p>";
       $jsondata["html"] .= "</div>";
     $jsondata["html"] .= "</div>";
     mysqli_close($mysqli);
@@ -398,6 +416,7 @@ switch ($_POST["accion"]) {
     $jsondata["total"] = $row["total"];
 
     $sql = "SELECT ";
+      $sql .= "n.autofecha,";
       $sql .= "n.id AS 'id_notificacion',";
       $sql .= "n.id_noticia,";
       $sql .= "n.mensaje,";
@@ -479,6 +498,7 @@ switch ($_POST["accion"]) {
             $jsondata["html"] .= "<p class='m-0 text-truncate' title='{$notificacion["mensaje"]}'>{$notificacion["mensaje"]}</p>";
             $jsondata["html"] .= "<p class='m-0 text-truncate' title='{$titulo["titulo"]}'><strong class='mr-1'>Título:</strong>{$titulo["titulo"]}</p>";
             $jsondata["html"] .= "<p class='m-0'><strong class='mr-1'>Estado:</strong>{$n}</p>";
+            $jsondata["html"] .= "<p class='m-0 text-right text-muted'>" . date("d/m/Y H:i",strtotime($notificacion["autofecha"])). "</p>";
           $jsondata["html"] .= "</div>";
         $jsondata["html"] .= "</div>";
       }

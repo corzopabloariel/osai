@@ -31,7 +31,7 @@
   </div>
   <div class="etiquetas border-left bg-white position-fixed text-dark">
     <h2 class="text-center text-uppercase p-3 mb-0 shadow position-relative">etiquetas</h2>
-    <span onclick="userDATOS.pantalla_cerrar()" class="close position-absolute" style="" aria-hidden="true">&times;</span>
+    <span onclick="userDATOS.pantalla_cerrar()" class="close position-absolute" aria-hidden="true">&times;</span>
     <div class="scroll">
       <div class="p-3">
         <button ng-click="buscar()" id="btn_procesar" data-noticia="existente" type="button" class="btn btn-block btn-info text-uppercase rounded-0 mb-3">procesar</button>
@@ -40,33 +40,30 @@
         <button ng-click="institucion()" id="btn_institucion" data-noticia type="button" class="btn btn-block text-uppercase rounded-0 mb-3">Institución</button>
         <div class="input-group mb-3">
           <label class="d-block border border-bottom-0 p-2 m-0 w-100 w-100 bg-light" for="">Medio Emisor</label>
-          <select disabled="true" class="custom-select w-100 select__2" name="select_medio" id="select_medio" style="" data-allow-clear="true" data-placeholder="Seleccione">
-            <option value=""></option>
-            <option ng-repeat="medio in medios track by medio.id" value="{{medio.id}}">{{medio.medio}}</option>
+          <select disabled="true" class="custom-select w-100 select__2" name="select_medio" id="select_medio" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value="">Cargando</option>
           </select>
         </div>
         <div class="input-group d-flex mb-3">
           <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Medio - Alcance</label>
-          <select class="custom-select w-100 select__2" name="select_medioAlcance" id="select_medioAlcance" style="" data-allow-clear="true" data-placeholder="Seleccione">
-            <option value=""></option>
-            <option ng-repeat="(nombre,medio) in mediosAlcance" value="{{medio.id}}">{{medio.nombre}}</option>
+          <select class="custom-select w-100 select__2" name="select_medioAlcance" id="select_medioAlcance" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value="">Cargando</option>
           </select>
         </div>
         <div class="input-group d-flex">
           <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Medio - Tipo</label>
-          <select class="custom-select w-100 select__2" name="select_medioTipo" id="select_medioTipo" style="" data-allow-clear="true" data-placeholder="Seleccione">
-            <option value=""></option>
-            <option ng-repeat="(nombre,medio) in mediosTipo" value="{{medio.id}}">{{medio.nombre}}</option>
+          <select class="custom-select w-100 select__2" name="select_medioTipo" id="select_medioTipo" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value="">Cargando</option>
           </select>
         </div>
         <hr>
         <div class="input-group d-flex mb-3">
           <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Destaque</label>
-          <select class="custom-select w-100 select__2" name="select_destaque" id="select_destaque" style="" data-allow-clear="true" data-placeholder="Seleccione"></select>
+          <select class="custom-select w-100 select__2" name="select_destaque" id="select_destaque" data-allow-clear="true" data-placeholder="Seleccione"></select>
         </div>
         <div class="input-group d-flex mb-3">
           <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Sección</label>
-          <select class="custom-select w-100 select__2" name="select_seccion" id="select_seccion" style="" data-allow-clear="true" data-placeholder="Seleccione"></select>
+          <select class="custom-select w-100 select__2" name="select_seccion" id="select_seccion" data-allow-clear="true" data-placeholder="Seleccione"></select>
         </div>
         <div class="d-none" id="video_noticia">
           <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Video</label>
@@ -82,9 +79,8 @@
         </div>
         <div class="input-group d-none mt-3">
           <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Periodista</label>
-          <select class="custom-select w-100 select__2" name="select_periodista" id="select_periodista" style="" data-allow-clear="true" data-placeholder="Seleccione">
-            <option value=""></option>
-            <option ng-repeat="periodista in periodistas track by periodista.id" value="{{periodista.id}}">{{periodista.nombre}}</option>
+          <select class="custom-select w-100 select__2" name="select_periodista" id="select_periodista" data-allow-clear="true" data-placeholder="Seleccione">
+            <option value="">Cargando</option>
           </select>
         </div>
         <div class="d-none mt-3" id="fecha_noticia">
@@ -103,7 +99,6 @@
   </div>
 </div>
 <!--/ PANTALLA MODAL -->
-
 <div class="container-fluid text-dark">
   <div class="shadow-sm bg-white rounded-0 mb-3">
     <div class="">
@@ -153,7 +148,7 @@
             <div class="w-100">
               <h3 class="text-center">Sección / Secciones</h3>
               <div class="input-group w-100">
-                <select class="custom-select w-100 select__2" name="select_seccionBUSCADOR[]" id="select_seccionBUSCADOR" style="" data-placeholder="Seleccione" multiple>
+                <select class="custom-select w-100 select__2" name="select_seccionBUSCADOR[]" id="select_seccionBUSCADOR" data-placeholder="Seleccione" multiple>
                   <option value=""></option>
                   <option ng-repeat="(id,seccion) in seccionSELECT" value="{{id}}">{{seccion}}</option>
                 </select>
@@ -165,7 +160,7 @@
         <div class="row justify-content-center pt-3">
           <div class="col-4">
             <div class="input-group">
-              <select class="custom-select w-100 select__2" name="select_medioNOTICIA" id="select_medioNOTICIA" style="" data-allow-clear="true" data-placeholder="MEDIO">
+              <select class="custom-select w-100 select__2" name="select_medioNOTICIA" id="select_medioNOTICIA" data-allow-clear="true" data-placeholder="MEDIO">
                 <option value=""></option>
                 <option ng-repeat="(id,medio) in mediosSELECT" value="{{id}}">{{medio}}</option>
               </select>
@@ -173,7 +168,7 @@
           </div>
           <div class="col-4">
             <div class="input-group">
-              <select class="custom-select w-100 select__2" name="select_medioTipoNOTICIA" id="select_medioTipoNOTICIA" style="" data-allow-clear="true" data-placeholder="TIPO DE MEDIO">
+              <select class="custom-select w-100 select__2" name="select_medioTipoNOTICIA" id="select_medioTipoNOTICIA" data-allow-clear="true" data-placeholder="TIPO DE MEDIO">
                 <option value=""></option>
                 <option ng-repeat="(id,medio) in mediostipoSELECT" value="{{id}}">{{medio}}</option>
               </select>
@@ -187,7 +182,7 @@
         <div class="row justify-content-center pt-3">
           <div class="col-4">
             <div class="input-group">
-              <select class="custom-select w-100 select__2" name="select_unidadNOTICIA" id="select_unidadNOTICIA" style="" data-allow-clear="true" data-placeholder="UNIDAD DE ANÁLISIS">
+              <select class="custom-select w-100 select__2" name="select_unidadNOTICIA" id="select_unidadNOTICIA" data-allow-clear="true" data-placeholder="UNIDAD DE ANÁLISIS">
                 <option value=""></option>
                 <option ng-repeat="(id,unidad) in unidadSELECT" value="{{id}}">{{unidad}}</option>
               </select>

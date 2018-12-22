@@ -29,6 +29,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.10/summernote.js"></script>
     <script type="text/javascript" src="assets/js/bootstrap3-typeahead.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.6/dist/loadingoverlay.min.js"></script>
+    <script type="text/javascript" src="assets/js/popupwindow.js"></script>
     <script type="text/javascript" src="assets/js/md5.js"></script>
     <script type="text/javascript" src="assets/js/declaration.js"></script>
     <script type="text/javascript" src="assets/js/toolbox.js"></script>
@@ -40,6 +42,7 @@
       crossorigin="anonymous">
     <link rel="stylesheet" href="assets/css/lobibox.css">
     <link rel="stylesheet" href="assets/css/messagebox.css">
+    <link rel="stylesheet" href="assets/css/popupwindow.css">
     <link rel="stylesheet" href="assets/css/select2.min.css">
     <link rel="stylesheet" href="assets/css/fontawesome-all.css">
     <!--<link rel="stylesheet" href="assets/css/datatables.css">-->
@@ -63,7 +66,7 @@
     	</div>
     </div>
     <!--/ LOADER -->
-
+    
     <!-- MODALES -->
     <div class="modal text-dark" role="dialog" id="modal">
       <div class="modal-dialog" role="document">
@@ -71,12 +74,12 @@
           <div class="modal-header bg-light">
             <h5 class="modal-title"></h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
+              <span aria-hidden="true"><i class="fas fa-times"></i></span>
             </button>
           </div>
           <form id="modal_form" name="modal_form" onsubmit="event.preventDefault(); userDATOS.submit(this)" novalidate>
             <div class="modal-body"></div>
-            <div class="modal-footer bg-light rounded-bottom"></div>
+            <div class="modal-footer bg-light rounded-bottom justify-content-start"></div>
           </form>
         </div>
       </div>
@@ -223,6 +226,7 @@
           <div class="col-12 d-flex justify-content-between">
             <p class="m-0 text-uppercase bg-white d-flex align-items-stretch border-left border-right pl-3"><span class="d-flex align-items-center">osai</span><span class="ml-3 px-2 d-flex align-items-center" id="status">ACTIVO</span></p>
             <ul class="m-0 list-inline d-flex bg-white justify-content-end ul-nav-osai">
+              <li data-vista="extractores" style="background-color: #64acfb;" class="list-inline-item border-right d-flex text-white align-items-stretch mr-0"><span class="d-flex align-items-center px-3"></span></li>
               <li data-vista="eliminado" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="eliminado" href="#!eliminado"><i class="fas fa-eraser mr-1"></i> eliminado</a></li>
               <li data-vista="informe" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="informe" href="#!informes"><i class="fas fa-chart-bar mr-1"></i> informes</a></li>
               <li data-vista="notificacion_root" class="list-inline-item d-flex align-items-stretch mr-0"><a class="d-flex align-items-center pl-3 pr-2 cursor-pointer" href="#!notificaciones">notificaciones</a></li>
@@ -263,9 +267,9 @@
           <li data-vista="noticias" class=""><!-- Todas las NOTICIAS -->
             <a class="a_link" data-url="noticias" href="#!"><i class="far fa-newspaper"></i>Noticias</a>
           </li>
-          <li data-vista="extractores" class="">
+          <!-- <li data-vista="extractores" class="">
             <a class="a_link" data-url="extractores" href="#!extractores"><i class="fab fa-elementor"></i>Extractores</a>
-          </li>
+          </li> -->
           <li data-vista="clientes" class="">
             <a class="a_link" data-url="clientes" href="#!clientes"><i class="fas fa-users"></i>Clientes</a>
           </li>

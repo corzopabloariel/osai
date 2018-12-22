@@ -109,7 +109,7 @@ userDATOS.filterNotificacion = function(flag, form = null, target = null) {
         window.filterNotificacion.push(x[1]);
       }
       $(target).html('');
-      userDATOS.verificarNotificacion(target,1, true);
+      userDATOS.verificarNotificacion(target,1, false);
     }
     modal.modal("hide");
   }
@@ -136,10 +136,9 @@ userDATOS.traerNotificacion = function(id, target) {
  * Trae de a 5
  * @param target STRING: lugar dónde irán las notificaciones
  */
-userDATOS.verificarNotificacion = function(target = "#tabla_notificacion_viejas",loading = 0) {
+userDATOS.verificarNotificacion = function(target = "#tabla_notificacion_viejas",loading = 0, new_ = true) {
   if(window["notificacionPAGINADO_" + target] === undefined) window["notificacionPAGINADO_" + target] = 0;
-  
-  window["notificacionPAGINADO_" + target] ++;
+  if(!new_) window["notificacionPAGINADO_" + target] ++;
   let filterNotificacion = null;
   if(window.filterNotificacion !== undefined) filterNotificacion = window.filterNotificacion;
   $.ajax({
@@ -165,15 +164,20 @@ userDATOS.verificarNotificacion = function(target = "#tabla_notificacion_viejas"
  *
  */
 userDATOS.verNotificacion = function(t) {
-  id = $(t).data("id");//ID notificacion
-  idNotificacionUsuario = $(t).data("notificacionusuario");
+  id = $(t).data("id");//ID tabla -> notificacion
+  idNotificacionUsuario = $(t).data("notificacionusuario");//ID tabla -> notificacion_usuario
   try {
     $("#modalNoticia").find(".btn").removeClass("d-none")
 
     let o = userDATOS.busquedaAlerta(id);//Retorna NOTICIA/
-    let seccion = "";
-    auxSeccion = userDATOS.busqueda(o.id_seccion,"seccion");
-    seccion = auxSeccion.nombre;
+    let seccion = "SIN SECCIÓN";
+    let medio = "";
+    if(parseInt(o.id_seccion) > 1) {
+      auxSeccion = userDATOS.busqueda(o.id_seccion,"seccion");
+      seccion = auxSeccion.nombre;
+    }
+    auxMedio = userDATOS.busqueda(o.id_medio,"medio");
+    medio = (auxMedio.medio).toUpperCase();
     window.noticiaNUEVA = o;
     window.notificacionNUEVA = id;
     window.notificacionUsuario = idNotificacionUsuario;
@@ -185,15 +189,16 @@ userDATOS.verNotificacion = function(t) {
     }
     if(parseInt(window.noticiaNUEVA.relevado) == 0) {
       $(t).addClass("bg-white");
-      $(t).find("p:last-child").html("<strong class='mr-1'>Estado:</strong>LEIDO");
-      userDATOS.change(id,"notificacion_usuario","visto",1);
+      $(t).find("p:nth-child(3)").html("<strong class='mr-1'>Estado:</strong>VISTO");
+      userDATOS.change(idNotificacionUsuario,"notificacion_usuario","visto",1);
     }
     html = o.cuerpo;
+    
     var SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
     while (SCRIPT_REGEX.test(html))
         html = html.replace(SCRIPT_REGEX, "");
     $("#modalNoticia").find(".modal-notificacion").html("<p class='m-0'>" + window.notificacionOBJ.mensaje + "<span class='badge badge-warning mx-2'>alerta</span><span onclick='userDATOS.mostrarAtributos(this)' class='text-uppercase cursor-pointer'>[ver atributos]</span></p>");
-    $("#modalNoticia").find(".modal-title").html(o.titulo + "<br/>[SECCIÓN: " + seccion + "]");
+    $("#modalNoticia").find(".modal-title").html(o.titulo + "<br/>[MEDIO: " + medio + "] [SECCIÓN: " + seccion + "] [<a href='" + window.noticiaNUEVA.url + "' target='blank' style='text-decoration:none'>LINK <i class='fas fa-external-link-alt'></i></a>]");
     $("#modalNoticia").find(".modal-body").html(html);
     $("#modalNoticia").modal("show");
   }
@@ -728,53 +733,61 @@ userDATOS.modalNOTICIA = function(STR_body,STR_footer,tipo, id = null) {
  *@param valor FLOAT
  *@param tipo STRING
  */
-userDATOS.calcularValoracion = function(e,valor,tipo,id = null) {
+userDATOS.calcularValoracion = function(e,valor,tipo,id) {
   //positivo + 2
   //neutro 0 y 2
   // negativo
   let detalle = "";
   window.valoracion = 0;
-  if(window.valoracionARR === undefined) window.valoracionARR = [];
-
+  if(window.valoracionARR === undefined) window.valoracionARR = {};
+  if(window.valoracionARR[id] === undefined) window.valoracionARR[id] = {}
+  //Con este valor, significa que corresponde a IMAGEN/VIDEO
+  //Tipo = 0 -> Equivale al tipo de valoración
+  //Tipo = 1 -> Equivale al valor
   if(valor == -1) {
     for(var x in window["calificaciones"][tipo]) {
       if(window.ARR_cliente[id]["valoracion"]["frm_" + window["calificaciones"][tipo][x]["id"]] !== undefined) {
         delete window.ARR_cliente[id]["valoracion"]["frm_" + window["calificaciones"][tipo][x]["id"]]
-        delete window.valoracionARR[window["calificaciones"][tipo][x]["id"] + "_"]
+        delete window.valoracionARR[id][window["calificaciones"][tipo][x]["id"]]
       }
 
       if(window["calificaciones"][tipo][x]["id"] == $("#frm_imagen").val())
         valor = window["calificaciones"][tipo][x]["valor"]
+      console.log(valor)
     }
+    if($("#frm_valor_imagen").val() == 1) valor *= 1;//a favor
+    else if($("#frm_valor_imagen").val() == 3) valor *= -1;//contra
+    else valor = 0;
     if(window.ARR_cliente[id]["valoracion"]["frm_" + $("#frm_imagen").val()] === undefined)
       window.ARR_cliente[id]["valoracion"]["frm_" + $("#frm_imagen").val()] = null;
-    window.ARR_cliente[id]["valoracion"]["frm_" + $("#frm_imagen").val()] = $("#frm_valor_imagen").val()
+    window.ARR_cliente[id]["valoracion"]["frm_" + $("#frm_imagen").val()] = valor;
 
-   if($("#frm_valor_imagen").val() == 1) valor *= 1;//a favor
-   else if($("#frm_valor_imagen").val() == 3) valor *= -1;//contra
-    else valor = 0;
+    if(window.valoracionARR[id][$("#frm_imagen").val()] === undefined)
+      window.valoracionARR[id][$("#frm_imagen").val()] = 0;
 
-    if(window.valoracionARR[$("#frm_imagen").val() + "_"] === undefined)
-      window.valoracionARR[$("#frm_imagen").val() + "_"] = 0;
-
-    window.valoracionARR[$("#frm_imagen").val() + "_"] = valor;
+    window.valoracionARR[id][$("#frm_imagen").val()] = valor;
   } else {
     if($(e).val() == 1) valor *= 1;//a favor
     else if($(e).val() == 3) valor *= -1;//contra
     else valor = 0;
 
-    if(window.valoracionARR[tipo + "_"] === undefined)
-      window.valoracionARR[tipo + "_"] = 0;
+    if(window.ARR_cliente[id]["valoracion"]["frm_" + tipo] === undefined)
+      window.ARR_cliente[id]["valoracion"]["frm_" + tipo] = null;
+    window.ARR_cliente[id]["valoracion"]["frm_" + tipo] = valor;
 
-    window.valoracionARR[tipo + "_"] = valor;
+
+    if(window.valoracionARR[id][tipo] === undefined)
+      window.valoracionARR[id][tipo] = 0;
+
+    window.valoracionARR[id][tipo] = valor;
   }
 
-  for(var i in window.valoracionARR)
-    window.valoracion += window.valoracionARR[i];
+  for(var i in window.valoracionARR[id])
+    window.valoracion += window.valoracionARR[id][i];
 
-  if(window.valoracion > 2) detalle = '<div class="rounded bg-success text-white p-2 text-center border text-uppercase">positivo</div>';
-  else if(window.valoracion >= 0) detalle = '<div class="rounded bg-warning text-dark p-2 text-center border text-uppercase">neutro</div>'
-  else detalle = '<div class="rounded bg-danger p-2 text-center text-white border text-uppercase">negativo</div>'
+  if(window.valoracion > 2) detalle = '<div class="bg-success text-white p-2 text-center text-uppercase">positivo</div>';
+  else if(window.valoracion >= 0) detalle = '<div class="bg-warning text-dark p-2 text-center text-uppercase">neutro</div>'
+  else detalle = '<div class="bg-danger p-2 text-center text-white text-uppercase">negativo</div>'
 
   $("#div_valoracion").html(detalle);
 }
@@ -796,13 +809,13 @@ userDATOS.valoracionActiva = function(t) {
  * Valida el formulario con elemento required y visible
  * @param t STRING: elemento donde se busca la info
  */
-userDATOS.validar = function(t) {
+userDATOS.validar = function(t, marca = true, visible = true) {
   let flag = 1;
   $(t).find('*[required="true"]').each(function(){
     if($(this).is(":visible")) {
       if($(this).is(":invalid") || $(this).val() == "") {
         flag = 0;
-        $(this).addClass("has-error");
+        if(marca) $(this).addClass("has-error");
       }
     }
   });
@@ -884,7 +897,8 @@ userDATOS.cliente_usuario = function() {
 userDATOS.listador = function(target,OBJ_pyrus,searching = true, id = 0, OBJ_btn = null, BTN_default = ["add","show","delete"]) {
 	let nombre_tabla = "tabla_" + id;
 	let column = OBJ_pyrus.columnaDT;
-	let rows = OBJ_pyrus.getContenidoDATATABLE();
+  // let rows = OBJ_pyrus.getContenidoDATATABLE();
+  // console.log(rows)
   let order = OBJ_pyrus.order;
 	let ARR_btn = [];
 
@@ -941,26 +955,36 @@ userDATOS.listador = function(target,OBJ_pyrus,searching = true, id = 0, OBJ_btn
 				}
 			});
   }
-
+  
 	window[nombre_tabla] = $(target).DataTable({
-		"columns": column,
-		"data": rows,
-		"columnDefs": order,
-
+    "processing": true,
+    "pageLength": 10,
+    "serverSide": true,
+    "paging": true,
+    "lengthChange": true,
+    "responsive": true,
+    "ajax": {
+      "method": "POST",
+      "url":"lib/DATATABLE.php",
+      "data": {"entidad": OBJ_pyrus.entidad, "especificacion": OBJ_pyrus.especificacion, "entidades": JSON.stringify(ENTIDAD)},
+    },
+    "columns": column,
+    "columnDefs": order,
     "fixedHeader": {
         header: false,
     },
 		"select": 'single',
 		"destroy": true,
-		"order": [[ 0, "desc" ]],
-		"searching": searching,
-		"sDom": "<'row pb-3'"+
-					"<'col col-12 col-sm-6 d-flex justify-content-start __lenght_buttons'>"+
-					"<'col col-12 col-sm-6'f>r>"+
-					"<'table-scrollable pb-3't>"+
-				"<'row'"+
-					"<'col col-12 col-sm-6 d-flex justify-content-start align-items-center'li>"+
-					"<'col col-12 col-sm-6 d-flex justify-content-end align-items-center __paginate'p>>",
+		"order": [[ 1, "desc" ]],
+    "searching": searching,
+    "dom": 'lBfrtip',
+		// "sDom": "<'row pb-3'"+
+		// 			"<'col col-12 col-sm-6 d-flex justify-content-start __lenght_buttons'>"+
+		// 			"<'col col-12 col-sm-6'f>r>"+
+		// 			"<'table-scrollable pb-3't>"+
+		// 		"<'row'"+
+		// 			"<'col col-12 col-sm-6 d-flex justify-content-start align-items-center'li>"+
+		// 			"<'col col-12 col-sm-6 d-flex justify-content-end align-items-center __paginate'p>>",
 		"scrollX":true,
 		"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
 		"buttons": ARR_btn,
@@ -1791,7 +1815,7 @@ userDATOS.distribuidorNOTICIA_behavior = function(tipo,elim) {
   let data = adata.data()[0];
   let html = $("#pantalla");
   window.noticiaSELECCIONADA = userDATOS.busqueda(data.id,"noticia",false,"id",1,elim);
-  let medio = window.variables["medio"].busqueda("id",window.noticiaSELECCIONADA.id_medio);
+  let medio = userDATOS.busqueda(window.noticiaSELECCIONADA.id_medio,"medio");
   let noticiaTABLA = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticias",false,"id",1,elim);
   let noticiaData = null;
 
@@ -1849,12 +1873,14 @@ userDATOS.distribuidorNOTICIA_behavior = function(tipo,elim) {
       air: []
     }
   });
+  $('#tipo_cuerpo').summernote('disable');
   if(parseInt(tipo) || parseInt(window.noticiaSELECCIONADA.estado) == 2) {
     switch(parseInt(window.noticiaSELECCIONADA.estado)) {
       case 0://normal
         console.log("PROCESANDO NOTICIA");
         relevo = userDATOS.busqueda(window.noticiaSELECCIONADA.id,"noticiarelevo",false,"did_noticia",0,elim)
         for(var i in relevo) {
+          if(parseInt(relevo[i]["id_cliente"]) == 0) continue
           if(window.ARR_cliente === undefined) window.ARR_cliente = {}
         	if(window.ARR_cliente[relevo[i]["id_cliente"]] === undefined) window.ARR_cliente[relevo[i]["id_cliente"]] = {}
 
@@ -2261,111 +2287,10 @@ userDATOS.bloquearUsuario = function(tabla,OBJ_pyrus) {
   });
 }
 // ---------------> VISTA PROCESAR Y PROCESADAS
-/**
- *@param e objeto select
- *@param i indice unico
- */
-userDATOS.actorUnico = function(e,i) {
-  let t = $("#modal-table-actor");
-  let s = $(e);
-  if(window.ARR_actor === undefined) window.ARR_actor = {};
-  if(s.val() != "") {
-    if(window.ARR_actor[s.val()] === undefined) {
-      /* PREBUSQUEDA */
-      t.find("td:nth-child(2) select").each(function() {
-        if($(this).val() != s.val())
-          $(this).find("option[value='" + s.val() + "']").attr("disabled",true);
-        if(window.ARR_actor[$(this).val()] !== undefined) {
-          window.ARR_actor[$(this).val()]["ACTIVO"] = 1
-        }
-      });
 
-      for(var i in window.ARR_actor) {
-        if(window.ARR_actor[i]["ACTIVO"] === undefined) delete window.ARR_actor[i];
-        else delete window.ARR_actor[i]["ACTIVO"];
-      }
-      if(s.val() != "") {
-        window.ARR_actor[s.val()] = {}
-        window.ARR_actor[s.val()]["frm_emisor"] = null;
-        window.ARR_actor[s.val()]["frm_img"] = null;
-        window.ARR_actor[s.val()]["frm_valor"] = null;
-      }
-      // SACO opción de los selects
-      t.find("td:nth-child(2) select").select2();
-    }
-  } else {
-
-    t.find("td:nth-child(2) select").each(function() {
-      if(window.ARR_actor[$(this).val()] !== undefined) {
-        window.ARR_actor[$(this).val()]["ACTIVO"] = 1
-      }
-    });
-
-    for(var i in window.ARR_actor) {
-      if(window.ARR_actor[i]["ACTIVO"] === undefined) {
-        t.find("tbody td:nth-child(2) select option[value='" + i + "']").removeAttr("disabled");
-        delete window.ARR_actor[i];
-      } else delete window.ARR_actor[i]["ACTIVO"];
-    }
-  }
-}
-userDATOS.institucionUnico = function(e) {
-  let t = $("#modal-table-institucion");
-  let s = $(e);
-  if(window.ARR_institucion === undefined) window.ARR_institucion = {};
-  if(s.val() != "") {
-    if(window.ARR_institucion[s.val()] === undefined) {
-      /* PREBUSQUEDA */
-      t.find("td:nth-child(2) select").each(function() {
-        if($(this).val() != s.val())
-          $(this).find("option[value='" + s.val() + "']").attr("disabled",true);
-        if(window.ARR_institucion[$(this).val()] !== undefined) {
-          window.ARR_institucion[$(this).val()]["ACTIVO"] = 1
-        }
-      });
-      console.log(window.ARR_institucion);
-      for(var i in window.ARR_institucion) {
-        if(window.ARR_institucion[i]["ACTIVO"] === undefined) delete window.ARR_institucion[i];
-        else delete window.ARR_institucion[i]["ACTIVO"];
-      }
-      console.log(window.ARR_institucion);
-      window.ARR_institucion[s.val()] = {}
-      window.ARR_institucion[s.val()]["frm_emisor"] = null;
-      window.ARR_institucion[s.val()]["frm_valor"] = null;
-      // SACO opción de los selects
-      t.find("td:nth-child(2) select").select2();
-    } else {
-      t.find("td:nth-child(2) select").each(function() {
-        if(window.ARR_institucion[$(this).val()] !== undefined) {
-          window.ARR_institucion[$(this).val()]["ACTIVO"] = 1
-        }
-      });
-      for(var i in window.ARR_institucion) {
-        if(window.ARR_institucion[i]["ACTIVO"] === undefined) {
-          t.find("tbody td:nth-child(2) select option[value='" + i + "']").removeAttr("disabled");
-          delete window.ARR_institucion[i];
-        } else delete window.ARR_institucion[i]["ACTIVO"];
-
-        console.log(window.ARR_institucion[i]);
-      }
-    }
-  } else {
-    t.find("td:nth-child(2) select").each(function() {
-      if(window.ARR_institucion[$(this).val()] !== undefined) {
-        window.ARR_institucion[$(this).val()]["ACTIVO"] = 1
-      }
-    });
-
-    for(var i in window.ARR_institucion) {
-      if(window.ARR_institucion[i]["ACTIVO"] === undefined) {
-        t.find("tbody td:nth-child(2) select option[value='" + i + "']").removeAttr("disabled");
-        delete window.ARR_institucion[i];
-      } else delete window.ARR_institucion[i]["ACTIVO"];
-    }
-  }
-}
 /**
  * Función para cancelar apertura de noticias. reestablece valores
+ * REVISAR ESTO
  */
 userDATOS.cancelarApertura = function() {
   if(window.noticiaSELECCIONADA !== undefined) {
@@ -2374,254 +2299,753 @@ userDATOS.cancelarApertura = function() {
     window.noticiaSELECCIONADA = undefined;
   }
 }
+/** ---> REVISAR */
 /**
- *
-  *@param e objeto select
-  *@param id del cliente
+ * Función para verificar que actor sea único
+ * Actualizado
+ * @param e objeto select
+ * @param i indice unico
  */
-userDATOS.temaUnico = function(e,id) {
-  let t = $("#attr_temas tbody");
-  let s = $(e);
-  if(s.val() != "") {
-    if(window.ARR_cliente[id]["tema"]["frm_tema_" + s.val()] === undefined) {
-      /* PREBUSQUEDA */
-      t.find("td:nth-child(2) select").each(function() {
-        if($(this).val() != s.val())
-          $(this).find("option[value='" + s.val() + "']").attr("disabled",true);
-        if(window.ARR_cliente[id]["tema"]["frm_tema_" + $(this).val()] !== undefined) {
-          // window.ARR_cliente[id]["tema"]["frm_tema_" + $(this).val()] = {};
-          window.ARR_cliente[id]["tema"]["frm_tema_" + $(this).val()]["ACTIVO"] = 1
+userDATOS.actorUnico = function(e,i) {
+  let table = $("#modal-table-actor");
+  let select = $(e);
+  let tr = select.closest("tr");
+  let value = select.val();
+  if(window.ARR_actor === undefined) window.ARR_actor = {};
+  if(select.val() != "") {
+    if(window.ARR_actor[select.val()] === undefined) {
+      if(table.find(".actorActive").length) table.find(".actorActive").removeClass("actorActive");
+      select.addClass("actorActive");
+      table.find("td:nth-child(2) select:not(.actorActive) option[value='" + value + "']").attr("disabled",true);
+
+      window.ARR_actor[value] = {}
+      window.ARR_actor[value]["frm_emisor"] = null;
+      window.ARR_actor[value]["frm_img"] = null;
+      window.ARR_actor[value]["frm_valor"] = null;
+
+      for(var i in window.ARR_actor) {
+        if(!table.find("td:nth-child(2) select option:selected[value='" + i + "']").length) {
+          table.find("td:nth-child(2) select option:disabled[value='" + i + "']").removeAttr("disabled");
+          delete window.ARR_actor[i];
         }
-      });
+      }
+      
+      table.find("td:nth-child(2) select").select2();
+    }
+    tr.find("td:last-child() input").removeAttr("disabled");
+    tr.find("td:last-child() .btn-group label").removeClass("bg-light");
+    tr.find("td:last-child() .btn-group label:first-child()").addClass("bg-success");
+    tr.find("td:last-child() .btn-group label:nth-child(2)").addClass("bg-warning");
+    tr.find("td:last-child() .btn-group label:last-child()").addClass("bg-danger");
+  } else {
+    tr.find("td:last-child() input").attr("disabled",true);
+    tr.find("td:last-child() .btn-group label").addClass("bg-light");
+    tr.find("td:last-child() .btn-group label:first-child()").removeClass("bg-success");
+    tr.find("td:last-child() .btn-group label:nth-child(2)").removeClass("bg-warning");
+    tr.find("td:last-child() .btn-group label:last-child()").removeClass("bg-danger");
+    for(var i in window.ARR_actor) {
+      if(!table.find("td:nth-child(2) select option:selected[value='" + i + "']").length) {
+        table.find("td:nth-child(2) select option:disabled[value='" + i + "']").removeAttr("disabled");
+        table.find("td:nth-child(2) select option:disabled[value='" + i + "']").parent().select2();
+        delete window.ARR_actor[i];
+      }
+    }
+  }
+}
+/**
+ * Función para verificar que una institución sea única
+ * Actualizado
+ */
+userDATOS.institucionUnico = function(e) {
+  let table = $("#modal-table-institucion");
+  let select = $(e);
+  let value = select.val();
+  let tr = select.closest("tr");
+
+  if(window.ARR_institucion === undefined) window.ARR_institucion = {};
+  if(value != "") {
+    if(window.ARR_institucion[value] === undefined) {
+      if(table.find(".institucionActive").length) table.find(".institucionActive").removeClass("institucionActive");
+      select.addClass("institucionActive");
+      table.find("td:nth-child(2) select:not(.institucionActive) option[value='" + value + "']").attr("disabled",true);
+
+      window.ARR_institucion[value] = {}
+      window.ARR_institucion[value]["frm_emisor"] = null;
+      window.ARR_institucion[value]["frm_valor"] = null;
+      // SACO opción de los selects
+      table.find("td:nth-child(2) select").select2();
+      
+      for(var i in window.ARR_institucion) {
+        if(!table.find("td:nth-child(2) select option:selected[value='" + i + "']").length) {
+          table.find("td:nth-child(2) select option:disabled[value='" + i + "']").removeAttr("disabled");
+          table.find("td:nth-child(2) select option:disabled[value='" + i + "']").parent().select2();
+          console.log(window.ARR_institucion[i])
+          delete window.ARR_institucion[i];
+        }
+      }
+    }
+    tr.find("td:last-child() input").removeAttr("disabled");
+    tr.find("td:last-child() .btn-group label").removeClass("bg-light");
+    tr.find("td:last-child() .btn-group label:first-child()").addClass("bg-success");
+    tr.find("td:last-child() .btn-group label:nth-child(2)").addClass("bg-warning");
+    tr.find("td:last-child() .btn-group label:last-child()").addClass("bg-danger");
+  } else {
+    tr.find("td:last-child() input").attr("disabled",true);
+    tr.find("td:last-child() .btn-group label").addClass("bg-light");
+    tr.find("td:last-child() .btn-group label:first-child()").removeClass("bg-success");
+    tr.find("td:last-child() .btn-group label:nth-child(2)").removeClass("bg-warning");
+    tr.find("td:last-child() .btn-group label:last-child()").removeClass("bg-danger");
+    for(var i in window.ARR_institucion) {
+      if(!table.find("td:nth-child(2) select option:selected[value='" + i + "']").length) {
+        table.find("td:nth-child(2) select option:disabled[value='" + i + "']").removeAttr("disabled");
+        table.find("td:nth-child(2) select option:disabled[value='" + i + "']").parent().select2();
+        delete window.ARR_institucion[i];
+      }
+    }
+  }
+}
+/**
+  * Función para agregar temas a una unidad / agenda
+  * Actualizado
+  * @param e objeto select
+  * @param id del cliente
+  */
+userDATOS.temaUnico = function(e,id) {
+  let table = $("#modal-table-temas");
+  let select = $(e);
+  let tr = select.closest("tr");
+  let value = select.val();
+  if(value != "") {
+    tr.find("td:last-child() input").removeAttr("disabled");
+    tr.find("td:last-child() label").removeClass("bg-light");
+    tr.find("td:last-child() label:first-child()").addClass("bg-success");
+    tr.find("td:last-child() label:nth-child(2)").addClass("bg-warning");
+    tr.find("td:last-child() label:last-child()").addClass("bg-danger");
+    
+    if(table.find(".temaActive").length) table.find(".temaActive").removeClass("temaActive");
+    select.addClass("temaActive");
+    if(window.ARR_cliente[id]["tema"]["frm_tema_" + value] === undefined) {
+      window.ARR_cliente[id]["tema"]["frm_tema_" + value] = null;
+      table.find("td:nth-child(2) select:not(.temaActive)").find("option[value='" + value + "']").attr("disabled",true);
+      
       for(var i in window.ARR_cliente[id]["tema"]) {
         if(i == "texto") continue;
-        if(window.ARR_cliente[id]["tema"][i]["ACTIVO"] === undefined) delete window.ARR_cliente[id]["tema"][i];
-        else delete window.ARR_cliente[id]["tema"][i]["ACTIVO"];
+        id_tema = i.substring(9);
+        if(!table.find("td:nth-child(2) select option:selected[value='" + id_tema + "']").length) {
+          table.find("td:nth-child(2) select option:disabled[value='" + id_tema + "']").removeAttr("disabled");
+          delete window.ARR_cliente[id]["tema"][i];
+        }
       }
-      window.ARR_cliente[id]["tema"]["frm_tema_" + s.val()] = {};
-      window.ARR_cliente[id]["tema"]["frm_tema_" + s.val()]["NUEVO"] = 1;
-      // SACO opción de los selects
-      t.find("td:nth-child(2) select").select2();
+
+      table.find("td:nth-child(2) select").select2();
     }
   } else {
-    t.find("td:nth-child(2) select").each(function() {
-      if(window.ARR_cliente[id]["tema"]["frm_tema_" + $(this).val()] == null) window.ARR_cliente[id]["tema"]["frm_tema_" + $(this).val()] = {}
-      if(window.ARR_cliente[id]["tema"]["frm_tema_" + $(this).val()] !== undefined) {
-        window.ARR_cliente[id]["tema"]["frm_tema_" + $(this).val()]["ACTIVO"] = 1
-      }
-    });
+    tr.find("td:last-child() input").attr("disabled",true);
+    tr.find("td:last-child() label").addClass("bg-light");
+    tr.find("td:last-child() label:first-child()").removeClass("bg-success");
+    tr.find("td:last-child() label:nth-child(2)").removeClass("bg-warning");
+    tr.find("td:last-child() label:last-child()").removeClass("bg-danger");
+    select.removeClass("temaActive");
 
     for(var i in window.ARR_cliente[id]["tema"]) {
-      if(window.ARR_cliente[id]["tema"][i] === null) window.ARR_cliente[id]["tema"][i] = {}
-      if(window.ARR_cliente[id]["tema"][i]["ACTIVO"] === undefined) {
-        t.find("tbody td:nth-child(2) select option[value='" + i + "']").removeAttr("disabled");
+      if(i == "texto") continue;
+      id_tema = i.substring(9);
+      if(!table.find("td:nth-child(2) select option:selected[value='" + id_tema + "']").length) {
+        table.find("td:nth-child(2) select option:disabled[value='" + id_tema + "']").removeAttr("disabled");
+        table.find("td:nth-child(2) select option:disabled[value='" + id_tema + "']").parent().select2();
         delete window.ARR_cliente[id]["tema"][i];
-      } else delete window.ARR_cliente[id]["tema"][i]["ACTIVO"];
+      }
     }
   }
 }
+/**
+ * Función para agregar unidad / agenda
+ * Actualizado
+ */
 userDATOS.unidadUnico = function(e) {
-  let t = $("#modal-table-unidad");
-  let s = $(e);
+  let table = $("#modal-table-unidad");
+  let select = $(e);
+  let value = select.val();
   if(window.ARR_cliente === undefined) window.ARR_cliente = {};
-  if(s.val() != "") {
-    if(window.ARR_cliente[s.val()] === undefined) {
-      /* PREBUSQUEDA */
-      t.find("td:nth-child(2) select").each(function() {
-        if($(this).val() != s.val() && s.val() != "")
-          $(this).find("option[value='" + s.val() + "']").attr("disabled",true);
-        if(window.ARR_cliente[$(this).val()] !== undefined) {
-          window.ARR_cliente[$(this).val()]["ACTIVO"] = 1
-        }
-      });
+  if(value != "") {
+    if(table.find(".unidadActive").length) table.find(".unidadActive").removeClass("unidadActive");
+    select.addClass("unidadActive");
+    select.closest("tr").find("td:last-child() button").removeAttr("disabled");
+    if(window.ARR_cliente[value] === undefined) {
+      window.ARR_cliente[value] = {}
+      window.ARR_cliente[value]["valoracion"] = null;
+      window.ARR_cliente[value]["tema"] = {};
+      window.ARR_cliente[value]["tema"]["texto"] = ""
+
       for(var i in window.ARR_cliente) {
-        // if(window.ARR_cliente[i]["ACTIVO"] === undefined) delete window.ARR_cliente[i];
-        // else delete window.ARR_cliente[i]["ACTIVO"];
+        if(!table.find("td:nth-child(2) select option:selected[value='" + i + "']").length) {
+          table.find("td:nth-child(2) select option:disabled[value='" + i + "']").removeAttr("disabled");
+          delete window.ARR_cliente[i];
+        }
       }
-      window.ARR_cliente[s.val()] = {}
-      // window.ARR_cliente[s.val()]["nuevo"] = 1;
-      window.ARR_cliente[s.val()]["valoracion"] = null;
-      window.ARR_cliente[s.val()]["tema"] = {};
-      window.ARR_cliente[s.val()]["tema"]["texto"] = ""
+
+      table.find("td:nth-child(2) select:not(.unidadActive)")
+        .find("option[value='" + value + "']").attr("disabled",true);
+      
       // SACO opción de los selects
-      t.find("td:nth-child(2) select").select2();
-    } else {
-      t.find("td:nth-child(2) select").each(function() {
-        if(window.ARR_cliente[$(this).val()] !== undefined) {
-          window.ARR_cliente[$(this).val()]["ACTIVO"] = 1
-        }
-      });
-      for(var i in window.ARR_cliente) {
-        if(window.ARR_cliente[i]["ACTIVO"] === undefined) {
-          if(window.ARR_cliente[i]["valoracion"] !== null) {
-            t.find("tbody td:nth-child(2) select option[value='" + i + "']").removeAttr("disabled");
-            // delete window.ARR_cliente[i];
-          }
-        } else delete window.ARR_cliente[i]["ACTIVO"];
-      }
+      table.find("td:nth-child(2) select").select2();
     }
   } else {
-
-  }
-}
-
-userDATOS.addActor = function() {
-  let t = $("#modal-table-actor");
-  window.index_actor ++;
-  tr = window.index_actor;
-  let html = "";
-  html += "<tr>" +
-      '<td onclick="userDATOS.removeActor(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-      '<td style="width:156px">' + window.variables["actor"].select({"NECESARIO":1,"NOMBRE":"Actor"},"frm_actor-" + tr,"form-control",{"onchange":"'userDATOS.actorUnico(this," + tr + ");'"}) + '</td>' +
-      '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="img" value="1" name="frm_img-' + tr + '" id="img_' + tr + '" /><label for="img_' + tr + '" class="custom-control-label">Imagen</label></div></td>' +
-      '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-      '<td class="d-flex justify-content-center">' +
-          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-      '</td>';
-  html += "</tr>";
-  t.find("tbody").append(html);
-
-  for(var i in window.ARR_actor) {
-    if(window.ARR_actor[i]["DESACTIVADO"] === undefined)
-      t.find("tbody tr:last-child td:nth-child(2) select option[value='" + i + "']").attr("disabled",true);
-  }
-
-  t.find("tbody tr:last-child td:nth-child(2) select").select2();
-}
-userDATOS.addInstitucion = function() {
-  let t = $("#modal-table-institucion");
-  window.index_institucion ++;
-  tr = window.index_institucion;
-  let html = "";
-  html += "<tr>" +
-    '<td onclick="userDATOS.removeInstitucion(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-    '<td style="width:180px">' + window.variables["attr_institucion"].select({"NECESARIO":1,"NOMBRE":"Institución"},"frm_institucion-" + tr,"form-control",{"onchange":"'userDATOS.institucionUnico(this);'"}) + '</td>' +
-    '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-
-    '<td class="d-flex justify-content-center">' +
-        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-    '</td>';
-  html += "</tr>";
-  t.find("tbody").append(html);
-  for(var i in window.ARR_institucion) {
-    if(window.ARR_institucion[i]["DESACTIVADO"] === undefined)
-      t.find("tbody tr:last-child td:nth-child(2) select option[value='" + i + "']").attr("disabled",true);
-  }
-  t.find("tbody tr:last-child td:nth-child(2) select").select2();
-}
-/**
- *@param id del cliente
- */
-userDATOS.addTema = function(id) {
-  let lugar = $("#attr_temas tbody");
-  let html = "";
-  if(window.index_tema === undefined) window.index_tema = 0;
-  else window.index_tema ++;
-  tr = window.index_tema;
-  html += "<tr>" +
-      '<td onclick="userDATOS.removeTemas(this,' + id + ');" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-      '<td style="width:156px">' + window.variables.attr_temas.select({"NECESARIO":1,"NOMBRE":"Tema"},"frm_tema-" + tr,"form-control",{"onchange":"'userDATOS.temaUnico(this," + id + ");'"}) + '</td>' +
-      '<td style="width:260px" class="d-flex justify-content-center">' +
-          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-      '</td>';
-  html += "</tr>";
-  lugar.append(html);
-  for(var i in window.ARR_cliente[id]["tema"]) {
-    id_tema = i.substring(9);
-    if(window.ARR_cliente[id]["tema"][i] === null) {
-      lugar.find("tr:last-child td:nth-child(2) select option[value='" + id_tema + "']").attr("disabled",true);
-    } else {
-      if(window.ARR_cliente[id]["tema"][i]["DESACTIVADO"] === undefined)
-        lugar.find("tr:last-child td:nth-child(2) select option[value='" + id_tema + "']").attr("disabled",true);
+    select.removeClass("unidadActive");
+    select.closest("tr").find("td:last-child() button").attr("disabled",true);
+    for(var i in window.ARR_cliente) {
+      if(!table.find("td:nth-child(2) select option:selected[value='" + i + "']").length) {
+        table.find("td:nth-child(2) select option:disabled[value='" + i + "']").removeAttr("disabled");
+        table.find("td:nth-child(2) select option:disabled[value='" + i + "']").parent().select2();
+        delete window.ARR_cliente[i];
+      }
     }
   }
-  lugar.find(".select__2").select2();
-}
-userDATOS.addUnidad = function() {
-  let t = $("#modal-table-unidad");
-  window.index_cliente ++;
-  tr = window.index_cliente;
-  let html = "";
-  html += "<tr>" +
-      '<td onclick="userDATOS.removeUnidad(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-      '<td style="width:226px">' + window.variables["cliente"].select({"NECESARIO":1,"NOMBRE":"Unidad a analizar"},"frm_cliente-" + tr,"form-control",{"onchange":"'userDATOS.unidadUnico(this);'"}) + '</td>' +
-      '<td><div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div></td>' +
-      '<td><div class="border p-2 text-truncate text-uppercase">sin temas</div></td>' +
-      '<td onclick="userDATOS.updateUnidad(this);" style="width:24px;" class="bg-success text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-edit"></i></span></td>';
-  html += "</tr>";
-  t.find("tbody").append(html);
-  for(var i in window.ARR_cliente) {
-    if(window.ARR_cliente[i]["DESACTIVADO"] === undefined)
-      t.find("tbody tr:last-child td:nth-child(2) select option[value='" + i + "']").attr("disabled",true);
-  }
-  t.find("tbody tr:last-child td:nth-child(2) select").select2();
 }
 /**
- * Eliminar elementos
+ * Función para agregar Actor
+ * Actualizado
+ */
+userDATOS.addActor = function() {
+  let t = $("#modal-table-actor");
+  if(window.index_actor === undefined) window.index_actor = 1;
+  window.index_actor ++;
+  $( "#modal-table-actor tbody tr:first-child" ).find("select").select2("destroy")
+  tr = $( "#modal-table-actor tbody tr:first-child" ).clone();
+  $( "#modal-table-actor tbody tr:first-child" ).find("select").select2();
+
+  tr[0].children[1].children[0].name = "frm_actor-" + window.index_actor;
+  //<checkbox>
+  tr[0].children[2].children[0].children[0].children[0].children[0].name = "frm_img-" + window.index_actor;
+  tr[0].children[2].children[0].children[0].children[1].children[0].name = "frm_emisor-" + window.index_actor;
+  //</checkbox>
+  tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_actor;
+  tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_actor;
+  tr[0].children[2].children[0].children[1].children[2].children[0].name = "frm_valor-" + window.index_actor;
+
+  tr[0].classList.remove("d-none");//SACO clase
+
+  $( "#modal-table-actor tbody" ).append(tr);
+  $( "#modal-table-actor tbody tr:last-child" ).find("select").select2();
+
+  for(var i in window.ARR_actor) {
+    $( "#modal-table-actor tbody tr:last-child td:nth-child(2) select option[value='" + i + "']").attr("disabled",true);
+  }
+}
+/**
+ * Función para agregar una institución en la noticia
+ * Actualizado
+ */
+userDATOS.addInstitucion = function() {
+  let table = $("#modal-table-institucion");
+  if(window.index_institucion === undefined) window.index_institucion = 1;
+  window.index_institucion ++;
+
+  $( "#modal-table-institucion tbody tr:first-child" ).find("select").select2("destroy")
+  tr = $( "#modal-table-institucion tbody tr:first-child" ).clone();
+  $( "#modal-table-institucion tbody tr:first-child" ).find("select").select2();
+  
+  tr[0].children[1].children[0].name = "frm_institucion-" + window.index_institucion;
+  //<checkbox>
+  tr[0].children[2].children[0].children[0].children[0].children[0].name = "frm_emisor-" + window.index_institucion;
+  //</checkbox>
+  tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_institucion;
+  tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_institucion;
+  tr[0].children[2].children[0].children[1].children[2].children[0].name = "frm_valor-" + window.index_institucion;
+
+  tr[0].classList.remove("d-none");//SACO clase
+
+  $( "#modal-table-institucion tbody" ).append(tr);
+  $( "#modal-table-institucion tbody tr:last-child" ).find("select").select2();
+
+  for(var i in window.ARR_institucion) {
+    $( "#modal-table-institucion tbody tr:last-child td:nth-child(2) select option[value='" + i + "']").attr("disabled",true);
+  }
+}
+/**
+ * Función para agregar temas a una unidad / agenda
+ * @param id del cliente
+ * Actualizado
+ */
+userDATOS.addTema = function(id) {
+  if(window.index_tema === undefined) window.index_tema = {};
+  if(window.index_tema[id] === undefined) window.index_tema[id] = 1;
+  window.index_tema[id] ++;
+  $( "#modal-table-temas tbody tr:first-child" ).find("select").select2("destroy")
+  tr = $( "#modal-table-temas tbody tr:first-child" ).clone();
+  $( "#modal-table-temas tbody tr:first-child" ).find("select").select2();
+
+  tr[0].children[1].children[0].name = "frm_tema-" + window.index_tema[id];
+
+  tr[0].children[2].children[0].children[0].children[0].name = "frm_valor-" + window.index_tema[id];
+  tr[0].children[2].children[0].children[1].children[0].name = "frm_valor-" + window.index_tema[id];
+  tr[0].children[2].children[0].children[2].children[0].name = "frm_valor-" + window.index_tema[id];
+
+  tr[0].classList.remove("d-none");//SACO clase
+
+  $( "#modal-table-temas tbody" ).append(tr);
+  $( "#modal-table-temas tbody tr:last-child" ).find("select").select2();
+
+  for(var i in window.ARR_cliente[id]["tema"]) {
+    if(i == "texto") continue;
+    id_tema = i.substring(9);
+    $( "#modal-table-temas tbody tr:last-child td:nth-child(2) select option[value='" + id_tema + "']").attr("disabled",true);
+  }
+}
+/**
+ * Función para agregar unidad / agenda
+ * Actualizado
+ */
+userDATOS.addUnidad = function() {
+  if(window.index_cliente === undefined) window.index_cliente = 1;
+  window.index_cliente ++;
+  $( "#modal-table-unidad tbody tr:first-child" ).find("select").select2("destroy")
+  data = $( "#modal-table-unidad tbody tr:first-child" ).clone();
+  $( "#modal-table-unidad tbody tr:first-child" ).find("select").select2();
+
+  data[0].children[1].children[0].name = "frm_cliente-" + window.index_cliente;
+  data[0].children[1].children[0].id = "frm_cliente-" + window.index_cliente;
+  data[0].classList.remove("d-none");//SACO clase
+
+  $( "#modal-table-unidad tbody" ).append(data);
+  for(var i in window.ARR_cliente) {
+    $( "#modal-table-unidad tbody tr:last-child td:nth-child(2) select option[value='" + i + "']").attr("disabled",true);
+  }
+  $( "#modal-table-unidad tbody tr:last-child" ).find("select").select2();
+}
+/**
+ * Función para eliminar actores
+ * Actualizado
  */
 userDATOS.removeActor = function(e) {
-  let t = $("#modal-table-actor");
-  let s = $(e);
-  let tr = s.parent();
-  if(tr.find("td:nth-child(2) select").val() != "") {
-    window.ARR_actor[tr.find("td:nth-child(2) select").val()]["DESACTIVADO"] = 1
-    t.find("td:nth-child(2) select option[value='" + tr.find("td:nth-child(2) select").val() + "']").removeAttr("disabled");
-    t.find("td:nth-child(2) select").select2();
+  let table = $("#modal-table-actor");
+  let button = $(e);
+  let tr = button.closest("tr");
+  let value = tr.find("select").val();
+  if(value == "") {
+    tr.remove();
+    return false;
   }
-  tr.remove();
+  $.MessageBox({
+    buttonDone  : "Si",
+    buttonFail  : "No",
+    message   : "¿Está seguro de eliminar al <strong>Actor</strong>?"
+  }).done(function(){
+    if(value != "") {
+      delete window.ARR_actor[value];
+      table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
+      table.find("td:nth-child(2) select").select2();
+    }
+    if(table.find("tr").length == 1)
+      userDATOS.addActor();
+    tr.remove();
+  });
 }
+/**
+ * Función para eliminar instituciones
+ * Actualizado
+ */
 userDATOS.removeInstitucion = function(e) {
-  let t = $("#modal-table-institucion");
-  let s = $(e);
-  let tr = s.parent();
-  if(tr.find("td:nth-child(2) select").val() != "") {
-    window.ARR_institucion[tr.find("td:nth-child(2) select").val()]["DESACTIVADO"] = 1
-    t.find("td:nth-child(2) select option[value='" + tr.find("td:nth-child(2) select").val() + "']").removeAttr("disabled");
-    t.find("td:nth-child(2) select").select2();
+  let table = $("#modal-table-institucion");
+  let button = $(e);
+  let tr = button.closest("tr");
+  let value = tr.find("select").val();
+
+  if(value == "") {
+    tr.remove();
+    return false;
   }
-  tr.remove();
-}
-userDATOS.removeUnidad = function(e) {
-  let t = $("#modal-table-unidad");
-  let s = $(e);
-  let tr = s.parent();
-  if(tr.find("td:nth-child(2) select").val() != "") {
-    window.ARR_cliente[tr.find("td:nth-child(2) select").val()]["DESACTIVADO"] = 1
-    t.find("td:nth-child(2) select option[value='" + tr.find("td:nth-child(2) select").val() + "']").removeAttr("disabled");
-    t.find("td:nth-child(2) select").select2();
-    delete window.ARR_cliente[tr.find("td:nth-child(2) select").val()];
-  }
-  tr.remove();
-}
-userDATOS.removeTemas = function(e,id) {
-  let t = $("#attr_temas tbody");
-  let s = $(e);
-  let tr = s.parent();
-  if(window.ARR_cliente[id]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()] == null) window.ARR_cliente[id]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()] = {}
-  window.ARR_cliente[id]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()]["DESACTIVADO"] = 1
-  t.find("td:nth-child(2) select option[value='" + tr.find("td:nth-child(2) select").val() + "']").removeAttr("disabled");
-  t.find("td:nth-child(2) select").select2();
-  tr.remove();
+  $.MessageBox({
+    buttonDone  : "Si",
+    buttonFail  : "No",
+    message   : "¿Está seguro de eliminar la <strong>Institución</strong>?"
+  }).done(function(){
+    if(value != "") {
+      delete window.ARR_institucion[value];
+      table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
+      table.find("td:nth-child(2) select").select2();
+    }
+    if(table.find("tr").length == 1)
+      userDATOS.addInstitucion();
+    tr.remove();
+  });
 }
 
-userDATOS.updateUnidad = function(e) {
-  let t = $("#modal-table-unidad");
-  let s = $(e);
-  let u = null;
-  if(s.closest("tr").find("td:nth-child(2) select").length)
-    u = s.closest("tr").find("td:nth-child(2) select").val()
-  else
-    u = s.closest("tr").find("td:nth-child(1) select").val()
-  if(u == "") userDATOS.notificacion("Seleccione una unidad","error");
-  else
-    userDATOS.unidadAnalisis(u);
+/**
+ * Función para eliminar Unidad / Agenda
+ * Actualizado
+ */
+userDATOS.removeUnidad = function(e) {
+  let table = $("#modal-table-unidad");
+  let button = $(e);
+  let tr = button.closest("tr");
+  let value = tr.find("td:nth-child(2) select").val();
+  if(value == "") {
+    if(table.find("tr").length == 1)
+    userDATOS.addUnidad();
+    tr.remove();
+    return false;
+  }
+  $.MessageBox({
+    buttonDone  : "Si",
+    buttonFail  : "No",
+    message   : "¿Está seguro de eliminar la información de la <strong>Unidad o Agenda</strong>?"
+  }).done(function(){
+    if(value != "") {
+      delete window.ARR_cliente[value];
+      table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
+      table.find("td:nth-child(2) select").select2();
+    }
+    if(table.find("tr").length == 1)
+      userDATOS.addUnidad();
+    tr.remove();
+  });
 }
+/**
+ * Función para eliminar temas
+ * Actualizado
+ */
+userDATOS.removeTemas = function(e,id) {
+  let table = $("#modal-table-temas tbody");
+  let button = $(e);
+  let tr = button.closest("tr");
+  let value = tr.find("td:nth-child(2) select").val();
+  if(value == "") {
+    delete window.ARR_cliente[id]["tema"]["frm_tema_" + value]
+    table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
+    table.find("td:nth-child(2) select").select2();
+    if(table.find("tr").length == 1)
+      userDATOS.addTema(id);
+    tr.remove();
+    return false;
+  }
+  $.MessageBox({
+    buttonDone  : "Si",
+    buttonFail  : "No",
+    message   : "¿Está seguro de eliminar el tema de la <strong>Unidad o Agenda</strong>?"
+  }).done(function(){
+    delete window.ARR_cliente[id]["tema"]["frm_tema_" + value]
+    table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
+    table.find("td:nth-child(2) select").select2();
+    if(table.find("tr").length == 1)
+      userDATOS.addTema(id);
+    tr.remove();
+  });
+}
+/**
+ * Función para limpiar lateral
+ * Actualizado
+ */
+userDATOS.closeUnidad = function(e) {
+  let html = "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
+  let table = $("#modal-table-unidad");
+  let button = $(e);
+  let id = button.closest("tr").find("select:disabled").val()
+  let boolTemas = true;
+  let bool = true;
+  $("#headingOne").click();
+  setTimeout(function() {
+    if(Object.keys(window.ARR_cliente[id]["tema"]).length > 1) {
+      for(var i in window.ARR_cliente[id]["tema"]) {
+        if(i == "texto") continue;
+        if(window.ARR_cliente[id]["tema"][i] === null) {
+          boolTemas = false;
+          break;
+        }
+      }
+    }
+    if(window.limpiarUnidad == undefined) {
+      if(userDATOS.validar("#accordionExample",false,false) == 1 && boolTemas) bool = true;
+      else bool = false;
+    }
+    if( bool ) {
+      button.closest("tr").find("td:nth-child(2) select").removeAttr("disabled");
+      button.closest("tr").find("td:nth-child(2) select").select2();
+      let id = button.closest("tr").find("td:nth-child(2) select").val();
+
+      button.closest(".modal-container").find("> .row > div:last-child()").html(html);
+      button.removeClass("bg-warning text-black").addClass("bg-success").find("i").removeClass("fa-angle-left").addClass("fa-angle-right");
+      button.attr("onclick","userDATOS.updateUnidad(this);");
+    } else userDATOS.notificacion("Complete los datos necesarios [VALORACIONES y TEMAS]","error",false);
+  },500);
+}
+/**
+ * Función para los diferentes tipos de datos en actor
+ * @param tipo INT: 0 -> imagen/emisor // 1 -> valoración
+ */
+userDATOS.optionActor = function(e,tipo) {
+  let table = $("#modal-table-actor");
+  let input = $(e);
+  let tr = input.closest("tr");
+  let value = tr.find("select").val();
+
+  imagenTR = tr.find("td:last-child() > div > div:first-child label:first-child()")[0];
+  imagen = (imagenTR.children[0].checked ? 1 : 0);
+
+  emisorTR = tr.find("td:last-child() > div > div:first-child label:last-child()")[0];
+  emisor = (emisorTR.children[0].checked ? 1 : 0);
+
+  valoracionTR = tr.find("td:last-child() > div > div:last-child");
+  valoracion = $(valoracionTR).find("input:checked").val();
+
+  window.ARR_actor[value]["frm_emisor"] = emisor;
+  window.ARR_actor[value]["frm_img"] = imagen;
+  window.ARR_actor[value]["frm_valor"] = valoracion;
+}
+/**
+ * Función para los diferentes tipos de datos en institución
+ * @param tipo INT: 0 -> imagen/emisor // 1 -> valoración
+ */
+userDATOS.optionInstitucion = function(e,tipo) {
+  let table = $("#modal-table-institucion");
+  let input = $(e);
+  let tr = input.closest("tr");
+  let value = tr.find("select").val();
+
+  emisorTR = tr.find("td:last-child() > div > div:first-child label")[0];
+  emisor = (emisorTR.children[0].checked ? 1 : 0);
+  console.log(emisor)
+
+  valoracionTR = tr.find("td:last-child() > div > div:last-child");
+  valoracion = $(valoracionTR).find("input:checked").val();
+
+  window.ARR_institucion[value]["frm_emisor"] = emisor;
+  window.ARR_institucion[value]["frm_valor"] = valoracion;
+}
+/**
+ * Función para modificar datos de la Unidad / Agenda
+ * Contiene las 2 partes: Valoración y temas
+ * Actualizado
+ */
+userDATOS.updateUnidad = function(e) {
+  let table = $("#modal-table-unidad");
+  let button = $(e);
+  let id = button.closest("tr").find("td:nth-child(2) select").val();
+  let OBJ_p = new Pyrus();
+  let optionDatos = "";
+  let valoracion = null;
+
+  window.limpiarUnidad = undefined;
+
+  if(table.find("select:disabled").length) {
+    table.find("select:disabled").closest("tr").addClass("bg-warning");
+    userDATOS.notificacion("Cierre primero la unidad / agenda o limpie el elemento");
+    setTimeout(function() {
+      table.find("select:disabled").closest("tr").removeClass("bg-warning");
+    },1500)
+    return false;
+  }
+
+  button.closest("tr").find("td:nth-child(2) select").attr("disabled",true);
+  button.closest("tr").find("td:nth-child(2) select").select2();
+
+  html = "";btn = "";
+  if(window.ARR_cliente[id]["tema"] === null) window.ARR_cliente[id]["tema"] = {}
+  if(window.ARR_cliente[id]["valoracion"] === null) window.ARR_cliente[id]["valoracion"] = {}
+  let calificacionesBD = userDATOS.busquedaTabla("calificacion");
+  calificaciones = {}
+  for(var i in calificacionesBD) {
+  	c = calificacionesBD[i];
+  	if(calificaciones[c.co] === undefined) calificaciones[c.co] = [];
+    calificaciones[c.co].push({id:c.id,nombre:c.nombre,valor:c.valor})
+  }
+  
+  for(var i in window.ARR_cliente[id]["valoracion"]) {
+    if(valoracion === null) valoracion = 0;
+    valoracion += window.ARR_cliente[id]["valoracion"][i]
+  }
+  html += '<div class="w-100">';
+    html += '<div class="accordion" id="accordionExample">';
+      html += '<div class="card">';
+        html += '<div class="card-header px-2 py-1 cursor-pointer" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">';
+          html += '<h5 class="mb-0 text-uppercase">Valoración</h5>';
+        html += '</div>';
+
+        html += '<div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">';
+          html += '<div class="card-body p-0">';
+            html += '<div class="w-100">';
+              html += '<div class="row">';
+                html += '<div class="col-12" id="div_valoracion">';
+                  if(valoracion === null)
+                    html += '<div class="bg-dark text-white p-2 text-center text-uppercase">sin acción</div>';
+                  else if(valoracion > 2)
+                    html += '<div class="bg-success text-white p-2 text-center text-uppercase">positivo</div>';
+                  else if(valoracion <= 2 && valoracion >= 0)
+                    html += '<div class="bg-warning text-dark p-2 text-center text-uppercase">neutro</div>'
+                  else  
+                    html += '<div class="bg-danger p-2 text-center text-white text-uppercase">negativo</div>'
+                html += '</div>';
+              html += '</div>';
+              html += '<div class="scrolling-wrapper-flexbox bg-info">';
+                for(var i in calificaciones[0]) {
+                  optionDatos = "<option value=''></option>";
+                  optionDatos += "<option value='1'>Favor</option>";
+                  optionDatos += "<option value='2'>Neutro</option>";
+                  optionDatos += "<option value='3'>Contra</option>";
+                  if(window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[0][i]["id"]] === undefined) {
+                    window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[0][i]["id"]] = null;
+                    html += '<div class="card bg-white rounded-0 w-50" >';
+                      html += '<div class="card-body">';
+                        html += '<h5 class="card-title">' + calificaciones[0][i]["nombre"] + '</h5>';
+                        html += '<div class="d-flex" title="' + calificaciones[0][i]["nombre"] + ' (' + calificaciones[0][i]["valor"] + ')' + '">';
+                          html += "<select data-placeholder='" + calificaciones[0][i]["nombre"] + ' (' + calificaciones[0][i]["valor"] + ')' + "' required='true' name='frm_"  + calificaciones[0][i]["id"] + "' class='form-control select__2 select-valor w-100' onchange='userDATOS.calcularValoracion(this," + calificaciones[0][i]["valor"] + ",\"" + calificaciones[0][i]["id"] + "\",\"" + id + "\")'>";
+                            html += optionDatos;
+                          html += "</select>";
+                        html += '</div>';
+                      html += '</div>';
+                    html += '</div>';
+                  } else {
+                    optionDatos = "<option value=''></option>";
+                    optionDatos += "<option value='1' " + (window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[0][i]["id"]] > 0 ? "selected='true'" : "") + ">Favor</option>";
+                    optionDatos += "<option value='2' " + (window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[0][i]["id"]] == 0 ? "selected='true'" : "") + ">Neutro</option>";
+                    optionDatos += "<option value='3' " + (window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[0][i]["id"]] < 0 ? "selected='true'" : "") + ">Contra</option>";
+                    html += '<div class="card bg-white rounded-0 w-50" >';
+                      html += '<div class="card-body">';
+                        html += '<h5 class="card-title">' + calificaciones[0][i]["nombre"] + '</h5>';
+                        html += '<div class="d-flex" title="' + calificaciones[0][i]["nombre"] + ' (' + calificaciones[0][i]["valor"] + ')' + '">';
+                          html += "<select data-placeholder='" + calificaciones[0][i]["nombre"] + ' (' + calificaciones[0][i]["valor"] + ')' + "' required='true' name='frm_"  + calificaciones[0][i]["id"] + "' class='form-control select__2 select-valor w-100' onchange='userDATOS.calcularValoracion(this," + calificaciones[0][i]["valor"] + ",\"" + calificaciones[0][i]["id"] + "\",\"" + id + "\")'>";
+                            html += optionDatos;
+                          html += "</select>";
+                        html += '</div>';
+                      html += '</div>';
+                    html += '</div>';
+                  }
+                }
+                window["calificaciones"] = calificaciones;
+                imgVid = null;
+                optionDatos = "<option value=''></option>";
+                optionDatos += "<option value='1'>Favor</option>";
+                optionDatos += "<option value='2'>Neutro</option>";
+                optionDatos += "<option value='3'>Contra</option>";
+                html += '<div class="card bg-white rounded-0 w-100">';
+                  html += '<div class="card-body">';
+                    html += '<h5 class="card-title">';
+                      html += '<select onchange="userDATOS.calcularValoracion(this,-1,1,' + id + ')" id="frm_imagen" class="form-control select__2 w-100" required="true">';
+                        for(var x in calificaciones[1]) {
+                          if(window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[1][x]["id"]] !== undefined) {
+                            imgVid = calificaciones[1][x]["id"];
+                            html += '<option selected value="' + calificaciones[1][x]["id"] + '">' + calificaciones[1][x]["nombre"] + ' (' + calificaciones[1][x]["valor"] + ')</option>';
+                          } else
+                            html += '<option value="' + calificaciones[1][x]["id"] + '">' + calificaciones[1][x]["nombre"] + ' (' + calificaciones[1][x]["valor"] + ')</option>';
+                        }
+                      html += '</select>';
+                    html += '</h5>';
+                    if(window.ARR_cliente[id]["valoracion"]["frm_" + imgVid] !== undefined) {
+                      optionDatos = "<option value=''></option>";
+                      optionDatos += "<option value='1' " + (window.ARR_cliente[id]["valoracion"]["frm_" + imgVid] > 0 ? "selected='true'" : "") + ">Favor</option>";
+                      optionDatos += "<option value='2' " + (window.ARR_cliente[id]["valoracion"]["frm_" + imgVid] == 0 ? "selected='true'" : "") + ">Neutro</option>";
+                      optionDatos += "<option value='3' " + (window.ARR_cliente[id]["valoracion"]["frm_" + imgVid] < 0 ? "selected='true'" : "") + ">Contra</option>";
+                    }
+                    html += "<select data-placeholder='Seleccione' required='true' id='frm_valor_imagen' class='form-control select__2 select-valor w-100' onchange='userDATOS.calcularValoracion(this,-1,1," + id + ")'>";
+                      html += optionDatos;
+                    html += "</select>";
+                  html += '</div>';
+                html += '</div>';
+                
+              html += '</div>';
+            html += '</div>';
+          html += '</div>';
+        html += '</div>';
+      html += '</div>';
+      /** ELEMENTOS DE TEMAS */
+      selectTemas = "";
+      selectTemas += "<option value=''></option>";
+      let temas = userDATOS.busquedaTabla("attr_temas");
+      for(var i in temas)
+        selectTemas += "<option value='" + i + "'>" + temas[i]["nombre"] + "</option>";
+      selectTemas += "</select>";
+      option = '<div class="btn-group" role="group" aria-label="Basic example">'
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="-1" /></label>';
+      option += '</div>';
+
+      html += '<div class="card">';
+        html += '<div class="card-header px-2 py-1 cursor-pointer" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">';
+          html += '<h5 class="mb-0 text-uppercase">Temas</h5>';
+        html += '</div>';
+
+        html += '<div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">';
+          html += '<div class="card-body p-0">';
+            html += "<button type='button' class='btn d-block mx-auto my-2 btn-primary text-uppercase' onclick='userDATOS.addTema(" + id + ")'>nuevo tema</button>";
+            html += "<table class='table m-0' id='modal-table-temas'>";
+              html += "<tbody>";
+                html += "<tr class='d-none'>" +
+                    '<td><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeTemas(this,' + id + ');"><i class="fas fa-times"></i></button></td>' +
+                    '<td class="px-0 w-75">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE TEMA' required='true' onchange='userDATOS.temaUnico(this," + id + ");' name='frm_tema-0'>" + selectTemas + '</td>' +
+                    '<td>' + option + '</td>';
+                html += "</tr>";
+                html += "<tr>" +
+                    '<td><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeTemas(this,' + id + ');"><i class="fas fa-times"></i></button></td>' +
+                    '<td class="px-0 w-75">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE TEMA' required='true' onchange='userDATOS.temaUnico(this," + id + ");' name='frm_tema-1'>" + selectTemas + '</td>' +
+                    '<td>' + option + '</td>';
+                html += "</tr>";
+              
+              html += "</tbody>";
+            html += "</table>";
+          html += '</div>';
+        html += '</div>';
+      html += '</div>';
+    html += '</div>';
+
+    html += '<div class="row mt-2 justify-content-center">';
+      html += '<div class="col-12">';
+        html += '<button type="button" onclick="userDATOS.limpiarUnidad(' + id + ');" class="btn btn-block btn-dark text-uppercase">limpiar elemento <i title="Reinicia VALORACIÓN y TEMAS de la UNIDAD DE ANÁLISIS" class="ml-2 fas fa-question-circle"></i></button>';
+      html += '</div>';
+    html += '</div>';
+
+  html += '</div>';
+  button.closest(".modal-container").find("> .row > div:last-child()").html(html);
+  button.closest(".modal-container").find("> .row > div:last-child()").find("select").select2();
+  button.removeClass("bg-success").addClass("bg-warning text-black").find("i").removeClass("fa-angle-right").addClass("fa-angle-left");
+  button.attr("onclick","userDATOS.closeUnidad(this);");
+
+  ////
+  if(Object.keys(window.ARR_cliente[id]["tema"]).length > 1) {
+    for(var i in window.ARR_cliente[id]["tema"]) {
+      if(i == "texto") continue;
+      id_tema = i.substring(9);
+      $("#modal-table-temas tr:last-child() td:nth-child(2)").find("select option[value='" + id_tema + "']").removeAttr("disabled");
+      $("#modal-table-temas tr:last-child() td:nth-child(2)").find("select").val(id_tema).trigger("change");
+      $("#modal-table-temas tr:last-child() td:nth-child(3)").find("input[value='" + window.ARR_cliente[id]["tema"][i] + "']").attr("checked",true);
+      $("#collapseTwo > div > button").click();
+    }
+    $("#modal-table-temas tr td:nth-child(2)").find("select").select2();
+  }
+  ////
+}
+/**
+ * Función para agregar la valoración de un tema
+ * Actualizado
+ */
+userDATOS.optionTema = function(e) {
+  let radio = $(e);
+  let tr = radio.closest("tr");
+  let tema = tr.find("select").val();
+  let value = radio.parent().find("input:checked").val();
+  let id = $("#modal-table-unidad").find("select:disabled").val();
+  
+  window.ARR_cliente[id]["tema"]["frm_tema_" + tema] = value;
+}
+/**
+ * Función para eliminar datos de una unidad / agenda
+ * Retorna sus datos al inicio
+ * Actualizado
+ */
+userDATOS.limpiarUnidad = function(id) {
+  $.MessageBox({
+    buttonDone  : "Si",
+    buttonFail  : "No",
+    message   : "¿Está seguro de eliminar la <strong>información</strong>?"
+  }).done(function(){
+    window.ARR_cliente[id]["tema"] = {};
+    window.ARR_cliente[id]["tema"]["texto"] = "";
+    window.ARR_cliente[id]["valoracion"] = null;
+    window.limpiarUnidad = "";
+    $("#modal-table-unidad").find("select:disabled").closest("tr").find("td:last-child() button").click();
+  });
+}
+/** */
 userDATOS.restaurarNoticia = function(e) {
   $.MessageBox({
     buttonDone  : "Si",
@@ -2689,131 +3113,24 @@ userDATOS.restaurarNoticia = function(e) {
     userDATOS.pantalla_cerrarSIMPLE()
   });
 }
-userDATOS.unidadAnalisis = function(id) {
-  let OBJ_p = new Pyrus();
-  let OBJ_datos = {1: "Favor",2: "Neutro",3:"Contra"};
-  html = "";btn = "";
-  if(window.ARR_cliente[id]["tema"] === null) window.ARR_cliente[id]["tema"] = {}
-  if(window.ARR_cliente[id]["valoracion"] === null) window.ARR_cliente[id]["valoracion"] = {}
-  calificaciones = {}
-  for(var i in window.variables.calificacion.resultado) {
-  	c = window.variables.calificacion.resultado[i];
-  	if(calificaciones[c.co] === undefined) calificaciones[c.co] = [];
-    calificaciones[c.co].push({id:c.id,nombre:c.nombre,valor:c.valor})
-  }
-  html += "<input type='hidden' name='frm_unidad' value='" + id + "'/>"
-  html += '<fieldset class="mb-2">';
-    html += '<div class="row">';
-      html += '<div class="col" id="div_valoracion">';
-        html += '<div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div>';
-      html += '</div>';
-    html += '</div>';
-  html += '</fieldset>';
-  html += '<fieldset style="overflow-x: scroll;overflow-y: hidden; white-space: nowrap;">';
-  html += '<div class="scrolling-wrapper-flexbox border-left border-right">';
-    for(var i in calificaciones[0]) {
-      if(window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[0][i]["id"]] === undefined)
-        window.ARR_cliente[id]["valoracion"]["frm_" + calificaciones[0][i]["id"]] = null;
-      html += '<div class="card bg-light rounded-0 w-50" >';
-        html += '<div class="card-body">';
-          html += '<h5 class="card-title">' + calificaciones[0][i]["nombre"] + '</h5>';
-          html += '<div class="d-flex" title="' + calificaciones[0][i]["nombre"] + ' (' + calificaciones[0][i]["valor"] + ')' + '">';
-            html +=  OBJ_p.select(
-              {"NECESARIO":1,"DISABLED":0,"NOMBRE":calificaciones[0][i]["nombre"] + ' (' + calificaciones[0][i]["valor"] + ')'},
-              "frm_" + calificaciones[0][i]["id"],
-              "form-control select-valor",
-              {"onchange":"'userDATOS.calcularValoracion(this," + calificaciones[0][i]["valor"] + ",\"" + calificaciones[0][i]["id"] + "\")'"},
-              OBJ_datos);
-          html += '</div>';
-        html += '</div>';
-      html += '</div>';
-    }
-    
-    delete calificaciones[0];
-    window["calificaciones"] = calificaciones;//ACAAA
-    for(var i in calificaciones) {
-      html += '<div class="card bg-light rounded-0 w-50">';
-        html += '<div class="card-body">';
-          html += '<h5 class="card-title">';
-            html += '<select onchange="userDATOS.calcularValoracion(this,-1,' + i + ',' + id + ')" id="frm_imagen" class="form-control select__2" required="true">';
-              for(var x in calificaciones[i])
-                html += '<option value="' + calificaciones[i][x]["id"] + '">' + calificaciones[i][x]["nombre"] + ' (' + calificaciones[i][x]["valor"] + ')</option>';
-            html += '</select>';
-          html += '</h5>';
-          html +=  OBJ_p.select(
-              {"NECESARIO":1,"DISABLED":0,"NOMBRE":"Seleccione"},
-              "frm_valor_imagen",
-              "form-control select-valor",
-              {"onchange":"'userDATOS.calcularValoracion(this,-1," + i + "," + id + ")'"},
-              OBJ_datos);
-        html += '</div>';
-      html += '</div>';
-    }
-  html += '</div>';
-  html += '</fieldset>';
-
-  html += '<div class="row pt-2 justify-content-center">';
-    // html += '<div class="col-6">';
-    //   html += '<button onclick="userDATOS.volverUnidad()" type="button" class="btn btn-block text-uppercase">volver</button>';
-    // html += '</div>';
-    html += '<div class="col-12">';
-      html += '<button class="btn border btn-block text-uppercase">establecer</button>';
-    html += '</div>';
-  html += '</div>';
-
-  btn += "<p class=\"p-0 m-0 text-uppercase text-center\">temas <button type=\"button\" onclick=\"userDATOS.addTema(" + id + ")\" class=\"btn btn-sm text-uppercase\"><i class=\"fas fa-plus\"></i></button></p>";
-  btn += "<table id=\"attr_temas\" class=\"mb-0 table\"><tbody></tbody></table>";
-
-  $("#modal").removeClass("bd-example-modal-lg");
-  $("#modal").find(".modal-dialog").removeClass("modal-lg");
-
-  $("#modal").find("form").data("tipo","clienteUnidad");//para el submit del form
-  $("#modal").find(".close").addClass("d-none");
-  $("#modal").find(".modal-body").html(html);
-  $("#modal").find(".modal-footer").html(btn);
-  $("#modal").find(".modal-title").html(window.variables["cliente"].mostrar_1(id));
-  
-  if(window.ARR_cliente[id] !== undefined) {
-    for(var i in window.ARR_cliente[id]["valoracion"]) {
-      if(window.ARR_cliente[id]["valoracion"][i] != null)
-      $("#modal").find("#" + i).val(window.ARR_cliente[id]["valoracion"][i]).trigger("change");
-    }
-    for(var i in window.ARR_cliente[id]["tema"]) {
-      if(i == "texto") continue;
-
-      if(window.ARR_cliente[id]["tema"][i]["DESACTIVADO"] !== undefined) {
-        delete window.ARR_cliente[id]["tema"][i];
-        continue;
-      }
-
-      if(window.ARR_cliente[id]["tema"][i]["NUEVO"] !== undefined) {
-        delete window.ARR_cliente[id]["tema"][i];
-        continue;
-      }
-
-      if(window.index_tema === undefined) window.index_tema = 0;
-      else window.index_tema ++;
-      tr = window.index_tema;
-
-      t_html = "<tr>" +
-      '<td onclick="userDATOS.removeTemas(this,' + id + ');" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-      '<td style="width:156px">' + window.variables.attr_temas.select({"NECESARIO":1,"NOMBRE":"Tema"},"frm_tema-" + tr,"form-control",{"onchange":"'userDATOS.temaUnico(this," + id + ");'"}) + '</td>' +
-      '<td style="width:260px" class="d-flex justify-content-center">' +
-      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-      '</td>';
-      t_html += "</tr>";
-      $("#attr_temas").append(t_html);
-
-      id_tema = i.substring(9);
-      $("#attr_temas").find("tr:last-child td:nth-child(2) select").val(id_tema).trigger("change");
-      $("#attr_temas").find("tr:last-child td:nth-child(3) input[value='" + window.ARR_cliente[id]["tema"][i]["valor"] + "']").attr("checked",true);
-    }
-  }
-  if($(".scrolling-wrapper-flexbox").length) $(".scrolling-wrapper-flexbox").niceScroll();
-  $("#modal").find(".select__2").select2();
+/**
+ * Función asincrónica para carga de elementos en la vista
+ * Carga los select de la noticia
+ * @param data OBJECT -> {id:entidad, ...}
+ */
+userDATOS.selectOption = function(id,entidad,column = "nombre") {
+  $.ajax({
+    type: 'POST',
+    url: cliente_url,
+    dataType: 'json',
+    async: true,
+    data: { "tipo": "query","accion": "selectOption","entidad":entidad,"column":column }
+  }).done(function(msg) {
+    $("#" + id).html(msg.html);
+    $("#" + id).select2();
+  });
 }
+/** */
 userDATOS.volverUnidad = function() {
   angular.element($("#btn_cliente")).scope().unidadAnalisis(0)//paso atrás
 }

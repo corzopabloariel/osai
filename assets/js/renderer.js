@@ -41,18 +41,6 @@ if(userDATOS.verificar(1)) {
       $scope.noticias = userDATOS.noticiasVALOR();
     }
 
-    this.option = function($scope) {
-      // $scope.secciones = window.variables.seccion.resultado;
-      $scope.temas = window.variables.attr_temas.resultado;
-      $scope.instituciones = window.variables.attr_institucion.resultado;
-      $scope.calificacion = window.variables.calificacion.resultado;
-      $scope.clientes = window.variables.cliente.resultado;
-      $scope.medios = window.variables.medio.resultado;
-      $scope.mediosAlcance = window.variables.medio_tipo.resultado;
-      $scope.periodistas = window.variables.periodista.resultado;
-      $scope.mediosTipo = {1:{id:"1",nombre:"Medios papel"},2:{id:"2",nombre:"Medio web"}}
-    }
-
     this.listador = function(e,n) {
       userDATOS.listador("#" + e,window.variables[e],true,n);
     }
@@ -127,10 +115,10 @@ if(userDATOS.verificar(1)) {
       templateUrl: 'assets/views/' + window.usuario.vistasACTIVAS.noticias,
       controller : window.usuario.controller.noticias
     })
-    .when('/extractores', {
-      templateUrl: 'assets/views/' + window.usuario.vistasACTIVAS.extractores,
-      controller : window.usuario.controller.extractores
-    })
+    // .when('/extractores', {
+    //   templateUrl: 'assets/views/' + window.usuario.vistasACTIVAS.extractores,
+    //   controller : window.usuario.controller.extractores
+    // })
     .when('/relevo', {
       templateUrl: 'assets/views/' + window.usuario.vistasACTIVAS.relevo,
       controller : window.usuario.controller.relevo
@@ -187,7 +175,7 @@ if(userDATOS.verificar(1)) {
   /**
    * Carga principal de entidades
    */
-  app.controller('jsonController', ['$scope', '$http', '$timeout', 'service_simat', 'factory_simat', function($scope, $http, $timeout, service_simat, factory_simat) {
+  app.controller('jsonController', ['$scope', '$http', '$timeout', '$location', 'service_simat', 'factory_simat', function($scope, $http, $timeout, $location, service_simat, factory_simat) {
     h = $("#ul_nav_header").prev().outerHeight();
     $("#ul_nav_header").css({marginTop:h});
     $scope.isViewLoading = false;
@@ -201,39 +189,17 @@ if(userDATOS.verificar(1)) {
     $scope.$on('$routeChangeError', function() {
       $scope.isViewLoading = false;
     });
-
     $scope.$on('$viewContentLoaded', function(){
-      // $(".scroll-osai, .body, #tabla_notificacion, #tabla_notificacion_viejas").niceScroll();
+      
     });
+    //////
+    let ext = userDATOS.busquedaExtraccion();
+    $("*[data-vista='extractores'] span").html('<i class="far fa-clock mr-1"></i>' + (ext.fecha).replace("T"," "));
+
     $scope.notificaciones = {}
     $scope.notificacionTOTAL = 0;
-    // $scope.notificaciones[1] = {"mensaje":"BBBB"}
 
     $scope.tipo_user = window.usuario["tipo"];
-    if(window.variables["medio_tipo"] === undefined) window.variables["medio_tipo"] = new Pyrus("medio_tipo");
-    if(window.variables["medio_destaque"] === undefined) window.variables["medio_destaque"] = new Pyrus("medio_destaque",true,true);
-
-    if(window.variables["seccion"] === undefined) window.variables["seccion"] = new Pyrus("seccion",true,true);
-    if(window.variables["attr_temas"] === undefined) window.variables["attr_temas"] = new Pyrus("attr_temas",true,true);
-    if(window.variables["attr_institucion"] === undefined) window.variables["attr_institucion"] = new Pyrus("attr_institucion",true,true);
-    if(window.variables["attr_alianza"] === undefined) window.variables["attr_alianza"] = new Pyrus("attr_alianza",true,true);
-    if(window.variables["attr_campo"] === undefined) window.variables["attr_campo"] = new Pyrus("attr_campo",true,true);
-    if(window.variables["attr_cargo"] === undefined) window.variables["attr_cargo"] = new Pyrus("attr_cargo",true,true);
-    if(window.variables["attr_nivel"] === undefined) window.variables["attr_nivel"] = new Pyrus("attr_nivel",true,true);
-    if(window.variables["attr_partido"] === undefined) window.variables["attr_partido"] = new Pyrus("attr_partido",true,true);
-    if(window.variables["attr_poder"] === undefined) window.variables["attr_poder"] = new Pyrus("attr_poder",true,true);
-
-
-    if(window.variables["calificacion"] === undefined) window.variables["calificacion"] = new Pyrus("calificacion",true,true);
-    if(window.variables["alarma"] === undefined) window.variables["alarma"] = new Pyrus("alarma",true,true);
-
-    if(window.variables["notificacion"] === undefined) window.variables["notificacion"] = new Pyrus("notificacion",false);
-    if(window.variables["noticia"] === undefined) window.variables["noticia"] = new Pyrus("noticia", false);
-    if(window.variables["noticias"] === undefined) window.variables["noticias"] = new Pyrus("noticias", false);
-    if(window.variables["noticiasactor"] === undefined) window.variables["noticiasactor"] = new Pyrus("noticiasactor",false);
-    if(window.variables["noticiascliente"] === undefined) window.variables["noticiascliente"] = new Pyrus("noticiascliente",false);
-    if(window.variables["noticiasproceso"] === undefined) window.variables["noticiasproceso"] = new Pyrus("noticiasproceso",false);
-    if(window.variables["noticiasinstitucion"] === undefined) window.variables["noticiasinstitucion"] = new Pyrus("noticiasinstitucion",false);
 
     $scope.submitUsuario = function(t) {
       let modal = $("#modalUsuario");
@@ -251,25 +217,6 @@ if(userDATOS.verificar(1)) {
           modal.modal("hide");
           userDATOS.notificacion("Datos cambiados","success");
         } else userDATOS.notificacion("Datos incorrectos","error");
-      }
-    }
-
-    if(window.variables["cliente"] === undefined) window.variables["cliente"] = new Pyrus("cliente");
-    if(window.variables["actor"] === undefined) window.variables["actor"] = new Pyrus("actor");
-    if(window.variables["medio"] === undefined) window.variables["medio"] = new Pyrus("medio");
-    if(window.variables["periodista"] === undefined) window.variables["periodista"] = new Pyrus("periodista");
-    // if(window.variables["instancias"] === undefined) window.variables["instancias"] = new Pyrus("instancias");
-
-    if(window.contenido["medio"] === undefined) window.contenido["medio"] = {};
-    for(var i in window.variables.medio.resultado) {
-      r = window.variables.medio.resultado[i];
-
-      if(window.contenido["medio"][r.id] === undefined) {
-        window.contenido["medio"][r.id] = {};
-        window.contenido["medio"][r.id]["nombre"] = r.medio;
-        window.contenido["medio"][r.id]["nombreCorto"] = r.nombre;
-        window.contenido["medio"][r.id]["logo"] = r.image;
-        window.contenido["medio"][r.id]["tipo"] = window.variables.medio_tipo.mostrar_1(r.id_medio_tipo)
       }
     }
     userDATOS.eliminarNoticiaMODAL = function() {
@@ -293,6 +240,11 @@ if(userDATOS.verificar(1)) {
     /**
      *
      */
+    $scope.redireccionar = function(viewName) {
+      console.log($location)
+        $location.path(viewName);
+      
+    }
     $scope.noticiasNUMEROS = function($scope) {
       $scope.$apply(function () {
          $scope.noticias = userDATOS.noticiasVALOR();
@@ -318,7 +270,7 @@ if(userDATOS.verificar(1)) {
         $scope.noticiasNUMEROS(angular.element("#menu_noticias").scope());
         $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").removeClass("bg-white");
         $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").addClass("bg-danger text-white");
-        $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").find("p:last-child").html("<strong class='mr-1'>Estado:</strong>ELIMINADO");
+        $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").find("p:nth-child(3)").html("<strong class='mr-1'>Estado:</strong>ELIMINADO");
         window.noticiaNUEVA = undefined;
         window.notificacionNUEVA = undefined;//ID
       })
@@ -352,7 +304,7 @@ if(userDATOS.verificar(1)) {
         $scope.noticiasNUMEROS(angular.element("#menu_noticias").scope());
         $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").removeClass("bg-white");
         $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").addClass("bg-warning");
-        $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").find("p:last-child").html("<strong class=\"mr-1\">Estado:</strong>RELEVADO");
+        $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").find("p:nth-child(3)").html("<strong class=\"mr-1\">Estado:</strong>RELEVADO");
         $("#modalNoticia").modal("hide")
         window.noticiaNUEVA = undefined;
         window.notificacionNUEVA = undefined;//ID
@@ -376,7 +328,7 @@ if(userDATOS.verificar(1)) {
       for(var i in clientes_osai) {
         if(OBJ_clientes_osai[i] === undefined) {  
           OBJ_clientes_osai[i] = "";
-          u = window.variables.cliente.resultado[clientes_osai[i]["id_cliente"]];
+          u = userDATOS.busqueda(clientes_osai[i]["id_cliente"],"cliente");
           if(clientes_osai[i]["id_cliente"] == cliente.id)
             defaultValue = i;
           OBJ_clientes_osai[i] = clientes_osai[i]["user"] + " (" + u["nombre"] + ")";
@@ -837,12 +789,13 @@ if(userDATOS.verificar(1)) {
   app.controller("institucion", function ($scope,service_simat,factory_simat) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     $(".nav_ul a[data-url='institucion']").addClass("active");
+    let pyrusInstitucion = new Pyrus("attr_institucion",false)
 
-    userDATOS.listador("#t_institucion",window.variables["attr_institucion"],true);
+    userDATOS.listador("#t_institucion",pyrusInstitucion,true);
     userDATOS.submit = function(t) {
       let e = $("#" + t.id).data("tipo");
       if(userDATOS.validar("#" + t.id)) {
-        let a = window.variables.attr_institucion.objeto["GUARDADO_ATTR"];
+        let a = pyrusInstitucion.objeto["GUARDADO_ATTR"];
         let OBJ = {}
         for(var j in a) {
           OBJ[j] = null;
@@ -861,12 +814,11 @@ if(userDATOS.verificar(1)) {
         }
         $("#" + t.id).find("input","button","select").attr("disabled")
 
-        accion = window.variables.attr_institucion.guardar_1(OBJ);//
+        accion = pyrusInstitucion.guardar_1(OBJ);//
         if(accion.id !== null && accion.flag) {//
-          window.variables[e].reload(false);//recargo contenido asy, por si se necesita
           let elemento = userDATOS.busqueda(accion.id,e);//traigo el nuevo registro
 
-          let row = window.variables[e].getContenidoDATATABLEsimple(elemento);
+          let row = pyrusInstitucion.getContenidoDATATABLEsimple(elemento);
           if(OBJ.id == "nulo") {
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"attr_institucion");
             window["tabla_0"].row.add(row).draw().node();//agrego sin recargar sitio
@@ -1120,7 +1072,6 @@ if(userDATOS.verificar(1)) {
     $(".nav_ul a[data-url='extractores']").addClass("active");
     //$("#div").addClass("d-none");
     let ext = userDATOS.busquedaExtraccion();
-    $scope.medios = window.variables.medio.resultado;
     $scope.extraccion = (ext.fecha).replace("T"," ");
   });
   /**
@@ -1200,12 +1151,21 @@ if(userDATOS.verificar(1)) {
     $(".nav_ul a[data-url='clientes']").addClass("active");
     //$("#div").addClass("d-none");
 
-    userDATOS.listador("#t_clientes",window.variables["cliente"],false);
+    let agendas = userDATOS.busqueda(1,"cliente",false,"todos",0);
+    let htmlAgendaContenedor = "";
+    let pyrusCliente = new Pyrus("cliente",false);
+    for(var i in agendas) {
+      htmlAgendaContenedor += "<p class='text-left m-0'>" + agendas[i]["nombre"] + "<i class='text-success ml-2 fas fa-check-circle'></i></p>";
+    }
+    if(htmlAgendaContenedor == "") htmlAgendaContenedor = "<p class='text-center m-0 text-uppercase'>sin agendas</p>"
+    $scope.htmlAgenda = htmlAgendaContenedor;
+
+    userDATOS.listador("#t_clientes",pyrusCliente,false);
 
     userDATOS.submit = function(t) {
       let e = $("#" + t.id).data("tipo");
       if(userDATOS.validar("#" + t.id)) {
-        let a = window.variables["cliente"].objeto["GUARDADO_ATTR"];
+        let a = pyrusCliente.objeto["GUARDADO_ATTR"];
         let OBJ = {}
         for(var j in a) {
           OBJ[j] = null;
@@ -1223,12 +1183,11 @@ if(userDATOS.verificar(1)) {
           }
         }
         $("#" + t.id).find("input","button","select").attr("disabled")
-        accion = window.variables.cliente.guardar_1(OBJ);//
+        accion = pyrusCliente.guardar_1(OBJ);//
         if(accion.id !== null && accion.flag) {//
-          window.variables.cliente.reload();//vuelvo a trear todos los datos
           let elemento = userDATOS.busqueda(accion.id,"cliente");//traigo el nuevo registro
 
-          let row = window.variables.cliente.getContenidoDATATABLEsimple(elemento);
+          let row = pyrusCliente.getContenidoDATATABLEsimple(elemento);
           if(OBJ.id == "nulo")
             window["tabla_0"].row.add(row).draw().node();//agrego sin recargar sitio
           else
@@ -1332,13 +1291,14 @@ if(userDATOS.verificar(1)) {
    * Solo accedido por usuarios nivel 1 y 2
    */
   app.controller("actores", function ($scope) {
+    let pyrusActor = new Pyrus("actor");
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     $(".nav_ul a[data-url='actores']").addClass("active");
 
-    userDATOS.listador("#t_actores",window.variables["actor"]);
+    userDATOS.listador("#t_actores",pyrusActor);
     userDATOS.submit = function(t) {
       if(userDATOS.validar("#" + t.id)) {
-        let a = window.variables["actor"].objeto["GUARDADO_ATTR"]
+        let a = pyrusActor.objeto["GUARDADO_ATTR"]
         let OBJ = {}
         for(var j in a) {
           OBJ[j] = null;
@@ -1383,19 +1343,12 @@ if(userDATOS.verificar(1)) {
   app.controller("usuarios", function ($scope) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     let ua = userDATOS.user();
-    $.ajax({
-       type: 'POST',
-       url: "lib/cliente.php",
-       dataType: 'json',
-       async: false,
-       data: { tipo: "usuarios" }
-    }).done(function(msg) {
-      window.variables.usuario.resultado = msg;
-    });
-    delete window.variables.usuario.resultado[ua.id];
-    for(var i in window.variables.usuario.resultado) {
-      if(parseInt(window.variables.usuario.resultado[i]["nivel"]) < parseInt(window.usuario.nivel))
-        delete window.variables.usuario.resultado[i];//saco de la vista los usuarios con nivel superior
+    let pyrusUsuario = new Pyrus("usuario",false);
+    let usuarios = userDATOS.busquedaTabla("usuario");
+    delete usuarios[ua.id];
+    for(var i in usuarios) {
+      if(parseInt(usuarios[i]["nivel"]) < parseInt(window.usuario.nivel))
+        delete usuarios[i];//saco de la vista los usuarios con nivel superior
     }
     let ARR_btn = [];
     ARR_btn.push({
@@ -1403,7 +1356,7 @@ if(userDATOS.verificar(1)) {
 				className: 'btn-primary',
 				action: function ( e, dt, node, config ) {
 					window["tabla_0"].rows('.selected').deselect();
-					userDATOS.addUsuario(window["tabla_0"],window.variables.usuario);
+					userDATOS.addUsuario(window["tabla_0"],pyrusUsuario);
 				}
 		});
     ARR_btn.push({
@@ -1424,10 +1377,10 @@ if(userDATOS.verificar(1)) {
 					userDATOS.bloquearUsuario(window["tabla_0"],window.variables.usuario);
 				}
 			});
-    userDATOS.listador("#t_usuarios",window.variables.usuario,true,0,ARR_btn,["delete"]);//target / VAR Pyrus / busqueda / id tabla / btn adicional / ARR btn default
+    userDATOS.listador("#t_usuarios",pyrusUsuario,true,0,ARR_btn,["delete"]);//target / VAR Pyrus / busqueda / id tabla / btn adicional / ARR btn default
     userDATOS.submit = function(t) {
       if(userDATOS.validar("#" + t.id)) {
-        let a = window.variables["usuario"].objeto["GUARDADO_ATTR"]
+        let a = pyrusUsuario.objeto["GUARDADO_ATTR"]
         let OBJ = {}
         for(var j in a) {
           OBJ[j] = null;
@@ -1442,18 +1395,17 @@ if(userDATOS.verificar(1)) {
         OBJ["cantidad"] = "8";
 
         $("#" + t.id).find("input","button","select").attr("disabled")
-        accion = window.variables.usuario.guardar_1(OBJ);
+        accion = pyrusUsuario.guardar_1(OBJ);
         if(accion.id !== null && accion.flag) {//
-          //window.variables["usuario"].reload();//vuelvo a trear todos los datos
           let row = [];
           let e = userDATOS.busqueda(accion.id,"usuario");//el dato nuevo
+          let usuario_nivel = new Pyrus("usuario_nivel",false);
           userDATOS.log(window.user_id,"Alta de registro",0,e.id,"usuario");
           row.push(e.id);
           row.push(e.user);
-          row.push(window.variables.usuario_nivel.mostrar_1(e.nivel));
+          row.push(usuario_nivel.mostrar_1(e.nivel));
           row.push("Activo");
           window["tabla_0"].row.add(row).draw().node();//agrego sin recargar sitio
-          //userDATOS.listador("#t_usuarios",window.variables.usuario,true,0,ARR_btn,["delete"]);//target / VAR Pyrus / busqueda / id tabla / btn adicional / ARR btn default
           $("#modal").modal("hide");
         } else userDATOS.notificacion("Datos repetidos","error");
       } else userDATOS.notificacion("Faltan datos","error");
@@ -1468,41 +1420,42 @@ if(userDATOS.verificar(1)) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     let atributos = {};
     let OBJ_alarmas = {};
+    let clientes = userDATOS.busquedaTabla("cliente");
     let CLIENTES_alarmas = {};
-    let ARR_alarmas = window.variables.alarma.busqueda("id_cliente",0,0);
+    let ARR_alarmas = userDATOS.busqueda(0,"alarma",false,"id_cliente",0);
     // la alarma busca por clientes activos, si no se encuentran seteados los agrega
-    for(var i in window.variables.cliente.resultado) {
-      let o = window.variables.alarma.busqueda("id_cliente",window.variables.cliente.resultado[i]["id"]);
-      CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]] = {};
-      CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["id"] = window.variables.cliente.resultado[i]["id"];
-      CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["nombre"] = window.variables.cliente.resultado[i]["nombre"];
-      if(o === undefined) {
+    for(var i in clientes) {
+      if(parseInt(clientes[i]["todos"])) continue;
+      let o = userDATOS.busqueda(clientes[i]["id"],"alarma",false,"id_cliente");
+      CLIENTES_alarmas[clientes[i]["id"]] = {};
+      CLIENTES_alarmas[clientes[i]["id"]]["id"] = clientes[i]["id"];
+      CLIENTES_alarmas[clientes[i]["id"]]["nombre"] = clientes[i]["nombre"];
+      if(o === null) {
         o = window.variables.alarma.objetoLimpio();
         o.estado = "0";
-        o.id_cliente = window.variables.cliente.resultado[i]["id"];
+        o.id_cliente = clientes[i]["id"];
         delete o["atributos"];
         accion = window.variables.alarma.guardar_1(o);
         aux = userDATOS.busqueda(accion.id,"alarma");//Agrego en el array precargado
-        window.variables.alarma.resultado[aux["id"]] = aux;
 
-        CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos"] = [];
-        CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos_negativos"] = {};
-        CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["estado"] = 0;
-        CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["id_alarma"] = accion.id;
+        CLIENTES_alarmas[clientes[i]["id"]]["atributos"] = [];
+        CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"] = {};
+        CLIENTES_alarmas[clientes[i]["id"]]["estado"] = 0;
+        CLIENTES_alarmas[clientes[i]["id"]]["id_alarma"] = accion.id;
       } else {
-        CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos"] = userDATOS.parseJSON(o.atributos);
+        CLIENTES_alarmas[clientes[i]["id"]]["atributos"] = userDATOS.parseJSON(o.atributos);
         if(o.atributos_negativos === null) {
-          CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos_negativos"] = {};
-          arr = CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos"];
+          CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"] = {};
+          arr = CLIENTES_alarmas[clientes[i]["id"]]["atributos"];
           for(var x in arr)
-            CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos_negativos"][arr[x]] = []
+            CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][arr[x]] = []
         } else {
-          CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos_negativos"] = userDATOS.parseJSON(o.atributos_negativos);
-          for(var x in CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos_negativos"])
-            CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos_negativos"][x] = userDATOS.parseJSON(CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["atributos_negativos"][x])
+          CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"] = userDATOS.parseJSON(o.atributos_negativos);
+          for(var x in CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"])
+            CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][x] = userDATOS.parseJSON(CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][x])
         }
-        CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["estado"] = o.estado;
-        CLIENTES_alarmas[window.variables.cliente.resultado[i]["id"]]["id_alarma"] = o.id;
+        CLIENTES_alarmas[clientes[i]["id"]]["estado"] = o.estado;
+        CLIENTES_alarmas[clientes[i]["id"]]["id_alarma"] = o.id;
       }
     }
     for(var i in ARR_alarmas) {
@@ -1525,9 +1478,11 @@ if(userDATOS.verificar(1)) {
 
     userDATOS.submit = function(t) {
       if(userDATOS.validar("#" + t.id)) {
-        let a = window.variables.alarma.objeto["GUARDADO_ATTR"];
+        let pyrusAlarma = new Pyrus("alarma",false);
+        let a = pyrusAlarma.objeto["GUARDADO_ATTR"];
         let modal = $("#modal");
         let OBJ = {};
+        
         for(var j in a) {
           OBJ[j] = null;
 
@@ -1540,11 +1495,10 @@ if(userDATOS.verificar(1)) {
           if(a[j]["TIPO"] == "valor")
             OBJ[j] = a[j]["VALOR"];
         }
-        accion = window.variables.alarma.guardar_1(OBJ);
+        accion = pyrusAlarma.guardar_1(OBJ);
         if(accion.id !== null && accion.flag) {
           on = userDATOS.busqueda(accion.id,"alarma");
           userDATOS.log(window.user_id,"Se agregó alarma (" + on.nombre + ")",0,accion.id,"alarma");
-          window.variables.alarma.resultado[on.id] = on;
           angular.element($("#alarmasF")).scope().alarmas[on.id] = on;
           modal.modal("hide");
         } else userDATOS.notificacion("Datos repetidos","error");
@@ -1558,28 +1512,30 @@ if(userDATOS.verificar(1)) {
         message   : "¿Está seguro de eliminar <strong>alarma</strong>?"
       }).done(function(){
         delete angular.element($("#alarmasF")).scope().alarmas[o.id];
-        delete window.variables.alarma.resultado[o.id];
+        let pyrusAlarma = new Pyrus("alarma",false);
         $("div[data-id='" + o.id + "']").remove();
         o.elim = 1;
         delete o["atributos"];
-        accion = window.variables.alarma.guardar_1(o);
+        accion = pyrusAlarma.guardar_1(o);
         userDATOS.log(window.user_id,"Se eliminó alarma (" + o.nombre + ")",0,accion.id,"alarma",1);
       });
     }
     $scope.submitAlarma = function(t,o) {
       if(angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"].indexOf(t.text) < 0) {
         angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"].push(t.text);
+        let pyrusAlarma = new Pyrus("alarma",false);
 
-        accion = window.variables.alarma.guardar_1(angular.element($("#alarmasF")).scope().alarmas[o.id]);
+        accion = pyrusAlarma.guardar_1(angular.element($("#alarmasF")).scope().alarmas[o.id]);
         angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"] = userDATOS.parseJSON(angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"]);
         userDATOS.log(window.user_id,"Se agregó atributo a la alarma " + o.nombre + " (" + t.text + ")",0,accion.id,"alarma");
         t.text = "";
       } else userDATOS.notificacion("Dato duplicado","error");
     }
     $scope.deleteATTRalarma = function(i,o) {
+      let pyrusAlarma = new Pyrus("alarma",false);
       text = angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"][i];
       angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"].splice(i,1);
-      accion = window.variables.alarma.guardar_1(angular.element($("#alarmasF")).scope().alarmas[o.id]);
+      accion = pyrusAlarma.guardar_1(angular.element($("#alarmasF")).scope().alarmas[o.id]);
       angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"] = userDATOS.parseJSON(angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"]);
       userDATOS.log(window.user_id,"Se quito atributo de la alarma " + o.nombre + " (" + text + ")",0,accion.id,"alarma",1);
     }
@@ -1604,33 +1560,35 @@ if(userDATOS.verificar(1)) {
 
     $scope.alarmasCLIENTE = CLIENTES_alarmas;
     $scope.estadoAlarma = function(o) {
+      let pyrusAlarma = new Pyrus("alarma",false);
       o.estado = (o.estado == 0 ? 1 : 0);
 
-      accion = window.variables.alarma.guardar_1(o);
+      accion = pyrusAlarma.guardar_1(o);
       userDATOS.log(window.user_id,"Alarma de " + o.nombre + " (" +(o.estado == "0" ? "APAGADA" : "ENCENDIDA")+ ")",0,accion.id,"alarma");
       angular.element($("#alarmasF")).scope().alarmas[o.id]["estado"] = o.estado;
       angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"] = userDATOS.parseJSON(angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"]);
-      window.variables.alarma.resultado[o.id]["estado"] = o.estado;
     }
     $scope.submit = function(t, cliente) {
+      let pyrusAlarma = new Pyrus("alarma",false);
       if(angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id].atributos.indexOf(t.text) < 0) {
         angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id].atributos.push(t.text);
-        let o = window.variables.alarma.busqueda("id",cliente.id_alarma);
+        let o = userDATOS.busqueda(cliente.id_alarma,"alarma");
         o.atributos = angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id].atributos;
         accion = window.variables.alarma.guardar_1(o);
 
-        window.variables.alarma.resultado[accion["id"]] = o;
+        pyrusAlarma.resultado[accion["id"]] = o;
 
         userDATOS.log(window.user_id,"Se agregó atributo a " + cliente.nombre + "(" + t.text + ")",0,accion.id,"alarma");
         t.text = "";
       } else userDATOS.notificacion("Dato duplicado","error");
     }
     $scope.alarma = function(cliente) {
+      let pyrusAlarma = new Pyrus("alarma",false);
       cliente.estado = (cliente.estado == 0 ? 1 : 0);
       angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id]
-      o = window.variables.alarma.busqueda("id",cliente.id_alarma);
+      o = userDATOS.busqueda(cliente.id_alarma,"alarma");
       o.estado = cliente.estado
-      accion = window.variables.alarma.guardar_1(o);
+      accion = pyrusAlarma.guardar_1(o);
       userDATOS.log(window.user_id,"Alarma de " + cliente.nombre + " (" +(cliente.estado == "0" ? "APAGADA" : "ENCENDIDA")+ ")",0,accion.id,"alarma");
       window.variables.alarma.resultado[o.id] = o;
     }
@@ -1671,10 +1629,8 @@ if(userDATOS.verificar(1)) {
       let li = $(e).closest("li");
       let elem = angular.element(li).scope();
       let data = null;
-      console.log(elem);
-      console.log( elem.$parent[tipo]["atributos_negativos"]);
-        data = elem.$parent[tipo]["atributos_negativos"][elem.attr];
-        console.log(data);
+      let pyrusAlarma = new Pyrus("alarma",false);
+      data = elem.$parent[tipo]["atributos_negativos"][elem.attr];
       let html = "";
       if(parseInt($(e).data("estado"))) {
         $(e).removeClass("text-warning");
@@ -1683,11 +1639,11 @@ if(userDATOS.verificar(1)) {
 
         let o = null;
         if(tipo == "cliente")
-          o = window.variables.alarma.busqueda("id",elem.$parent.cliente.id_alarma);
+          o = userDATOS.busqueda(elem.$parent.cliente.id_alarma,"alarma");
         else
-          o = window.variables.alarma.busqueda("id",elem.$parent.id);
+          o = userDATOS(elem.$parent.id,"alarma");
         o.atributos_negativos = elem.$parent[tipo]["atributos_negativos"];
-        accion = window.variables.alarma.guardar_1(o);
+        accion = pyrusAlarma.guardar_1(o);
         if(tipo == "alarmaF") {
           o["atributos"] = userDATOS.parseJSON(o["atributos"]);
 
@@ -1730,7 +1686,7 @@ if(userDATOS.verificar(1)) {
     $scope.mediosSELECT = selectMEDIOS.medio;
     $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
     $scope.seccionSELECT = selectMEDIOS.seccion;
-    $scope.unidadSELECT = window.variables.cliente.resultado;
+    $scope.unidadSELECT = userDATOS.busquedaTabla("cliente");
     $(".select__2").select2();
 
     scopeNoticias = function($scope) {
@@ -1910,7 +1866,7 @@ if(userDATOS.verificar(1)) {
                   nr["id_usuario"] = window.user_id;
                   nr["id_cliente"] = data[i];
                   new_r.guardar_1(nr);
-                }//aca
+                }
                 userDATOS.change(o.id_noticia,"noticias","moderado",1);
                 userDATOS.log(window.user_id,"Relevo de noticia",0,o.id_noticia,"noticias");
 
@@ -1941,7 +1897,10 @@ if(userDATOS.verificar(1)) {
 
     service_simat.noticias($scope);
     factory_simat.load("noticias4");
-    service_simat.option($scope);
+    userDATOS.selectOption("select_medio","medio","medio");
+    userDATOS.selectOption("select_medioAlcance","medio_tipo");
+    userDATOS.selectOption("select_periodista","periodista");
+    userDATOS.selectOption("select_medioTipo","");
 
     selectMEDIOS = userDATOS.noticiasSELECT("procesada");
 
@@ -1950,6 +1909,10 @@ if(userDATOS.verificar(1)) {
     $scope.seccionSELECT = selectMEDIOS.seccion;
     $scope.unidadSELECT = selectMEDIOS.unidad;
     $(".select__2").select2();
+    userDATOS.selectOption("select_medio","medio","medio");
+    userDATOS.selectOption("select_medioAlcance","medio_tipo");
+    userDATOS.selectOption("select_periodista","periodista");
+    userDATOS.selectOption("select_medioTipo","");
 
     $("#btn_filtro").on("click",function() {
       let minDateFilter = $('#fecha_min').val();
@@ -2182,8 +2145,6 @@ if(userDATOS.verificar(1)) {
           }
       });
       let arr = {};
-      // for(var i in window.variables.cliente.resultado)
-      // 	if(arr[window.variables.cliente.resultado[i]["id"]] === undefined) arr[window.variables.cliente.resultado[i]["id"]] = window.variables.cliente.resultado[i]["nombre"]
       for(var i in OBJ_clientes_osai) {
         if(OBJ_clientes_osai[i]["estado"]) {
           opt.push(i);
@@ -2337,7 +2298,8 @@ if(userDATOS.verificar(1)) {
             }
           } else userDATOS.notificacion("Datos repetidos","error");
         } else if($("#" + t.id).data("tipo") == "actorCREATE") {
-          let a = window.variables["actor"].objeto["GUARDADO_ATTR"]
+          let pyrusActor = new Pyrus("actor");
+          let a = pyrusActor.objeto["GUARDADO_ATTR"]
           let OBJ = {}
           for(var j in a) {
             OBJ[j] = null;
@@ -2359,8 +2321,7 @@ if(userDATOS.verificar(1)) {
           if(accion.id !== null && accion.flag) {//
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"actor");
             let elemento = userDATOS.busqueda(accion.id,"actor");//traigo el nuevo registro
-            if(window.variables.actor.resultado[elemento.id] === undefined) {
-              window.variables.actor.resultado[elemento.id] = elemento;
+            if(elemento === null) {
               $("#modal").modal("hide");
               return_ = "actor"
             }
@@ -2517,330 +2478,274 @@ if(userDATOS.verificar(1)) {
     userDATOS.createActor = function() {
       userDATOS.modal(null,window.variables.actor,"actorCREATE");
     }
+    // V. PROCESADAS
+    /**
+     * Función que maneja las unidades de análisis o agenda de la noticia
+     * Además, los temas y valoraciones que correspondan de cada uno
+     * Actualizado
+     */
+    $scope.unidadAnalisis = function() {
+      window.valoracionARR = undefined;
+      let modal = $("#modal");
+      let clientes = userDATOS.busquedaTabla("cliente");
+      let selectCliente = "";
+      selectCliente += "<option value=''></option>";
+      let optionCliente = "";
+      modal.find(".modal-title").text("UNIDAD DE ANÁLISIS");
+      modal.find(".modal-dialog").addClass("modal-lg")
+      modal.find(".modal-body").addClass("py-0");
+      modal.find(".modal-body").append("<div class='modal-container'></div>");
 
-    $scope.unidadAnalisis = function(index_ = -1) {
-      let OBJ_datos = {1: "Favor",2: "Neutro",3:"Contra"};
-      if(window.noticiaSELECCIONADAeditar === undefined) {
-        modal = $("#modal");
-        modal.find(".modal-title").text("UNIDAD DE ANÁLISIS")
-        for(var i in window.ARR_cliente) {
-          // cliente = userDATOS.busqueda(i,"cliente");
-          html = "";
-          html += "<article class='text-dark border-bottom mb-2'>";
-            html += "<h4 class='text-center'>" + window.variables.cliente.mostrar_1(i) + "</h4>";
-            html += "<div class='row'>";
-              html += "<div class='col-6'>";
-                if(window.ARR_cliente[i]["valoracion"] !== null) {
-                  html += "<p style='font-size:1.5em;' class='m-0 text-center'>VALORACION</p>"
-                  for(var x in window.ARR_cliente[i]["valoracion"]) {
-                    id = x.substr(4);
-                    STR_class = "";
-                    if(parseInt(window.ARR_cliente[i]["valoracion"][x]) == 1) STR_class = "bg-success text-white";
-                    if(parseInt(window.ARR_cliente[i]["valoracion"][x]) == 2) STR_class = "bg-warning";
-                    if(parseInt(window.ARR_cliente[i]["valoracion"][x]) == 3) STR_class = "bg-danger text-white";
-                    texto = window.variables.calificacion.mostrar_1(id).split(" (");
-                    html += "<p style='font-size:1.5em;' class='m-0 pl-1 pr-1 " + STR_class + "'>" + texto[0] + " " + "</p>"
-                  }
-                }
-              html += "</div>";
-              html += "<div class='col-6'>";
-                if(window.ARR_cliente[i]["tema"] !== null) {
-                  html += "<p style='font-size:1.5em;' class='m-0 text-center'>TEMA</p>"
-                  for(var x in window.ARR_cliente[i]["tema"]) {
-                    if(x == "texto") continue;
-                    if(window.ARR_cliente[i]["tema"][x] !== null) {
-                      if(window.ARR_cliente[i]["tema"][x]["DESACTIVADO"] !== undefined) delete window.ARR_cliente[i]["tema"][x]
-                    }
-                    id = x.substr(9);
-                    STR_class = "";
-                    if(parseInt(window.ARR_cliente[i]["tema"][x]["valor"]) == 1) STR_class = "bg-success text-white";
-                    if(parseInt(window.ARR_cliente[i]["tema"][x]["valor"]) == 0) STR_class = "bg-warning";
-                    if(parseInt(window.ARR_cliente[i]["tema"][x]["valor"]) == -1) STR_class = "bg-danger text-white";
-
-                    html += "<p style='font-size:1.5em;' class='m-0 pl-1 pr-1 " + STR_class + "'>" + window.variables.attr_temas.mostrar_1(id) + " " + "</p>"
-                  }
-                }
-              html += "</div>";
-            html += "</div>";
-          html += "</article>";
-
-          modal.find(".modal-body").append(html);
-        }
-        modal.modal("show")
-      } else {
-        window.valoracionARR = undefined;
-        $("#modal").find(".close").removeClass("d-none");
-
-        if(window.index_cliente === undefined) window.index_cliente = 0;
-        let OBJ_p = new Pyrus();
-        flag = true;
-        // if(window.noticiaSELECCIONADA !== undefined) {
-        //   if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
-        // }
-        html = "";btn = "";
-        if(flag) {
-          //
-          // btn = "<button class=\"btn btn-block text-uppercase\">establecer</button>";
-          html += '<div class="row mb-3">';
+      for(var i in clientes) {
+        if(parseInt(clientes[i]["todos"])) selectCliente += "<optgroup label='AGENDA'><option value='" + i + "'>" + clientes[i]["nombre"] + "</option></optgroup>";
+        else optionCliente += "<option value='" + i + "'>" + clientes[i]["nombre"] + "</option>";
+      }
+      selectCliente += "<optgroup label='UNIDAD DE ANÁLISIS'>" + optionCliente + "</optgroup>";
+      selectCliente += "</select>";
+      flag = true;
+      if(window.noticiaSELECCIONADA !== undefined) {
+        if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
+      }
+      html = "";btn = "";
+      html += '<div class="row">';
+        html += "<div class='col-7 py-2'>";
+          if(flag) {
+            html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn mx-auto d-block mb-2 btn-primary text-uppercase'>nueva unidad</button>";
+          }
+          html += '<div class="row">';
             html += "<div class='col'>";
-              html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn btn-block btn-primary text-uppercase'>nueva unidad</button>";
-            html += "</div>";
-          html += "</div>";
-        }
-
-        html += '<div class="row">';
-          html += "<div class='col'>";
-            html += "<table class='table m-0' id='modal-table-unidad'>";
-              html += "<tbody>";
-              flag = false;
-              if(window.ARR_cliente !== undefined) {
-                for(var i in window.ARR_cliente) {
-                  if(index_ == 0) {
-                    window.index_cliente ++;
-                    tr = window.index_cliente;
-                    html += "<tr>" +
-                        '<td onclick="userDATOS.removeUnidad(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                        '<td style="width:226px">' + window.variables.cliente.select({"NECESARIO":1,"NOMBRE":"Unidad a analizar"},"frm_cliente-" + tr,"form-control",{"onchange":"'userDATOS.unidadUnico(this);'"},null,i) + '</td>' +
-                        '<td><div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div></td>' +
-                        '<td style="width:250px;"><div class="border p-2 text-truncate text-uppercase">sin temas</div></td>' +
-                        '<td onclick="userDATOS.updateUnidad(this);" style="width:24px;" class="bg-success text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-edit"></i></span></td>';
-                    html += "</tr>";
-                  } else {
-                    // if(window.ARR_cliente[i]["nuevo"] !== undefined) delete window.ARR_cliente[i];
-                    //else {
-                      window.index_cliente ++;
-                      tr = window.index_cliente;
-
-                      html += "<tr>" +
-                          '<td onclick="userDATOS.removeUnidad(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                          '<td style="width:226px">' + window.variables["cliente"].select({"NECESARIO":1,"NOMBRE":"Unidad a analizar"},"frm_cliente-" + tr,"form-control",{"onchange":"'userDATOS.unidadUnico(this);'"}) + '</td>' +
-                          '<td><div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div></td>' +
-                          '<td style="width:250px;"><div class="border p-2 text-truncate text-uppercase">sin temas</div></td>' +
-                          '<td onclick="userDATOS.updateUnidad(this);" style="width:24px;" class="bg-success text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-edit"></i></span></td>';
-                      html += "</tr>";
-
-                  }
-                }
-                if(Object.keys(ARR_cliente).length == 0) flag = true;
-              } else flag = true;
-              if(flag) {
-                window.index_cliente ++;
-                tr = window.index_cliente;
-
-                html += "<tr>" +
-                    '<td onclick="userDATOS.removeUnidad(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                    '<td style="width:226px">' + window.variables["cliente"].select({"NECESARIO":1,"NOMBRE":"Unidad a analizar"},"frm_cliente-" + tr,"form-control",{"onchange":"'userDATOS.unidadUnico(this);'"}) + '</td>' +
-                    '<td><div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div></td>' +
-                    '<td style="width:250px;"><div class="border p-2 text-truncate text-uppercase">sin temas</div></td>' +
-                    '<td onclick="userDATOS.updateUnidad(this);" style="width:24px;" class="bg-success text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-edit"></i></span></td>';
-                html += "</tr>";
-              }
-              html += "</tbody>";
-            html += "</table>";
-          html += "</div>";
-        html += "</div>";
-
-        $("#modal").addClass("bd-example-modal-lg");
-        $("#modal").find(".modal-dialog").addClass("modal-lg");
-        userDATOS.modalNOTICIA(html,btn,{tipo:"cliente",nombre:"Unidad de Análisis"},(index_ == -1 ? null : 0))//ACAa
-      }
-    }
-    $scope.institucion = function() {
-
-      if(window.noticiaSELECCIONADAeditar === undefined) {
-        modal = $("#modal");
-        modal.find(".modal-title").text("INSTITUCIONES");
-        html = "";
-        html += "<table class='table w-100 text-dark'>";
-        html += "<thead>";
-          html += "<th>INSTITUCIÓN</th>";
-          html += "<th class='text-center'>EMISOR</th>";
-          html += "<th class='text-center'>VALORACIÓN</th>";
-        html += "</thead>";
-        html += "<tbody>";
-        for(var i in window.ARR_institucion) {
-          html += "<tr>";
-            html += "<td>" + window.variables.attr_institucion.mostrar_1(i) + "</td>";
-            emisor = "";
-            if(parseInt(window.ARR_institucion[i]["frm_emisor"]) == 1) emisor = "SI";
-            if(parseInt(window.ARR_institucion[i]["frm_emisor"]) == 0) emisor = "NO";
-            html += "<td class='text-center'>" + emisor + "</td>"
-            STR_class = "";
-            if(parseInt(window.ARR_institucion[i]["frm_valor"]) == 1) STR_class = "<p class='m-0 p-2 bg-success text-white'>POSITIVO</p>";
-            if(parseInt(window.ARR_institucion[i]["frm_valor"]) == 0) STR_class = "<p class='m-0 p-2 bg-warning'>NEUTRO</p>";
-            if(parseInt(window.ARR_institucion[i]["frm_valor"]) == -1) STR_class = "<p class='m-0 p-2 bg-danger text-white'>NEGATIVO</p>";
-            html += "<td class='p-0 text-center'>" + STR_class + "</td>"
-          html += "</tr>";
-        }
-        html += "</tbody>";
-        html += "</table>";
-        modal.find(".modal-body").append(html);
-        modal.modal("show")
-      } else {
-        if(window.index_institucion === undefined) window.index_institucion = 0;
-        html = "";btn = "";
-        flag = true;
-        if(window.noticiaSELECCIONADA !== undefined && window.noticiaSELECCIONADAeditar === undefined) {
-          if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
-        }
-        if(flag) {
-          btn = "<button class=\"btn btn-block text-uppercase\">establecer</button>";
-          html += '<div class="row mb-3 justify-content-center">';
-            html += "<div class='col-6'>";
-              html += "<button type='button' onclick='userDATOS.addInstitucion();' class='btn btn-block btn-primary text-uppercase'>nueva institución</button>";
-            html += "</div>";
-            if(parseInt(window.usuario.nivel) != 4) {
-              html += "<div class='col-6'>";
-                html += "<button type='button' onclick='userDATOS.createInstitucion();' class='btn btn-block btn-success text-uppercase'>crear institución</button>";
-              html += "</div>";
-            }
-          html += "</div>";
-        }
-        html += '<div class="row">';
-          html += "<div class='col'>";
-            html += "<table class='table m-0' id='modal-table-institucion'>";
-            if(window.ARR_institucion !== undefined) {//ARRAY de Objetos de los actores involucrados en la nota
-              for(var i in window.ARR_institucion) {
-                window.index_institucion ++;
-                tr = window.index_institucion;
-                html += "<tr>" +
-                  '<td onclick="userDATOS.removeInstitucion(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                  '<td style="width:180px">' + window.variables.attr_institucion.select({"NECESARIO":1,"NOMBRE":"Institución"},"frm_institucion-" + tr,"form-control",{"onchange":"'userDATOS.institucionUnico(this);'"},null,i) + '</td>' +
-                  '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-
-                  '<td class="d-flex justify-content-center">' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                  '</td>';
-                html += "</tr>";
-              }
-            } else {
-              window.index_institucion ++;
-              tr = window.index_institucion;
-
-              html += "<tr>" +
-                  '<td onclick="userDATOS.removeInstitucion(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                  '<td style="width:180px">' + window.variables.attr_institucion.select({"NECESARIO":1,"NOMBRE":"Institución"},"frm_institucion-" + tr,"form-control",{"onchange":"'userDATOS.institucionUnico(this);'"}) + '</td>' +
-                  '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-                  '<td class="d-flex justify-content-center">' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                  '</td>';
-              html += "</tr>";
-            }
-              html += "</tbody>";
-            html += "</table>";
-          html += "</div>";
-        html += "</div>";
-
-        $("#modal").addClass("bd-example-modal-lg");
-        $("#modal").find(".modal-dialog").addClass("modal-lg");
-        userDATOS.modalNOTICIA(html,btn,{tipo:"institucion",nombre:"Instituciones"});
-      }
-    }
-    $scope.actor = function(index_ = -1) {
-      if(window.noticiaSELECCIONADAeditar === undefined) {
-        modal = $("#modal");
-        modal.find(".modal-title").text("ACTORES");
-        html = "";
-        html += "<table class='table w-100 text-dark'>";
-        html += "<thead>";
-          html += "<th>ACTOR</th>";
-          html += "<th class='text-center'>EMISOR</th>";
-          html += "<th class='text-center'>IMAGEN</th>";
-          html += "<th class='text-center'>VALORACIÓN</th>";
-        html += "</thead>";
-        html += "<tbody>";
-        for(var i in window.ARR_actor) {
-          html += "<tr>";
-            html += "<td>" + window.variables.actor.mostrar_1(i) + "</td>";
-            emisor = "";
-            if(parseInt(window.ARR_actor[i]["frm_emisor"]) == 1) emisor = "SI";
-            if(parseInt(window.ARR_actor[i]["frm_emisor"]) == 0) emisor = "NO";
-            html += "<td class='text-center'>" + emisor + "</td>"
-            img = "";
-            if(parseInt(window.ARR_actor[i]["frm_img"]) == 1) img = "SI";
-            if(parseInt(window.ARR_actor[i]["frm_img"]) == 0) img = "NO";
-            html += "<td class='text-center'>" + img + "</td>"
-            STR_class = "";
-            if(parseInt(window.ARR_actor[i]["frm_valor"]) == 1) STR_class = "<p class='m-0 p-2 bg-success text-white'>POSITIVO</p>";
-            if(parseInt(window.ARR_actor[i]["frm_valor"]) == 0) STR_class = "<p class='m-0 p-2 bg-warning'>NEUTRO</p>";
-            if(parseInt(window.ARR_actor[i]["frm_valor"]) == -1) STR_class = "<p class='m-0 p-2 bg-danger text-white'>NEGATIVO</p>";
-            html += "<td class='p-0 text-center'>" + STR_class + "</td>"
-          html += "</tr>";
-        }
-        html += "</tbody>";
-        html += "</table>";
-        modal.find(".modal-body").append(html);
-        modal.modal("show")
-      } else {
-        if(window.index_actor === undefined) window.index_actor = 0;
-        flag = true;
-        if(window.noticiaSELECCIONADA !== undefined) {
-          if(parseInt(window.noticiaSELECCIONADA.estado) == 2 && window.noticiaSELECCIONADAeditar === undefined) flag = false;
-        }
-        html = "";btn = "";
-        if(flag) {
-          //
-          btn = (index_ == -1 ? "<button class=\"btn btn-block text-uppercase\">establecer</button>" : "<button class=\"btn btn-block text-uppercase\">editar</button>");
-          html += '<div class="row mb-3 justify-content-center">';
-            html += "<div class='col-6'>";
-              html += "<button type='button' onclick='userDATOS.addActor();' class='btn btn-block btn-primary text-uppercase'>nuevo actor</button>";
-            html += "</div>";
-            if(parseInt(window.usuario.nivel) != 4) {
-              html += "<div class='col-6'>";
-                html += "<button type='button' onclick='userDATOS.createActor();' class='btn btn-block btn-success text-uppercase'>crear actor</button>";
-              html += "</div>";
-            }
-          html += "</div>";
-        }
-
-        html += '<div class="row">';
-          html += "<div class='col'>";
-            html += "<table class='table m-0' id='modal-table-actor'>";
-              html += "<tbody>";
-              if(window.ARR_actor !== undefined) {//ARRAY de Objetos de los actores involucrados en la nota
-                for(var i in window.ARR_actor) {
-                  window.index_actor ++;
-                  tr = window.index_actor;
-                  html += "<tr>" +
-                      '<td onclick="userDATOS.removeActor(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                      '<td style="width:156px">' + window.variables.actor.select({"NECESARIO":1,"NOMBRE":"Actor"},"frm_actor-" + tr,"form-control",{"onchange":"'userDATOS.actorUnico(this);'"},null,i) + '</td>' +
-                      '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="img" value="1" name="frm_img-' + tr + '" id="img_' + tr + '" /><label for="img_' + tr + '" class="custom-control-label">Imagen</label></div></td>' +
-                      '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-                      '<td class="d-flex justify-content-center">' +
-                          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                          '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                      '</td>';
+              html += "<table class='table m-0' id='modal-table-unidad'>";
+                html += "<tbody>";
+                  html += "<tr class='d-none'>" +
+                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
+                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-0' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
+                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
                   html += "</tr>";
-                }
-              } else {
-                window.index_actor ++;
-                tr = window.index_actor;
-
-                html += "<tr>" +
-                    '<td onclick="userDATOS.removeActor(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                    '<td style="width:156px">' + window.variables["actor"].select({"NECESARIO":1,"NOMBRE":"Actor"},"frm_actor-" + tr,"form-control",{"onchange":"'userDATOS.actorUnico(this);'"}) + '</td>' +
-                    '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="img" value="1" name="frm_img-' + tr + '" id="img_' + tr + '" /><label for="img_' + tr + '" class="custom-control-label">Imagen</label></div></td>' +
-                    '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-                    '<td class="d-flex justify-content-center">' +
-                        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                    '</td>';
-                html += "</tr>";
-              }
-              html += "</tbody>";
-            html += "</table>";
+                  html += "<tr>" +
+                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
+                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
+                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
+                  html += "</tr>";
+                
+                html += "</tbody>";
+              html += "</table>";
+            html += "</div>";
           html += "</div>";
         html += "</div>";
+        html += "<div class='col-5 p-2 bg-light border-left d-flex'>";
+          html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
+        html += "</div>";
+      html += "</div>";
+      
+      modal.find(".modal-container").html(html);
+      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      modal.modal("show");
+      
+      if(window.ARR_cliente !== undefined) {
+        for(var i in window.ARR_cliente) {
+          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+          userDATOS.addUnidad();
+        }
+      }
+    }
+    /**
+     * Función que maneja a instituciones dentro de una noticia
+     * Actualizado
+     */
+    $scope.institucion = function() {
+      let modal = $("#modal");
+      let selectInstitucion = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Institución' required='true' name='frm_institucion-1' onchange='userDATOS.institucionUnico(this);'>";
+      let optionInstitucion = "<option value=''></option>";
+      let instituciones = userDATOS.busquedaTabla("attr_institucion");
+      modal.find(".modal-title").text("INSTITUCIONES");
+      for(var i in instituciones) 
+        optionInstitucion += "<option value='" + i + "'>" + instituciones[i]["nombre"] + "</option>";
+      selectInstitucion += optionInstitucion;
+      selectInstitucion += "</select>";
+      html = "";btn = "";
+      flag = true;
+      if(window.noticiaSELECCIONADA !== undefined) {
+        if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
+      }
+      if(flag) {
+        html += '<div class="d-flex justify-content-center mb-3">';
+          html += '<div class="btn-group" role="group" aria-label="Botones">';
+            html += "<button type='button' onclick='userDATOS.addInstitucion();' class='btn btn-primary text-uppercase'>nuevo institución</button>";
+            if(parseInt(window.usuario.nivel) != 4)
+              html += "<button type='button' onclick='userDATOS.createInstitucion();' class='btn btn-success text-uppercase'>crear institución</button>";
+          html += "</div>";
+        html += "</div>";
+      }
+      option = '<div class="btn-group" role="group" aria-label="Valoración">'
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+      option += '</div>';
+      html += '<div class="row">';
+        html += "<div class='col'>";
+          html += "<table class='table m-0' id='modal-table-institucion'>";
+            html += "<tbody>";
 
-        $("#modal").addClass("bd-example-modal-lg");
-        $("#modal").find(".modal-dialog").addClass("modal-lg");
-        userDATOS.modalNOTICIA(html,btn,{tipo:"actor",nombre:"Actores"});
+            html += "<tr class='d-none'>";
+              html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
+              html += '<td class="w-50">';
+                html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Institución' required='true' name='frm_institucion-0' onchange='userDATOS.institucionUnico(this);'>" + optionInstitucion + "</select>";
+              html += '</td>';
+              html += '<td class="px-0 w-50">';
+                html += '<div class="d-flex align-items-center justify-content-end">';
+                  html += '<div class="border-right pr-2 mr-2">';
+                    html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionInstitucion(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
+                  html += '</div>';
+                  html += '<div class="btn-group" role="group" aria-label="Valoración">'
+                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                  html += '</div>';
+                html += '</div>';
+              html += '</td>';
+            html += "</tr>";
+
+            html += "<tr>";
+              html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
+              html += '<td class="w-50">';
+                html += selectInstitucion;
+              html += '</td>';
+              html += '<td class="px-0 w-50">';
+                html += '<div class="d-flex align-items-center justify-content-end">';
+                  html += '<div class="border-right pr-2 mr-2">';
+                    html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionInstitucion(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
+                  html += '</div>';
+                  html += option;
+                html += '</div>';
+              html += '</td>';
+            html += "</tr>";
+          
+            html += "</tbody>";
+          html += "</table>";
+        html += "</div>";
+      html += "</div>";
+      
+      modal.find(".modal-body").html(html);
+      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      modal.modal("show");
+
+      
+      if(window.ARR_institucion !== undefined) {
+        for(var i in window.ARR_institucion) {
+          $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+          $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+
+          emisorTR = $("#modal-table-institucion tr:last-child()").find("td:last-child() > div > div:first-child label")[0];
+          if(parseInt(window.ARR_institucion[i]["frm_emisor"]))
+            emisorTR.children[0].checked = true;
+
+          valoracionTR = $("#modal-table-institucion tr:last-child()").find("td:last-child() > div > div:last-child");
+          $(valoracionTR).find("input[value='" + window.ARR_institucion[i]["frm_valor"] + "']").attr("checked",true);
+          userDATOS.addInstitucion();
+        }
+      }
+    }
+    /**
+     * Función que maneja a actores dentro de una noticia
+     * ACTUALIZADO
+     */
+    $scope.actor = function() {
+      let modal = $("#modal");
+      let actores = userDATOS.busquedaTabla("actor");
+      let selectActor = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-1' onchange='userDATOS.actorUnico(this);'>";
+      let optionActor = "<option value=''></option>";
+      modal.find(".modal-title").text("ACTORES");
+      for(var i in actores)
+        optionActor += "<option value='" + i + "'>" + actores[i]["nombre"] + "</option>";
+      selectActor += optionActor;
+      selectActor += "</select>";
+      flag = true;
+      if(window.noticiaSELECCIONADA !== undefined) {
+        if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
+      }
+      html = "";btn = "";
+      if(flag) {
+        //
+        html += '<div class="d-flex justify-content-center mb-3">';
+          html += '<div class="btn-group" role="group" aria-label="Valoración">';
+            html += "<button type='button' onclick='userDATOS.addActor();' class='btn btn-primary text-uppercase'>nuevo actor</button>";
+            if(parseInt(window.usuario.nivel) != 4)
+              html += "<button type='button' onclick='userDATOS.createActor();' class='btn btn-success text-uppercase'>crear actor</button>";
+          html += "</div>";
+        html += "</div>";
+      }
+      option = '<div class="btn-group" role="group" aria-label="Valoración">'
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+      option += '</div>';
+      //////
+      html += '<div class="row">';
+        html += "<div class='col'>";
+          html += "<table class='table m-0' id='modal-table-actor'>";
+            html += "<tbody>";
+              html += "<tr class='d-none'>";
+                html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
+                html += '<td class="w-50">';
+                  html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-0' onchange='userDATOS.actorUnico(this);'>" + optionActor + "</select>"; 
+                html += '</td>';
+                html += '<td class="px-0 w-50">';
+                  html += '<div class="d-flex align-items-center justify-content-end">';
+                    html += '<div class="border-right pr-2 mr-2">';
+                      html += '<label class="m-0 d-block border-bottom w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="img" value="1" name="frm_img-0" />Imagen</label>';
+                      html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-0" />Emisor</label>';
+                    html += '</div>';
+                    html += '<div class="btn-group" role="group" aria-label="Valoración">';
+                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                    html += '</div>';
+                  html += '</div>';
+                html += '</td>';
+              html += "</tr>";
+              ////////
+              html += "<tr>";
+                html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
+                html += '<td class="w-50">';
+                  html += selectActor; 
+                html += '</td>';
+                html += '<td class="px-0 w-50">';
+                  html += '<div class="d-flex align-items-center justify-content-end">';
+                    html += '<div class="border-right pr-2 mr-2">';
+                      html += '<label class="m-0 d-block border-bottom w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="img" value="1" name="frm_img-1" />Imagen</label>';
+                      html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
+                    html += '</div>';
+                    html += option;
+                  html += '</div>';
+                html += '</td>';
+              html += "</tr>";
+            html += "</tbody>";
+          html += "</table>";
+        html += "</div>";
+      html += "</div>";
+
+      modal.find(".modal-body").html(html);
+      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      modal.modal("show");
+
+      if(window.ARR_actor !== undefined) {
+        for(var i in window.ARR_actor) {
+          $("#modal-table-actor tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+          $("#modal-table-actor tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+
+          imagenTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:first-child label:first-child()")[0];
+          if(parseInt(window.ARR_actor[i]["frm_img"]))
+            imagenTR.children[0].checked = true;
+
+          emisorTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:first-child label:last-child()")[0];
+          if(parseInt(window.ARR_actor[i]["frm_emisor"]))
+            emisorTR.children[0].checked = true;
+
+          valoracionTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:last-child");
+          $(valoracionTR).find("input[value='" + window.ARR_actor[i]["frm_valor"] + "']").attr("checked",true);
+          userDATOS.addActor();
+        }
       }
     }
   });
@@ -2863,7 +2768,11 @@ if(userDATOS.verificar(1)) {
     $scope.unidadSELECT = selectMEDIOS.unidad;
     $(".select__2").select2();
 
-    service_simat.option($scope);
+    userDATOS.selectOption("select_medio","medio","medio");
+    userDATOS.selectOption("select_medioAlcance","medio_tipo");
+    userDATOS.selectOption("select_periodista","periodista");
+    userDATOS.selectOption("select_medioTipo","");
+    // service_simat.option($scope);
 
     $(".note-editable").bind({
       paste : function() {
@@ -3049,69 +2958,7 @@ if(userDATOS.verificar(1)) {
       let flag = true;
       let return_ = null;
       if(userDATOS.validar("#" + t.id)) {
-        if($("#" + t.id).data("tipo") == "clienteUnidad") {
-          for(var i in aux)
-            OBJ_data[aux[i]["name"]] = aux[i]["value"];
-          frm_unidad = OBJ_data["frm_unidad"];
-          delete OBJ_data["frm_unidad"];
-          for(var i in window.ARR_cliente[frm_unidad]["valoracion"]) {
-            window.ARR_cliente[frm_unidad]["valoracion"][i] = OBJ_data[i];
-            delete OBJ_data[i];
-          }
-
-          window.ARR_cliente[frm_unidad]["tema"]["texto"] = "";
-          $("#attr_temas").find("tr").each(function() {
-            tr = $(this);
-            if(window.ARR_cliente[frm_unidad]["nueva"] !== undefined) delete window.ARR_cliente[frm_unidad]["nueva"];
-            if(window.ARR_cliente[frm_unidad]["tema"] === null) window.ARR_cliente[frm_unidad]["tema"] = {}
-            if(window.ARR_cliente[frm_unidad]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()] === null) {
-              window.ARR_cliente[frm_unidad]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()] = {};
-              window.ARR_cliente[frm_unidad]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()]["valor"] = 0;
-            }
-            delete window.ARR_cliente[frm_unidad]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()]["NUEVO"]
-            if(window.ARR_cliente[frm_unidad]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()]["DESACTIVADO"] === undefined) {
-              if(window.ARR_cliente[frm_unidad]["tema"]["texto"] != "") window.ARR_cliente[frm_unidad]["tema"]["texto"] += ", ";
-              title = "";
-              switch (parseInt(tr.find("td:nth-child(3) input:checked").val())) {
-                case 1:
-                  title = "POSITIVO";
-                  break;
-                case 0:
-                  title = "NEUTRO";
-                  break;
-                case -1:
-                  title = "NEGATIVO";
-                  break;
-              }
-              window.ARR_cliente[frm_unidad]["tema"]["texto"] += "<span title='" + title + "'>" + tr.find("td:nth-child(2) select option[value='" + tr.find("td:nth-child(2) select").val() + "']").text() + "</span>"
-              window.ARR_cliente[frm_unidad]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()]["valor"] = tr.find("td:nth-child(3) input:checked").val();
-            } else delete window.ARR_cliente[frm_unidad]["tema"]["frm_tema_" + tr.find("td:nth-child(2) select").val()];
-          });
-          flag = false
-        } else if($("#" + t.id).data("tipo") == "actor") {
-          $("#modal-table-actor").find("td:nth-child(2) select").each(function() {
-            tr = $(this).closest("tr");
-            window.ARR_actor[$(this).val()]["frm_emisor"] = (tr.find("td:nth-child(4) input").is(":checked") ? "1" : "0");
-            window.ARR_actor[$(this).val()]["frm_img"] = (tr.find("td:nth-child(3) input").is(":checked") ? "1" : "0");
-            window.ARR_actor[$(this).val()]["frm_valor"] = tr.find("td:nth-child(5) input:checked").val();
-            window.ARR_actor[$(this).val()]["ACTIVO"] = 1
-          });
-          for(var i in window.ARR_actor) {
-            if(window.ARR_actor[i]["ACTIVO"] !== undefined) delete window.ARR_actor[i]["ACTIVO"];
-            else delete window.ARR_actor[i];
-          }
-        } else if($("#" + t.id).data("tipo") == "institucion") {
-          $("#modal-table-institucion").find("td:nth-child(2) select").each(function() {
-            tr = $(this).closest("tr");
-            window.ARR_institucion[$(this).val()]["frm_emisor"] = (tr.find("td:nth-child(3) input").is(":checked") ? "1" : "0");
-            window.ARR_institucion[$(this).val()]["frm_valor"] = tr.find("td:nth-child(4) input:checked").val();
-            window.ARR_institucion[$(this).val()]["ACTIVO"] = 1
-          });
-          for(var i in window.ARR_institucion) {
-            if(window.ARR_institucion[i]["ACTIVO"] !== undefined) delete window.ARR_institucion[i]["ACTIVO"];
-            else delete window.ARR_institucion[i];
-          }
-        } else if($("#" + t.id).data("tipo") == "institucionCREATE") {
+        if($("#" + t.id).data("tipo") == "institucionCREATE") {
           let a = window.variables.attr_institucion.objeto["GUARDADO_ATTR"];
           let OBJ = {}
           for(var j in a) {
@@ -3136,14 +2983,14 @@ if(userDATOS.verificar(1)) {
             // window.variables[e].reload(false);//recargo contenido asy, por si se necesita
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"attr_institucion");
             let elemento = userDATOS.busqueda(accion.id,"attr_institucion");//traigo el nuevo registro
-            if(window.variables.attr_institucion.resultado[elemento.id] === undefined) {
-              window.variables.attr_institucion.resultado[elemento.id] = elemento;
+            if(elemento === null) {
               $("#modal").modal("hide");
               return_ = "institucion"
             }
           } else userDATOS.notificacion("Datos repetidos","error");
         } else if($("#" + t.id).data("tipo") == "actorCREATE") {
-          let a = window.variables["actor"].objeto["GUARDADO_ATTR"]
+          let pyrusActor = new Pyrus("actor");
+          let a = pyrusActor.objeto["GUARDADO_ATTR"]
           let OBJ = {}
           for(var j in a) {
             OBJ[j] = null;
@@ -3165,8 +3012,7 @@ if(userDATOS.verificar(1)) {
           if(accion.id !== null && accion.flag) {//
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"actor");
             let elemento = userDATOS.busqueda(accion.id,"actor");//traigo el nuevo registro
-            if(window.variables.actor.resultado[elemento.id] === undefined) {
-              window.variables.actor.resultado[elemento.id] = elemento;
+            if(elemento === null) {
               $("#modal").modal("hide");
               return_ = "actor"
             }
@@ -3182,8 +3028,7 @@ if(userDATOS.verificar(1)) {
             $("#modal").find(".select__2").select2()
           }
           if(return_ == "actor") {
-            angular.element($('#pantalla')).scope()["actor"]()
-            $("#modal").find(".select__2").select2()
+            angular.element("#pantalla").scope().actor()
           }
         }
       }
@@ -3220,150 +3065,188 @@ if(userDATOS.verificar(1)) {
         },1000);
       });
     }
-    $scope.unidadAnalisis = function(index_ = -1) {
+    // V. PROCESAR
+    /**
+     * Función que maneja las unidades de análisis o agenda de la noticia
+     * Además, los temas y valoraciones que correspondan de cada uno
+     * Actualizado
+     */
+    $scope.unidadAnalisis = function() {
       window.valoracionARR = undefined;
-      $("#modal").find(".close").removeClass("d-none");
+      let modal = $("#modal");
+      let clientes = userDATOS.busquedaTabla("cliente");
+      let selectCliente = "";
+      selectCliente += "<option value=''></option>";
+      let optionCliente = "";
+      modal.find(".modal-title").text("UNIDAD DE ANÁLISIS");
+      modal.find(".modal-dialog").addClass("modal-lg")
+      modal.find(".modal-body").addClass("py-0");
+      modal.find(".modal-body").append("<div class='modal-container'></div>");
 
-      if(window.index_cliente === undefined) window.index_cliente = 0;
-      let OBJ_p = new Pyrus();
-      let OBJ_datos = {1: "Favor",2: "Neutro",3:"Contra"};
+      for(var i in clientes) {
+        if(parseInt(clientes[i]["todos"])) selectCliente += "<optgroup label='AGENDA'><option value='" + i + "'>" + clientes[i]["nombre"] + "</option></optgroup>";
+        else optionCliente += "<option value='" + i + "'>" + clientes[i]["nombre"] + "</option>";
+      }
+      selectCliente += "<optgroup label='UNIDAD DE ANÁLISIS'>" + optionCliente + "</optgroup>";
+      selectCliente += "</select>";
       flag = true;
       if(window.noticiaSELECCIONADA !== undefined) {
         if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
       }
       html = "";btn = "";
-      if(flag) {
-        //
-        // btn = "<button class=\"btn btn-block text-uppercase\">establecer</button>";
-        html += '<div class="row mb-3 justify-content-center">';
-          html += "<div class='col-6'>";
-            html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn btn-block btn-primary text-uppercase'>nueva unidad</button>";
+      html += '<div class="row">';
+        html += "<div class='col-7 py-2'>";
+          if(flag) {
+            html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn mx-auto d-block mb-2 btn-primary text-uppercase'>nueva unidad</button>";
+          }
+          html += '<div class="row">';
+            html += "<div class='col'>";
+              html += "<table class='table m-0' id='modal-table-unidad'>";
+                html += "<tbody>";
+                  html += "<tr class='d-none'>" +
+                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
+                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-0' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
+                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
+                  html += "</tr>";
+                  html += "<tr>" +
+                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
+                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
+                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
+                  html += "</tr>";
+                
+                html += "</tbody>";
+              html += "</table>";
+            html += "</div>";
           html += "</div>";
         html += "</div>";
-      }
-
-      html += '<div class="row">';
-        html += "<div class='col'>";
-          html += "<table class='table m-0' id='modal-table-unidad'>";
-            html += "<tbody>";
-            flag = false;
-            if(window.ARR_cliente !== undefined) {
-              for(var i in window.ARR_cliente) {
-                if(index_ == 0) {
-                  window.index_cliente ++;
-                  tr = window.index_cliente;
-                  html += "<tr>" +
-                      '<td onclick="userDATOS.removeUnidad(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                      '<td style="width:226px">' + window.variables.cliente.select({"NECESARIO":1,"NOMBRE":"Unidad a analizar"},"frm_cliente-" + tr,"form-control",{"onchange":"'userDATOS.unidadUnico(this);'"},null,i) + '</td>' +
-                      '<td><div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div></td>' +
-                      '<td style="width:250px;"><div class="border p-2 text-truncate text-uppercase">sin temas</div></td>' +
-                      '<td onclick="userDATOS.updateUnidad(this);" style="width:24px;" class="bg-success text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-edit"></i></span></td>';
-                  html += "</tr>";
-                } else {
-                  // if(window.ARR_cliente[i]["nuevo"] !== undefined) delete window.ARR_cliente[i];
-                  //else {
-                    window.index_cliente ++;
-                    tr = window.index_cliente;
-
-                    html += "<tr>" +
-                        '<td onclick="userDATOS.removeUnidad(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                        '<td style="width:226px">' + window.variables["cliente"].select({"NECESARIO":1,"NOMBRE":"Unidad a analizar"},"frm_cliente-" + tr,"form-control",{"onchange":"'userDATOS.unidadUnico(this);'"}) + '</td>' +
-                        '<td><div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div></td>' +
-                        '<td style="width:250px;"><div class="border p-2 text-truncate text-uppercase">sin temas</div></td>' +
-                        '<td onclick="userDATOS.updateUnidad(this);" style="width:24px;" class="bg-success text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-edit"></i></span></td>';
-                    html += "</tr>";
-
-                }
-              }
-              if(Object.keys(ARR_cliente).length == 0) flag = true;
-            } else flag = true;
-            if(flag) {
-              window.index_cliente ++;
-              tr = window.index_cliente;
-
-              html += "<tr>" +
-                  '<td onclick="userDATOS.removeUnidad(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                  '<td style="width:226px">' + window.variables["cliente"].select({"NECESARIO":1,"NOMBRE":"Unidad a analizar"},"frm_cliente-" + tr,"form-control",{"onchange":"'userDATOS.unidadUnico(this);'"}) + '</td>' +
-                  '<td><div class="rounded bg-light p-2 text-center border text-uppercase">sin acción</div></td>' +
-                  '<td style="width:250px;"><div class="border p-2 text-truncate text-uppercase">sin temas</div></td>' +
-                  '<td onclick="userDATOS.updateUnidad(this);" style="width:24px;" class="bg-success text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-edit"></i></span></td>';
-              html += "</tr>";
-            }
-            html += "</tbody>";
-          html += "</table>";
+        html += "<div class='col-5 p-2 bg-light border-left d-flex'>";
+          html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
         html += "</div>";
       html += "</div>";
-
-      $("#modal").addClass("bd-example-modal-lg");
-      $("#modal").find(".modal-dialog").addClass("modal-lg");
-      userDATOS.modalNOTICIA(html,btn,{tipo:"cliente",nombre:"Unidad de Análisis"},(index_ == -1 ? null : 0))//ACAa
+      
+      modal.find(".modal-container").html(html);
+      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      modal.modal("show");
+      
+      if(window.ARR_cliente !== undefined) {
+        for(var i in window.ARR_cliente) {
+          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+          userDATOS.addUnidad();
+        }
+      }
     }
+    /**
+     * Función que maneja a instituciones dentro de una noticia
+     * Actualizado
+     */
     $scope.institucion = function() {
-      if(window.index_institucion === undefined) window.index_institucion = 0;
-
+      let modal = $("#modal");
+      let selectInstitucion = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Institución' required='true' name='frm_institucion-1' onchange='userDATOS.institucionUnico(this);'>";
+      let optionInstitucion = "<option value=''></option>";
+      let instituciones = userDATOS.busquedaTabla("attr_institucion");
+      modal.find(".modal-title").text("INSTITUCIONES");
+      for(var i in instituciones) 
+        optionInstitucion += "<option value='" + i + "'>" + instituciones[i]["nombre"] + "</option>";
+      selectInstitucion += optionInstitucion;
+      selectInstitucion += "</select>";
       html = "";btn = "";
       flag = true;
       if(window.noticiaSELECCIONADA !== undefined) {
         if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
       }
       if(flag) {
-        btn = "<button class=\"btn btn-block text-uppercase\">establecer</button>";
-        html += '<div class="row mb-3 justify-content-center">';
-          html += "<div class='col-6'>";
-            html += "<button type='button' onclick='userDATOS.addInstitucion();' class='btn btn-block btn-primary text-uppercase'>nueva institución</button>";
+        html += '<div class="d-flex justify-content-center mb-3">';
+          html += '<div class="btn-group" role="group" aria-label="Botones">';
+            html += "<button type='button' onclick='userDATOS.addInstitucion();' class='btn btn-primary text-uppercase'>nuevo institución</button>";
+            if(parseInt(window.usuario.nivel) != 4)
+              html += "<button type='button' onclick='userDATOS.createInstitucion();' class='btn btn-success text-uppercase'>crear institución</button>";
           html += "</div>";
-          if(parseInt(window.usuario.nivel) != 4) {
-            html += "<div class='col-6'>";
-              html += "<button type='button' onclick='userDATOS.createInstitucion();' class='btn btn-block btn-success text-uppercase'>crear institución</button>";
-            html += "</div>";
-          }
         html += "</div>";
       }
+      option = '<div class="btn-group" role="group" aria-label="Valoración">'
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+      option += '</div>';
       html += '<div class="row">';
         html += "<div class='col'>";
           html += "<table class='table m-0' id='modal-table-institucion'>";
-          if(window.ARR_institucion !== undefined) {//ARRAY de Objetos de los actores involucrados en la nota
-            for(var i in window.ARR_institucion) {
-              window.index_institucion ++;
-              tr = window.index_institucion;
-              html += "<tr>" +
-                '<td onclick="userDATOS.removeInstitucion(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                '<td style="width:180px">' + window.variables.attr_institucion.select({"NECESARIO":1,"NOMBRE":"Institución"},"frm_institucion-" + tr,"form-control",{"onchange":"'userDATOS.institucionUnico(this);'"},null,i) + '</td>' +
-                '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
+            html += "<tbody>";
 
-                '<td class="d-flex justify-content-center">' +
-                    '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                    '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                    '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                '</td>';
-              html += "</tr>";
-            }
-          } else {
-            window.index_institucion ++;
-            tr = window.index_institucion;
-
-            html += "<tr>" +
-                '<td onclick="userDATOS.removeInstitucion(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                '<td style="width:180px">' + window.variables["attr_institucion"].select({"NECESARIO":1,"NOMBRE":"Institución"},"frm_institucion-" + tr,"form-control",{"onchange":"'userDATOS.institucionUnico(this);'"}) + '</td>' +
-                '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-                '<td class="d-flex justify-content-center">' +
-                    '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                    '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                    '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                '</td>';
+            html += "<tr class='d-none'>";
+              html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
+              html += '<td class="w-50">';
+                html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Institución' required='true' name='frm_institucion-0' onchange='userDATOS.institucionUnico(this);'>" + optionInstitucion + "</select>";
+              html += '</td>';
+              html += '<td class="px-0 w-50">';
+                html += '<div class="d-flex align-items-center justify-content-end">';
+                  html += '<div class="border-right pr-2 mr-2">';
+                    html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionInstitucion(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
+                  html += '</div>';
+                  html += '<div class="btn-group" role="group" aria-label="Valoración">'
+                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                  html += '</div>';
+                html += '</div>';
+              html += '</td>';
             html += "</tr>";
-          }
+
+            html += "<tr>";
+              html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
+              html += '<td class="w-50">';
+                html += selectInstitucion;
+              html += '</td>';
+              html += '<td class="px-0 w-50">';
+                html += '<div class="d-flex align-items-center justify-content-end">';
+                  html += '<div class="border-right pr-2 mr-2">';
+                    html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionInstitucion(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
+                  html += '</div>';
+                  html += option;
+                html += '</div>';
+              html += '</td>';
+            html += "</tr>";
+          
             html += "</tbody>";
           html += "</table>";
         html += "</div>";
       html += "</div>";
+      
+      modal.find(".modal-body").html(html);
+      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      modal.modal("show");
 
-      $("#modal").addClass("bd-example-modal-lg");
-      $("#modal").find(".modal-dialog").addClass("modal-lg");
-      userDATOS.modalNOTICIA(html,btn,{tipo:"institucion",nombre:"Instituciones"});
+      
+      if(window.ARR_institucion !== undefined) {
+        for(var i in window.ARR_institucion) {
+          $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+          $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+
+          emisorTR = $("#modal-table-institucion tr:last-child()").find("td:last-child() > div > div:first-child label")[0];
+          if(parseInt(window.ARR_institucion[i]["frm_emisor"]))
+            emisorTR.children[0].checked = true;
+
+          valoracionTR = $("#modal-table-institucion tr:last-child()").find("td:last-child() > div > div:last-child");
+          $(valoracionTR).find("input[value='" + window.ARR_institucion[i]["frm_valor"] + "']").attr("checked",true);
+          userDATOS.addInstitucion();
+        }
+      }
     }
-    $scope.actor = function(index_ = -1) {
-      if(window.index_actor === undefined) window.index_actor = 0;
+    /**
+     * Función que maneja a actores dentro de una noticia
+     * ACTUALIZADO
+     */
+    $scope.actor = function() {
+      let modal = $("#modal");
+      let actores = userDATOS.busquedaTabla("actor");
+      let selectActor = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-1' onchange='userDATOS.actorUnico(this);'>";
+      let optionActor = "<option value=''></option>";
+      modal.find(".modal-title").text("ACTORES");
+      for(var i in actores)
+        optionActor += "<option value='" + i + "'>" + actores[i]["nombre"] + "</option>";
+      selectActor += optionActor;
+      selectActor += "</select>";
       flag = true;
       if(window.noticiaSELECCIONADA !== undefined) {
         if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
@@ -3371,63 +3254,86 @@ if(userDATOS.verificar(1)) {
       html = "";btn = "";
       if(flag) {
         //
-        btn = (index_ == -1 ? "<button class=\"btn btn-block text-uppercase\">establecer</button>" : "<button class=\"btn btn-block text-uppercase\">editar</button>");
-        html += '<div class="row mb-3 justify-content-center">';
-          html += "<div class='col-6'>";
-            html += "<button type='button' onclick='userDATOS.addActor();' class='btn btn-block btn-primary text-uppercase'>nuevo actor</button>";
+        html += '<div class="d-flex justify-content-center mb-3">';
+          html += '<div class="btn-group" role="group" aria-label="Valoración">';
+            html += "<button type='button' onclick='userDATOS.addActor();' class='btn btn-primary text-uppercase'>nuevo actor</button>";
+            if(parseInt(window.usuario.nivel) != 4)
+              html += "<button type='button' onclick='userDATOS.createActor();' class='btn btn-success text-uppercase'>crear actor</button>";
           html += "</div>";
-          if(parseInt(window.usuario.nivel) != 4) {
-            html += "<div class='col-6'>";
-              html += "<button type='button' onclick='userDATOS.createActor();' class='btn btn-block btn-success text-uppercase'>crear actor</button>";
-            html += "</div>";
-          }
         html += "</div>";
       }
-
+      option = '<div class="btn-group" role="group" aria-label="Valoración">'
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+      option += '</div>';
+      //////
       html += '<div class="row">';
         html += "<div class='col'>";
           html += "<table class='table m-0' id='modal-table-actor'>";
             html += "<tbody>";
-            if(window.ARR_actor !== undefined) {//ARRAY de Objetos de los actores involucrados en la nota
-              for(var i in window.ARR_actor) {
-                window.index_actor ++;
-                tr = window.index_actor;
-                html += "<tr>" +
-                    '<td onclick="userDATOS.removeActor(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                    '<td style="width:156px">' + window.variables.actor.select({"NECESARIO":1,"NOMBRE":"Actor"},"frm_actor-" + tr,"form-control",{"onchange":"'userDATOS.actorUnico(this);'"},null,i) + '</td>' +
-                    '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="img" value="1" name="frm_img-' + tr + '" id="img_' + tr + '" /><label for="img_' + tr + '" class="custom-control-label">Imagen</label></div></td>' +
-                    '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-                    '<td class="d-flex justify-content-center">' +
-                        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                        '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                    '</td>';
-                html += "</tr>";
-              }
-            } else {
-              window.index_actor ++;
-              tr = window.index_actor;
-
-              html += "<tr>" +
-                  '<td onclick="userDATOS.removeActor(this);" style="width:24px;" class="bg-danger text-white position-relative cursor-pointer"><span class="position-absolute w-100 text-center" style="left:0; top: calc(50% - 10.5px);"><i class="fas fa-times"></i></span></td>' +
-                  '<td style="width:156px">' + window.variables["actor"].select({"NECESARIO":1,"NOMBRE":"Actor"},"frm_actor-" + tr,"form-control",{"onchange":"'userDATOS.actorUnico(this);'"}) + '</td>' +
-                  '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="img" value="1" name="frm_img-' + tr + '" id="img_' + tr + '" /><label for="img_' + tr + '" class="custom-control-label">Imagen</label></div></td>' +
-                  '<td><div class="d-flex justify-content-center w-100 custom-control custom-checkbox m-0 pt-2 pb-2"><input class="custom-control-input m-0" type="checkbox" data-check="emisor" value="1" name="frm_emisor-' + tr + '" id="emisor_' + tr + '" /><label for="emisor_' + tr + '" class="custom-control-label">Emisor</label></div></td>' +
-                  '<td class="d-flex justify-content-center">' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="1" data-check="" id="pos_' + tr + '" /><label class="custom-control-label text-success" for="pos_' + tr + '">Positivo</label></div>' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-2"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="0" data-check="" id="neu_' + tr + '" /><label class="custom-control-label text-warning" for="neu_' + tr + '">Neutro</label></div>' +
-                      '<div class="custom-control custom-radio custom-control-inline pb-2 pt-2 mr-0"><input class="custom-control-input" type="radio" name="frm_valor-' + tr + '" value="-1" data-check="" id="neg_' + tr + '" /><label class="custom-control-label text-danger" for="neg_' + tr + '">Negativo</label></div>' +
-                  '</td>';
+              html += "<tr class='d-none'>";
+                html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
+                html += '<td class="w-50">';
+                  html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-0' onchange='userDATOS.actorUnico(this);'>" + optionActor + "</select>"; 
+                html += '</td>';
+                html += '<td class="px-0 w-50">';
+                  html += '<div class="d-flex align-items-center justify-content-end">';
+                    html += '<div class="border-right pr-2 mr-2">';
+                      html += '<label class="m-0 d-block border-bottom w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="img" value="1" name="frm_img-0" />Imagen</label>';
+                      html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-0" />Emisor</label>';
+                    html += '</div>';
+                    html += '<div class="btn-group" role="group" aria-label="Valoración">';
+                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                    html += '</div>';
+                  html += '</div>';
+                html += '</td>';
               html += "</tr>";
-            }
+              ////////
+              html += "<tr>";
+                html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
+                html += '<td class="w-50">';
+                  html += selectActor; 
+                html += '</td>';
+                html += '<td class="px-0 w-50">';
+                  html += '<div class="d-flex align-items-center justify-content-end">';
+                    html += '<div class="border-right pr-2 mr-2">';
+                      html += '<label class="m-0 d-block border-bottom w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="img" value="1" name="frm_img-1" />Imagen</label>';
+                      html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
+                    html += '</div>';
+                    html += option;
+                  html += '</div>';
+                html += '</td>';
+              html += "</tr>";
             html += "</tbody>";
           html += "</table>";
         html += "</div>";
       html += "</div>";
 
-      $("#modal").addClass("bd-example-modal-lg");
-      $("#modal").find(".modal-dialog").addClass("modal-lg");
-      userDATOS.modalNOTICIA(html,btn,{tipo:"actor",nombre:"Actores"});
+      modal.find(".modal-body").html(html);
+      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      modal.modal("show");
+
+      if(window.ARR_actor !== undefined) {
+        for(var i in window.ARR_actor) {
+          $("#modal-table-actor tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+          $("#modal-table-actor tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+
+          imagenTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:first-child label:first-child()")[0];
+          if(parseInt(window.ARR_actor[i]["frm_img"]))
+            imagenTR.children[0].checked = true;
+
+          emisorTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:first-child label:last-child()")[0];
+          if(parseInt(window.ARR_actor[i]["frm_emisor"]))
+            emisorTR.children[0].checked = true;
+
+          valoracionTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:last-child");
+          $(valoracionTR).find("input[value='" + window.ARR_actor[i]["frm_valor"] + "']").attr("checked",true);
+          userDATOS.addActor();
+        }
+      }
     }
 
     userDATOS.deleteOBJ = function(o,i) {
@@ -3677,24 +3583,24 @@ $(document).ready(function() {
     var rows = tabla_noticia.rows({ 'search': 'applied' }).nodes();
     $('input[type="checkbox"]', rows).prop('checked', this.checked);
   }).on('change', '#select_medio', function() {
-    let m = window.variables.medio.busqueda("id",$(this).val());
-    let d = window.variables.medio_destaque.busqueda("id_medio",$(this).val(),0);
+    let medio = userDATOS.busqueda($(this).val(),"medio");
+    let destaques = userDATOS.busqueda($(this).val(),"medio_destaque",false,"id_medio",0);
     let secciones = userDATOS.busqueda($(this).val(),"seccion",false,"id_medio",0)
-    let s = $("#select_destaque");
-    let ss = $("#select_seccion");
-    s.html("");
-    if(d.length == 0)
-      s.append("<option value=''>SIN ESPECIFICAR</option>");
+    let selectDestaque = $("#select_destaque");
+    let selectSeccion = $("#select_seccion");
+    selectDestaque.html("");
+    if(Object.keys(destaques).length == 0)
+      selectDestaque.append("<option value=''>SIN ESPECIFICAR</option>");
     else {
-      s.append("<option value=''></option>");
-      for(var i in d)
-        s.append("<option value='" + d[i].id + "'>" + d[i].lugar + " - " + d[i].destaque + " (" + d[i].referencia + ")</option>");
+      selectDestaque.append("<option value=''></option>");
+      for(var i in destaques)
+        selectDestaque.append("<option value='" + destaques[i].id + "'>" + destaques[i].lugar + " - " + destaques[i].destaque + " (" + destaques[i].referencia + ")</option>");
     }
-    s.select2();
+    selectDestaque.select2();
 
-    if(m !== undefined) {
-      if(m.id_medio_tipo != "0") {
-        $("#select_medioAlcance").val(m.id_medio_tipo).trigger("change");
+    if(medio !== null) {
+      if(medio.id_medio_tipo != "0") {
+        $("#select_medioAlcance").val(medio.id_medio_tipo).trigger("change");
         $("#select_medioAlcance").attr("disabled",true);
         $("#select_medioAlcance").select2();
       }
@@ -3703,11 +3609,11 @@ $(document).ready(function() {
       $("#select_medioAlcance").select2();
     }
     /////////// SECCIONES
-    ss.html("<option value=''></option>");
-    ss.append("<option value='1'>SIN SECCIÓN</option>");
-    for(var i in secciones) ss.append("<option value='" + i + "'>" + secciones[i]["nombre"] + "</option>")
+    selectSeccion.html("<option value=''></option>");
+    selectSeccion.append("<option value='1'>SIN SECCIÓN</option>");
+    for(var i in secciones) selectSeccion.append("<option value='" + i + "'>" + secciones[i]["nombre"] + "</option>")
     if(window.noticiaSELECCIONADA !== undefined)
-      ss.val(window.noticiaSELECCIONADA.id_seccion).trigger("change");
+      selectSeccion.val(window.noticiaSELECCIONADA.id_seccion).trigger("change");
   }).on('change','section thead input[type="checkbox"]', function(){
     if(window.noticiasCHECKED === null) window.noticiasCHECKED = {}
     if($(this).is(":checked")) {
@@ -3769,14 +3675,18 @@ $(document).ready(function() {
     $('#modalNoticia').find(".modal-title").html("");
   });
   $('#modal').on('shown.bs.modal', function (e) {
-    if($('#modal').find(".select__2").length) $('#modal').find(".select__2").select2()
+    if($('#modal').find(".select__2").length) $('#modal').find(".select__2").select2({width: 'resolve'});
   });
   $('#modal').on('hidden.bs.modal', function (e) {
+    if($("#modal").find(".modal-body.py-0").length) $("#modal").find(".modal-body.py-0").removeClass("py-0");
+
     $("#modal").removeClass("bd-example-modal-lg");
     $("#modal").find(".modal-dialog").removeClass("modal-lg");
     $('#modal').find(".modal-body").html("");
     $('#modal').find(".modal-footer").html("");
     $("#modal").find(".close").removeClass("d-none");
+
+    if(window.limpiarUnidad !== undefined) window.limpiarUnidad = undefined;
 
     if(window.usuarioTABLA !== undefined) window.usuarioTABLA = undefined;
     if(window.ARR_tema_prev !== undefined) window.ARR_tema_prev = undefined;
@@ -3799,37 +3709,38 @@ $(document).ready(function() {
 
   window.evtSource.addEventListener('alarmaCliente', clienteEVENT);
   window.evtSource.addEventListener('noticiaRELEVADA',noticiaRELEVADA);
+  // window.evtSource.addEventListener('relanzarNotificacion',relanzarNotificacion);
 
+  // function relanzarNotificacion(e) {
+  //   if(parseInt(window.user.nivel) == 4) return false;
+  //   userDATOS.verificarNotificacion();
+  // }
   function clienteEVENT(e) {
     // Usar Function para traer notificaciones
     // e.data = id_notificacion insertada
+    if(parseInt(window.user.nivel) == 4) return false;
     intNotificacion = parseInt($('*[data-notificacion="numero"]').text());
     intNotificacion ++;
     $.get("/lib/servidorCAMBIO.php?tipo=noticia&id_noticia=" + e.lastEventId,function(m){});
-    // if(window["notificacionACTIVA"] === undefined) {
-    //   window["notificacionACTIVA"] = 0;//
-    //   userDATOS.verificarNotificacion(0,"#tabla_notificacion");
-    // } else {
-    //   window["notificacionACTIVA"] ++;
-    //   if(window["notificacionACTIVA"] == 20)
-    //     userDATOS.verificarNotificacion(0,"#tabla_notificacion");
-    //   else
-    //     userDATOS.verificarNotificacion(1,"#tabla_notificacion");
-    // }
+    
     userDATOS.traerNotificacion(e.data,"#tabla_notificacion");
     $('*[data-notificacion="numero"]').text(intNotificacion);
   }
   function noticiaRELEVADA(e) {
+    console.log(e)
     aux = userDATOS.parseJSON(e.data);
+    date = new Date();
+    fecha = (date.getDate() < 10 ? "0" + date.getDate() : date.getDate()) + "/" + (date.getMonth() < 10 ? "0" + date.getMonth() : date.getMonth()) + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes();
     n = $('*[data-notificacion="numero"]').text();
     html = "";
     html += "<div class='row'>";
       html += "<div class='col-12'>";
         html += "<p class='m-0 text-truncate'>Noticia Relevada</p>";
         html += "<p class='m-0 text-truncate' title='" + aux.titulo + "'><strong class='mr-1'>Título:</strong>" + aux.titulo + "</p>";
+        html += "<p class='m-0 text-right'>" + fecha + "</p>";
       html += "</div>";
     html += "</div>";
-    $.get("/lib/servidorCAMBIO.php?tipo=noticiaRELEVADA&id_noticia=" + e.lastEventId,function(m){});
+    // $.get("/lib/servidorCAMBIO.php?tipo=noticiaRELEVADA&id_noticia=" + e.lastEventId,function(m){});
     if(window["noticiaRELEVADA"] === undefined) {
       window["noticiaRELEVADA"] = 1;
       $("#tabla_notificacion").html(html);
@@ -3839,6 +3750,10 @@ $(document).ready(function() {
     }
     angular.element("*[ng-controller=\"jsonController\"]").scope().noticiasNUMEROS(angular.element("#menu_noticias").scope());
     $('*[data-notificacion="numero"]').text(parseInt(n) + parseInt(window["noticiaRELEVADA"]));
+
+    if(parseInt(window.user.nivel) == 4) {
+      
+    }
   }
 
   function scopeNotificacion($scope,number) {

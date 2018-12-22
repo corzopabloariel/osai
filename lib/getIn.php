@@ -95,9 +95,12 @@ if(isset($_POST['carga'])){
     $titulo = trim($titulo);
     $autor = trim($autor);
     $categoria = trim($categoria);
+    
     $n['categoria'] = $categoria;
     $n['titulo'] = $titulo;
-    if(!empty($v['data']->cuerpo)) $v['data']['cuerpo'] = limpiarCuerpo($v['data']['cuerpo']);
+    $cuerpoNoticia = "";
+    if(!empty($v['data']['cuerpo'])) 
+      $cuerpoNoticia = limpiarTags($v['data']['cuerpo'], true);
 
     $n['data'] = json_encode($v['data']);//SE CONSERVA, POR SI LAS DUDAS
     $n['nueva'] = 1;//noticia nueva
@@ -109,8 +112,8 @@ if(isset($_POST['carga'])){
     $noticia['id_medio_tipo'] = $id_medioTipo;
     $noticia['url'] = $v['url'];
     $noticia['titulo'] = $titulo;
-    $noticia['cuerpo'] = $v['data']['cuerpo'];
-    $noticia['cuerpo_solotexto'] =  preg_replace('!\s+!', ' ', strip_tags($v['data']['cuerpo']) ); // remueve espacios en blanco
+    $noticia['cuerpo'] = $cuerpoNoticia;
+    // $noticia['cuerpo_solotexto'] =  preg_replace('!\s+!', ' ', strip_tags($v['data']['cuerpo']) ); // remueve espacios en blanco
     $noticia['fecha'] = $fechaBONITA;
     $noticia['id_seccion'] = $categoria;
     $noticia['nueva'] = 1;
@@ -140,21 +143,14 @@ if(isset($_POST['carga'])){
   echo "CANTIDAD DE NODOS INSERTADOS: " . strval(count($nodos));
 }
 
-function limpiarCuerpo($cuerpoBASE) {
-  $dom = new DOMDocument;
-  libxml_use_internal_errors(true);
-  $dom->loadHTML(mb_convert_encoding($cuerpoBASE, 'HTML-ENTITIES', 'UTF-8'));
-  libxml_clear_errors();
-  $xpath = new DOMXPath($dom);
-  $nodes = $xpath->query('//*[@style]');
-  foreach ($nodes as $node) $node->removeAttribute('style');
-  $nodes = $xpath->query('//*[@class]');
-  foreach ($nodes as $node) $node->removeAttribute('class');
-  $nodes = $xpath->query('//*[@onclick]');
-  foreach ($nodes as $node) $node->removeAttribute('onclick');
+function limpiarTags($string, $remove_breaks = false) {
+  $string = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $string );
+  $string = strip_tags($string, '<p><img><br><i><figure><figcaption><ul><strong>');
 
-  $cuerpo = $dom->saveHTML();
-  return $cuerpo;
+  if ( $remove_breaks )
+    $string = preg_replace('/[\r\n\t ]+/', ' ', $string);
+
+  return trim( $string );
 }
 function validarFecha($f) {
   $vocales = 0;

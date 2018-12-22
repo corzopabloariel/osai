@@ -166,16 +166,33 @@ while (1) {
   $resultado_NOTICIA = $mysqli->query($query);
   while($row_NOTICIA = $resultado_NOTICIA->fetch_assoc()) {
     sendMsg($row_NOTICIA["id"],"{titulo: '{$row_NOTICIA["titulo"]}'}","noticiaRELEVADA");
+    $noticias = R::findOne("noticia","id = ?",[$row_NOTICIA["id"]]);
+    $noticias["nueva"] = 2;
+    R::store($noticias);
   }
   //CAMBIO FLAG DE NOTIFICACIONES NUEVAS
   /**
-   * Es importante, porque cambia los primeros 5 registros
+   * Verifico cantidad de notificaciones
+   * Solo de RELEVO para arriba
    */
-  // $notificaciones = R::findAll("notificacion","aviso = ?",[1]);
-  // foreach($notificaciones AS $n) {
-  //   $n["aviso"] = 0;
-  //   R::store($n);
-  // }
+  $totalNoficaciones = R::count("notificacion","elim = 0");
+  $sql = "SELECT ";
+    $sql .= "(";
+      $sql .= "(SELECT count(*) FROM notificacion AS n ";
+        $sql .= "LEFT OUTER JOIN notificacion_usuario AS nu ON ";
+        $sql .= "(n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0) ";
+      $sql .= "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]} AND nu.id IS NULL)";
+      $sql .= " + ";
+      $sql .= "(SELECT count(*) FROM notificacion AS n ";
+        $sql .= "INNER JOIN notificacion_usuario AS nu ON ";
+        $sql .= "(n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0 AND nu.visto = 0) ";
+      $sql .= "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]})";
+    $sql .= ") AS total";
+
+  // $res = $mysqli->query($sql);
+  // $row = $res->fetch_assoc();
+  // if($row["total"] != $totalNoficaciones)
+  //   sendMsg(totalNoficaciones,"ok","relanzarNotificacion");
   sleep(2);
 }
 

@@ -1,8 +1,17 @@
 <div class="container text-dark">
-  <div class="card mx-auto shadow-sm bg-white rounded-0" style="width:70%;">
-    <div class="card-body">
-      <table class="table table-hover w-100" id="t_clientes">
-      </table>
-    </div>
+  <div class="mx-auto" style="width:70%;">
+    <fieldset style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+      <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">Agenda</legend>
+      <div style="font-size: 1.2em;" ng-bind-html="htmlAgenda"></div>
+    </fieldset>
+    <fieldset class="mt-3" style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+      <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">Unidades de análisis</legend>
+      <div class="card shadow-sm bg-white rounded-0">
+        <div class="card-body">
+          <table class="table table-hover w-100" id="t_clientes">
+          </table>
+        </div>
+      </div>
+    </fieldset>
   </div>
 </div>

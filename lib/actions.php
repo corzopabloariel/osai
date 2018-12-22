@@ -18,51 +18,51 @@
 
 class PYRUS_ACTION{
 
-  /**
-   *
-   */
-  public static function createData($d) {
-    $tables = R::inspect();
-    $entidad = $d["entidad"];
-    $ARR_attr = $d["objeto"];
-    //response(200, 'ok', "TABLA '{$entidad}' creada");
-    if(in_array($entidad, $tables)) response(200, 'ok', "TABLA '{$entidad}' existente en " . CONFIG_BD);
-    else {
-      $aux = R::xdispense($entidad);
-      foreach ($ARR_attr as $attr => $tipo) {
-        switch ($tipo) {
-            case 'TP_PK':
-                $valor = NULL;
-                break;
-            case 'TP_BOLEANO':
-                $valor = true;
-                break;
-            case 'TP_FLOAT':
-                $valor = 0.0;
-                break;
-            case 'TP_FECHA_LARGA':
-                $valor = date('Y-m-d H:i:s');
-                break;
-            case 'TP_ENTERO':
-            case 'TP_FECHA_CORTA':
-            case 'TP_RELACION':
-            case 'TP_MASCARA':
-            case 'TP_ENUM':
-                $valor = 0;
-                break;
-            default:
-                $valor = "";
-                break;
+    /**
+     *
+     */
+    public static function createData($d) {
+        $tables = R::inspect();
+        $entidad = $d["entidad"];
+        $ARR_attr = $d["objeto"];
+        //response(200, 'ok', "TABLA '{$entidad}' creada");
+        if(in_array($entidad, $tables)) response(200, 'ok', "TABLA '{$entidad}' existente en " . CONFIG_BD);
+        else {
+        $aux = R::xdispense($entidad);
+        foreach ($ARR_attr as $attr => $tipo) {
+            switch ($tipo) {
+                case 'TP_PK':
+                    $valor = NULL;
+                    break;
+                case 'TP_BOLEANO':
+                    $valor = true;
+                    break;
+                case 'TP_FLOAT':
+                    $valor = 0.0;
+                    break;
+                case 'TP_FECHA_LARGA':
+                    $valor = date('Y-m-d H:i:s');
+                    break;
+                case 'TP_ENTERO':
+                case 'TP_FECHA_CORTA':
+                case 'TP_RELACION':
+                case 'TP_MASCARA':
+                case 'TP_ENUM':
+                    $valor = 0;
+                    break;
+                default:
+                    $valor = "";
+                    break;
+            }
+            if($attr != "id")
+            $aux->$attr = $valor;
+            }
+        //print_r($aux);die();
+        R::store($aux);
+        R::wipe($entidad);
+        response(200, 'ok', $ARR_attr);
         }
-        if($attr != "id")
-        $aux->$attr = $valor;
-  		}
-      //print_r($aux);die();
-      R::store($aux);
-      R::wipe($entidad);
-      response(200, 'ok', $ARR_attr);
     }
-  }
 
     /**
      * Dado una entidad, lista todos sus elementos
@@ -81,6 +81,19 @@ class PYRUS_ACTION{
 		response(200,'ok ' . $entidad,PYRUS_DB::remove_uno($entidad,$id));
 	}
 
+    public static function get_uno($d) {
+        $entidad = $d['entidad'];
+        $column = $d["column"];
+        $value = $d["value"];
+        response(200,'ok ' . $entidad, PYRUS_DB::get_uno($entidad,$column,$value));
+    }
+
+    public static function get_all($d) {
+        $entidad = $d['entidad'];
+        $column = $d["column"];
+        $value = $d["value"];
+        response(200,'ok ' . $entidad, PYRUS_DB::get_all($entidad,$column,$value));
+    }
 
     /**
      * Guarda genericamente un objeto dado, recibe por
@@ -135,8 +148,8 @@ class PYRUS_ACTION{
             response(200,'no login, no autorizado',['estado' => 0,'s_id' => session_id()]);
         }
     }
-   public static function sesion($d){
-       response(200,'ok usuario',['estado' => 1,'session' => $_SESSION]);
-   }
+    public static function sesion($d){
+        response(200,'ok usuario',['estado' => 1,'session' => $_SESSION]);
+    }
 
 }

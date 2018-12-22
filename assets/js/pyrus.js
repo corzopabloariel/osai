@@ -139,7 +139,7 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 				else STR_valor = (this.objeto['ATRIBUTOS'][i]["NOMBRE"]).toUpperCase();
 
 				window.columna[this.entidad].push(i)
-				window.columnaDT[this.entidad].push({title: STR_valor});
+				window.columnaDT[this.entidad].push({"title": STR_valor, "data": i});
 			}
 
 			this.columna = window.columna[this.entidad];
@@ -339,11 +339,10 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 	this.formularioDato = function(t,id) {
 		let dom = $(t);
 		let OBJ_dato = this.busqueda("id",id);// Datos
+		
 		let OBJ_attr = this.objeto["GUARDADO_ATTR"];
 		let OBJ_datos = this.objeto["ATRIBUTOS"];
 		let ARR_aux = [];
-		console.log(id)
-		console.log(OBJ_dato)
 		if(OBJ_dato === undefined) return;
 		for(var x in OBJ_attr) {
 			if(OBJ_attr[x]["TIPO"] != "array") {
@@ -466,13 +465,13 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 			let aux = this.busqueda(attr,id);
 			let STR_aux = this.objeto["VISIBLE"]["TEXTO"];
 			let ATTR_aux = this.objeto["VISIBLE"]["ATTR"];
-			if(aux === undefined) return "SIN DATO";
+			if(aux === null) return "SIN DATO";
 			for(var i in ATTR_aux) {
 				if(this.especificacion[ATTR_aux[i]]["TIPO"] == "TP_RELACION") {
 					e = this.especificacion[ATTR_aux[i]]["RELACION"]["TABLA"];
 					a = this.especificacion[ATTR_aux[i]]["RELACION"]["ATTR"];
-
-					STR_aux = STR_aux.replace("/" + ATTR_aux[i] + "/",window.variables[e].mostrar_1(aux[ATTR_aux[i]]));
+					pyrusAux = new Pyrus(e,false);
+					STR_aux = STR_aux.replace("/" + ATTR_aux[i] + "/",pyrusAux.mostrar_1(aux[ATTR_aux[i]]));
 					//
 				} else
 					STR_aux = STR_aux.replace("/" + ATTR_aux[i] + "/",aux[ATTR_aux[i]]);
@@ -561,16 +560,14 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 	 * Devuelve un objeto o ARRAY de objetos de la entidadd
 	 */
 	this.busqueda = function(attr,val,count = 1){
-		if(attr == "id" || attr == "nivel") val += ""
-		let ARR_busqueda = $.map(this.resultado, function(value, index) { return [value]; });
+		let data = null;
 		if(count) {
-			return ARR_busqueda.find(x => x[attr] === val);
+			this.query("get_uno",{"entidad":this.entidad, "column": attr, "value":val},function(e) { data = e; }, null, false);
+			return data;
 		}
 		else {
-			let ARR_aux = ARR_busqueda.filter(function(x) {
-				return x[attr] == val
-			});
-			return ARR_aux;
+			this.query("get_uno",{"entidad":this.entidad, "column": attr, "value":val},function(e) { data = e; }, null, false);
+			return data;
 		}
 	}
 	/**
@@ -683,8 +680,10 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 		}
  		return ARR_rows;
  	}
-	this.getContenidoDATATABLE = function(ARR_resultado = this.resultado) {
+	this.getContenidoDATATABLE = function() {
 		let OBJ_attr = this.especificacion;
+		let ARR_resultado = null;
+		this.query("get_all",{"entidad":this.entidad ,"column": "", "value": ""},function(e) { ARR_resultado = e },null,false)
 		let ARR_rows = [];
 
 		for(var x in ARR_resultado) {//
@@ -695,15 +694,17 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 				if(OBJ_attr[y]["TIPO"] == "TP_RELACION") {
 					///////// Modificar para que busque varios elementos
 					///////// Solo acepta json
-					if(OBJ_attr[y]["FORMATO"] === undefined)
-						ARR_aux.push(window.variables[OBJ_attr[y]["RELACION"]["TABLA"]].mostrar_1(ARR_resultado[x][y],OBJ_attr[y]["RELACION"]["ATTR"]));
-					else {
+					if(OBJ_attr[y]["FORMATO"] === undefined) {
+						pyrusAux = new Pyrus(OBJ_attr[y]["RELACION"]["TABLA"], false);
+						ARR_aux.push(pyrusAux.mostrar_1(ARR_resultado[x][y],OBJ_attr[y]["RELACION"]["ATTR"]));
+					} else {
 						if(OBJ_attr[y]["FORMATO"] == "json") {
+							pyrusAux = new Pyrus(OBJ_attr[y]["RELACION"]["TABLA"], false);
 							let aux = JSON.parse(ARR_resultado[x][y]);
 							let h = "";
 							for(var xx in aux)
 								h += "<p class='m-0'>" +
-									window.variables[OBJ_attr[y]["RELACION"]["TABLA"]].mostrar_1(aux[xx],OBJ_attr[y]["RELACION"]["ATTR"]) + "</p>";
+									pyrusAux.mostrar_1(aux[xx],OBJ_attr[y]["RELACION"]["ATTR"]) + "</p>";
 							ARR_aux.push(h);
 						} else ARR_aux.push("");////FORMATO NO JSON
 					}
@@ -791,26 +792,25 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
   * @param function callbackFail Funcion a llamar si hay errores
   */
   this.query = function (accion,data,callbackOK,callbackFail = null,async = true){
-		url_envio = url_query_local;
-		let envio = { "accion":accion, "data":data };
+	url_envio = url_query_local;
+	let envio = { "accion":accion, "data":data };
 
     $.ajax({
-	     context: this,
-	     type: 'POST',
-	     // make sure you respect the same origin policy with this url:
-	     // http://en.wikipedia.org/wiki/Same_origin_policy
-	     url: url_envio,
-			 //dataType: 'json',
-	     async: async,
-	     data: envio,
-	     success: function(msg){
-         var devolucion = JSON.parse(msg);
-         // uso call para pasarle el contexto this
-         callbackOK.call(this,devolucion['data']);
-	     },
-	     error: function(msg){
-				 console.log(msg)
-			 }
+		context: this,
+		type: 'POST',
+		// make sure you respect the same origin policy with this url:
+		// http://en.wikipedia.org/wiki/Same_origin_policy
+		url: url_envio,
+		async: async,
+		data: envio,
+		success: function(msg){
+			var devolucion = JSON.parse(msg);
+			// uso call para pasarle el contexto this
+			callbackOK.call(this,devolucion['data']);
+		},
+		error: function(msg){
+			console.log(msg)
+		}
 	  });
   };
   /* ----------------- */

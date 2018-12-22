@@ -78,27 +78,22 @@ $mysqli = new mysqli(CONFIG_HOST, CONFIG_USER, CONFIG_PASS, CONFIG_BD);
 // asort($Aelementos["medio_tipo"]);
 // asort($Aelementos["secciones"]);
 // print_r($Aelementos);
-$a = R::findAll("alarma");
-$Aaux = [];
-foreach($a AS $row_ALARMA) {
-  // echo $x["atributos_negativos"];
-  if(is_null($row_ALARMA["atributos"])) continue;
-  if(is_null($row_ALARMA["atributos_negativos"])) continue;
-  $Adata = json_decode($row_ALARMA["atributos"]);//ATTR a buscar en la noticia
-  $AatributosNegativos = json_decode($row_ALARMA["atributos_negativos"]);
-  for($i = 0; $i < count($Adata); $i++) {
-    $Aaux[$Adata[$i]] = [];
-    $AatributosNegativos->$Adata[$i] = str_replace("'",'"',$AatributosNegativos->$Adata[$i]);
-    $AatributosNegativos->$Adata[$i] = json_decode($AatributosNegativos->$Adata[$i]);
-    foreach($AatributosNegativos->$Adata[$i] AS $j) {
-      $Aaux[$Adata[$i]][] = "{$Adata[$i]} {$j}";
-      $Aaux[$Adata[$i]][] = "{$j} {$Adata[$i]}";
-    }
-  }
+$ns = R::findAll("noticia","cuerpo = '' AND cuerpo_solotexto IS NULL");
 
-  // for($i = 0; $i < count($Adata); $i++) {
-  //   print_r($Aaux[$Adata[$i]]);
-  // }
+foreach($ns AS $n) {
+    $x = R::findOne("noticias","id = {$n["id"]}");
+    $aux = json_decode($x["data"]);
+    $n["cuerpo"] = wp_strip_all_tags($aux->cuerpo,true);
+    R::store($n);
 }
-print_r($Aaux);
+
+function wp_strip_all_tags($string, $remove_breaks = false) {
+    $string = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $string );
+    $string = strip_tags($string, '<p><img><br><i><figure><figcaption><ul><strong>');
+ 
+    if ( $remove_breaks )
+        $string = preg_replace('/[\r\n\t ]+/', ' ', $string);
+ 
+    return trim( $string );
+}
 ?>

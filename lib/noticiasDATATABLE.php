@@ -124,6 +124,7 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
     $inner .= "INNER JOIN usuario AS u ON (u.elim = 0 AND u.id = p.id_usuario AND p.id_usuario = {$_SESSION["user_id"]} OR u.elim = 0 AND u.id = p.id_usuario AND u.nivel = 4) ";
   } else {
     $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia AND p.id_usuario = {$_SESSION["user_id"]}) ";
+    $inner .= "INNER JOIN usuario AS u ON (u.elim = 0 AND u.id = p.id_usuario AND p.id_usuario = {$_SESSION["user_id"]}) ";
   }
 } else if(isset($params["clipping"])) {
   $where_condition .= "AND n.estado IN (3,4,5) ";//ESTADOS DISPONIBLES

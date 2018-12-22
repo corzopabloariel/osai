@@ -24,15 +24,22 @@ class PYRUS_DB {
       return R::findAll($e,"elim LIKE ? ORDER BY id {$ord}",[0]);
   }
 
-  /**
-   * Trae un elemento de una entidad dada por un id
-   *
-   * @param string $e entidad
-   * @param integer $id id
-   */
-  static function get_uno($e,$id){
-      return R::findOne($e,'id LIKE ?', [$id]);
-  }
+    /**
+     * Trae un elemento de una entidad dada por un id
+     *
+     * @param string $e entidad
+     * @param integer $id id
+     */
+    static function get_uno($e,$column,$value) {
+        return R::findOne($e,"{$column} LIKE ?", [$value]);
+    }
+
+    static function get_all($e,$column,$value) {
+        if(empty($column))
+            return R::findAll($e);
+        else 
+            return R::findAll($e,"{$column} LIKE ?", [$value]);
+    }
 
 	/**
 	 * Baja logica
