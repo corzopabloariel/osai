@@ -15,14 +15,14 @@ class PYRUS_DB {
       R::setup("mysql:host=".CONFIG_HOST.";dbname=".CONFIG_BD,CONFIG_USER,CONFIG_PASS);
   }
 
-  /**
-   * Trae todos los elementos de una entidad
-   *
-   * @param string $e nombre de la entidad dispense
-   */
-  static function get_todos($e,$ord = "ASC"){
-      return R::findAll($e,"elim LIKE ? ORDER BY id {$ord}",[0]);
-  }
+    /**
+     * Trae todos los elementos de una entidad
+     *
+     * @param string $e nombre de la entidad dispense
+     */
+    static function get_todos($e,$ord = "ASC"){
+        return R::findAll($e,"elim LIKE ? ORDER BY id {$ord}",[0]);
+    }
 
     /**
      * Trae un elemento de una entidad dada por un id
@@ -34,11 +34,11 @@ class PYRUS_DB {
         return R::findOne($e,"{$column} LIKE ?", [$value]);
     }
 
-    static function get_all($e,$column,$value) {
+    static function get_all($e,$column = "",$value = "") {
         if(empty($column))
-            return R::findAll($e);
+            return R::findAll($e,"elim = ?",[0]);
         else 
-            return R::findAll($e,"{$column} LIKE ?", [$value]);
+            return R::findAll($e,"{$column} LIKE ? AND elim = ?", [$value,0]);
     }
 
 	/**
@@ -46,8 +46,8 @@ class PYRUS_DB {
 	 *
 	 */
 	static function remove_uno($e,$id){
-		$b = R::findOne($e,'id LIKE ?',[$id]);
-		$b['activo'] = 0;
+		$b = R::findOne($e,'id = ?',[$id]);
+		$b['elim'] = 1;
 		R::store($b);
 	}
 

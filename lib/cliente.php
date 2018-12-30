@@ -4,9 +4,10 @@ session_start();
 require_once 'config.php';
 require_once 'ext/rb.php';
 
+$post = $_POST;
 $accion = "";
 // acciones
-if(isset($_POST["tipo"])) $accion = $_POST["tipo"];
+if(isset($post["tipo"])) $accion = $post["tipo"];
 //if(isset($_GET["servidor"])) $accion = "servidor";
 
 switch ($accion) {
@@ -17,6 +18,12 @@ switch ($accion) {
     include_once("inc/log.php");
     break;
   case 'query':// Traer datos de las distintas entidades
+    if(!isset($_SESSION["user_id"])) {
+      if($post["accion"] != "usuario" && $post["column"] != "user") {
+        echo json_encode(["aviso" => "///IMPORTANTE/// -> No puede acceder a esta información sin estar logueado.\nIngrese con su usuario y contraseña"], JSON_FORCE_OBJECT);
+        die();
+      }
+    }
     include_once("inc/query.php");
     break;
   case 'delete':// Borra un registro
@@ -33,6 +40,9 @@ switch ($accion) {
     break;
   case 'noticiasDATATABLE':
     include_once("inc/noticiasDATATABLE.php");
+    break;
+  case 'acceso':
+    include_once("inc/acceso.php");
     break;
 }
 ?>

@@ -113,7 +113,7 @@
             // const version = 1;
             // const min = "2018-11-01";
             // const max = "2018-12-05";
-            var dates = {
+            var dates_ = {
                 convert:function(d) {
                     return (
                         d.constructor === Date ? d :
@@ -137,7 +137,7 @@
             const alianzas = userDATOS.busquedaTabla("attr_alianza");
             let dataBD = userDATOS.dataBD("grafico_1", { "f_min": min, "f_max": max }, "#loader");
             let actores = {};
-            let dataAUX = dataAUX_2 = dataAUX_3 = undefined;
+			dataAUX = dataAUX_2 = dataAUX_3 = undefined;
 
             if(dataBD.estado) {
                 let data = dataBD.data;
@@ -312,6 +312,9 @@ var margin_G1 = 20,
 // var color = d3.scale.linear().domain([-1, 18]).interpolate(d3.interpolateHcl);
 $(document).ready(function() {
     //////////////////////////////
+    dataAUX = undefined;
+    dataAUX_2 = undefined;
+    dataAUX_3 = undefined;
     if(dataAUX !== undefined) {
 		html = '';
         // html = '<h3 class="mb-0">Temas por Actor</h3>';

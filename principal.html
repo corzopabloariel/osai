@@ -33,6 +33,7 @@
     <script type="text/javascript" src="assets/js/popupwindow.js"></script>
     <script type="text/javascript" src="assets/js/md5.js"></script>
     <script type="text/javascript" src="assets/js/declaration.js"></script>
+    <script type="text/javascript" src="assets/js/strings.js"></script>
     <script type="text/javascript" src="assets/js/toolbox.js"></script>
     <script type="text/javascript" src="assets/js/pyrus.js"></script>
     <script type="text/javascript" src="assets/js/userDATOS.js"></script>
@@ -249,11 +250,12 @@
               <li data-vista="alertas" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="alertas" href="#!alertas" name="button_cog"><i class="mr-1 fas fa-exclamation-triangle"></i> alertas</a></li>
               <li data-vista="usuarios" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="usuarios" href="#!usuarios" name="button_cog"><i class="mr-1 fas fa-address-book"></i> usuarios</a></li>
               <li data-vista="ajustes" class="list-inline-item border-right d-flex align-items-stretch mr-0"><a class="d-flex align-items-center px-3" data-url="ajustes" href="#!ajustes" name="button_cog"><i class="mr-1 fas fa-cogs"></i> ajustes</a></li>
-              <li class="list-inline-item d-flex align-items-stretch border-right">
+              <li class="list-inline-item d-flex align-items-stretch border-right" id="dropdown-menu">
                 <div class="cursor-pointer d-flex align-items-stretch px-3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <p class="d-flex align-items-center m-0"><i class="fas fa-user-circle mr-1"></i> <span class="text-uppercase" id="user-log"></span></p>
                   <div class="dropdown-menu dropdown-menu-right rounded-0">
-                    <p class="pl-4 pr-4"><strong>Tipo:</strong> {{ tipo_user }}</p>
+                    <p class="px-4"><strong>Tipo:</strong> <span class="text-uppercase">{{ tipo_user }}</span></p>
+                    <p class="px-4"><strong class="d-block">Último acceso</strong><small>{{ acceso }}</small></p>
                     <a class="dropdown-item cursor-pointer" onclick="userDATOS.cambiarClave()">Cambiar contraseña</a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item text-uppercase cursor-pointer" onclick="userDATOS.logout()">salir <span class="float-right"><i class="text-danger fas fa-power-off"></i></span></a>

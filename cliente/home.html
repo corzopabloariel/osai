@@ -8,6 +8,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script type="text/javascript" src="../assets/js/popper.min.js"></script>
     <script type="text/javascript" src="../assets/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../assets/js/lobibox.js"></script>
 
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-route.js"></script>
@@ -22,76 +23,100 @@
     <!-- <css> -->
     <link rel="stylesheet" href="../assets/css/bootstrap.css">
     <link rel="stylesheet" href="../assets/css/fontawesome-all.css">
+    <link rel="stylesheet" href="../assets/css/lobibox.css">
     <!-- </css> -->
     <style media="screen">
     @import url('https://fonts.googleapis.com/css?family=Quicksand');
-    body { font-size: 20px; font-family: 'Quicksand', sans-serif; background-color: #e9ebee; color: #1d2129; }
+    body { font-size: 20px; font-family: 'Quicksand', sans-serif; background-color: #e9ebee; color: #1d2129; cursor: default; }
     section { font-size:16px; }
-    header a, header a:hover { text-decoration: none; }
+    header a, header a:hover,
+    section a, section a:hover { text-decoration: none; }
     .header { min-height: 96px; background-color: #2e4a84; top: 0; left: 0; }
     .header + div { min-height: 300px; background-color: #5dacd5; }
     .blue { color: #ffffff; border-bottom: 1px solid #29487d; }
     .card + .card { margin-top: 10px; }
     .card-columns .card + .card { margin-top: 0; }
     .bg-llight { background-color: #f7f7f7; }
-    .bg-img { background-image: url(../assets/images/bg-cliente.jpg); background-position: center center; background-repeat: no-repeat; background-attachment: fixed; background-size: cover; background-color: #464646; }
+    .bg-img { background-image: url(../assets/images/b_01.jpg); background-position: center center; background-repeat: no-repeat; background-attachment: fixed; background-size: cover; background-color: #464646; }
     .bg-blue { background-color: #4267b2; }
     .cursor-pointer { cursor: pointer;  }
 
     .dropdown-menu:before, .dropdown-menu:after { border-left: 7px solid transparent; border-right: 7px solid transparent; top:-7px; content: " "; position: absolute; display: block; width: 0; height: 0; }
     .dropdown-menu:after { border-bottom: 8px solid #f8f9fa; left: 6px; top: -8px; z-index: 2; }
     .dropdown-menu:before { border-bottom: 7px solid #dee2e6; left: 7px; z-index: 1; }
-    @media (min-width: @screen-sm-min) and (max-width: @screen-sm-max) {
-
+    .info-oculta { cursor: pointer; }
+    .column-metricas { left:0; top: 76px; z-index: 20; height: calc(100% - 76px); }
+    /*effect-underline*/
+    a.active::after,a.active::before { content: "#"; }
+    a.active::after { margin-left: .5em; }
+    a.active::before { margin-right: .5em; }
+    a.active { border-bottom: 1px solid; }
+    a.effect-underline::after { content: ''; position: absolute; left: 0; display: inline-block; height: 1em; width: 100%; border-bottom: 1px solid; margin-top: 10px; opacity: 0; -webkit-transition: opacity 0.35s, -webkit-transform 0.35s; transition: opacity 0.35s, transform 0.35s; -webkit-transform: scale(0,1); transform: scale(0,1); }
+    a.effect-underline:hover::after { opacity: 1; -webkit-transform: scale(1); transform: scale(1); }
+    /*loading*/
+    .loading { display: inline-block; position: relative; width: 64px; height: 64px; }
+    .loading div { display: inline-block; position: absolute; left: 6px; width: 13px; background: #ccc; animation: loading 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite; }
+    .loading div:nth-child(1) { left: 6px; animation-delay: -0.24s; }
+    .loading div:nth-child(2) { left: 26px; animation-delay: -0.12s; }
+    .loading div:nth-child(3) { left: 45px; animation-delay: 0; }
+    @keyframes loading {
+      0% { top: 6px; height: 51px; }
+      50%, 100% { top: 19px; height: 26px; }
     }
     </style>
   </head>
-  <body>
-    <header class="position-fixed shadow w-100 bg-blue blue" style="z-index:1">
-      <div class="container-fluid">
-        <div class="d-flex justify-content-between">
-
-          <div class="d-flex">
-            <ul class="list-inline m-0 d-flex justify-content-end">
-              <li class="list-inline-item px-1 ml-2 d-flex"><a href="#!" class="text-white d-flex align-self-stretch"><pan class="d-flex align-self-center">inicio</span></a></li>
-              <li class="list-inline-item px-1 d-flex align-items-stretch position-relative">
-                <div class="d-flex align-items-center cursor-pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <span class="badge bg-danger badge-pill position-absolute" style="right:0; bottom:5px; font-size:10px;">14</span>
-                  <p class="m-0 px-1"><i class="fas fa-bell"></i></p>
-                  <div class="dropdown-menu dropdown-menu-right rounded-0">
-                  </div>
-                </div>
-              </li>
-              <li class="list-inline-item px-1 d-flex align-items-stretch">
-                <div class="d-flex align-items-center cursor-pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <p class="dropdown-toggle m-0 px-2 dropdown-toggle-split"></p>
-                </div>
-                <div class="dropdown-menu rounded-0" aria-labelledby="dropdownMenu">
-                  <p class="" style="padding: 0.25rem 1.5rem;" id="user_name"></p>
-                  <a class="dropdown-item" href="#!perfil">Perfil</a>
-                  <a class="dropdown-item">Configuración</a>
-                  <div class="dropdown-divider"></div>
-                  <button onclick="userDATOS.logout();" class="dropdown-item position-relative cursor-pointer" type="button">Salir<i class="text-danger position-absolute fas fa-power-off" style="right: 1.5rem;top: 0.5rem;"></i></button>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <div class="">
-            <p class="m-0 py-2 text-uppercase" id="ubicacion"></p>
-          </div>
-
-          <div class="">
-            <p class="m-0 py-2">OSAI</p>
-          </div>
+  <body onscroll="userDATOS.scroll(this);">
+    <div id="menu" style="z-index:1000; top:0; left:0; display: none;" class="col-6 bg-white position-fixed h-100">
+      <button onclick="userDATOS.menu(0);" type="button" class="close position-absolute p-2" style="right:0; top:0; z-index:2; outline: none;" aria-label="Close">
+        <span aria-hidden="true" style="font-size: 3em;line-height: 18px;" class="font-weight-light text-dark">×</span>
+      </button>
+      <header class="w-100 position-absolute" style="left: 0; top: 0;">
+        <div class="container-fluid font-weight-light py-2">
+          <h2 class="text-center text-uppercase border-bottom border-dark mb-0">osai</h2>
         </div>
+      </header>
+      <section class="w-100 position-absolute d-flex align-items-center" style="z-index: 1; left: 0; top: 55px; height: calc(100% - 58px - 55px); font-size: 1.2em;">
+        <div class="container-fluid font-weight-light py-2">
+          <p class="text-uppercase text-center"><a data-href="#!" class="d-inline-block position-relative active text-dark">home</a></p>
+          <p class="text-uppercase text-center"><a data-href="#!mis_noticias" href="#!mis_noticias" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">mis noticias</a></p>
+          <p class="text-uppercase text-center"><a data-href="#!agenda_nacional" href="#!agenda_nacional" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">agenda nacional</a></p>
+          <p class="text-uppercase text-center"><a data-href="#!notificaciones" href="#!notificaciones" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">notificaciones</a></p>
+          <p class="text-uppercase text-center mb-0"><a data-href="#!configuracion" href="#!configuracion" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">configuración</a></p>
+        </div>
+      </section>
+      <footer class="position-absolute text-center w-100" style="bottom:0; left:0; font-size: 1.5em;">
+        <span onclick="userDATOS.logout();" class="cursor-pointer text-uppercase d-inline-block border-top border-dark pb-1 px-3 pt-2">
+          <i class="text-danger fas fa-power-off mr-2"></i>Salir
+        </span>
+        <span id="user_name" class="text-uppercase d-inline-block border-top border-dark pb-1 px-3 pt-2">
+        </span>
+      </footer>
+    </div>
+    <div onclick="userDATOS.menu(0);" id="menuBackground" style="z-index:900;top:0;left:0;opacity: .7; display: none;" class="bg-dark w-100 h-100 position-fixed"></div>
+    <header class="position-fixed shadow-sm w-100 border-bottom bg-white" style="z-index:1; font-size: 2em;">
+      <div class="d-flex">
+        <ul class="list-inline m-0 d-flex border-right justify-content-end">
+          <li class="list-inline-item ml-2 d-flex cursor-pointer" onclick="userDATOS.menu(1);"><span class="d-flex align-self-center"><i class="fas fa-bars"></i></span></li>
+          <li class="list-inline-item d-flex">
+            <p class="m-0 p-2">OSAI</p>
+          </li>
+          <li class="list-inline-item border-left d-flex align-items-stretch position-relative" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <div class="d-flex align-items-center px-3 cursor-pointer">
+              <span class="badge bg-danger badge-pill position-absolute text-white" style="right:5px; bottom:5px; font-size:10px;">14</span>
+              <p class="m-0 px-1"><i class="fas fa-bell"></i></p>
+              <div class="dropdown-menu dropdown-menu-left rounded-0">
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
     </header>
-    <div class="header position-absolute w-100"></div>
-    <!-- <div class="bg-img">
-
-    </div> -->
-    <section class="pt-3 pb-3">
+    <div id="cargando" class="position-fixed w-100 text-uppercase py-3" style="bottom:0;left:0;z-index: 10;display:none;">
+      <div class="w-100 d-flex justify-content-center">
+        cargando<img class="d-inline-block ml-2" src="http://93.188.164.27/assets/images/loading_notificacion.gif" style="height: 30px;">
+      </div>
+    </div>
+    <section class="" style="padding-top: 76px;">
       <ng-view></ng-view>
     </section>
 

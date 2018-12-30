@@ -1,5 +1,5 @@
 /**
- * Última revisión: 09.12.2018 23:30
+ * Última revisión: 28.12.2018
  */
 const translate_spanish = {
   buttons: {
@@ -169,19 +169,31 @@ userDATOS.verNotificacion = function(t) {
   try {
     $("#modalNoticia").find(".btn").removeClass("d-none")
 
-    let o = userDATOS.busquedaAlerta(id);//Retorna NOTICIA/
+    let o = null;
+    userDATOS.busquedaAlerta({"id":id}, function(d) {
+      o = d;
+    });//Retorna NOTICIA/
     let seccion = "SIN SECCIÓN";
     let medio = "";
     if(parseInt(o.id_seccion) > 1) {
-      auxSeccion = userDATOS.busqueda(o.id_seccion,"seccion");
+      auxSeccion = null;
+      userDATOS.busqueda({"value":o.id_seccion,"tabla":"seccion"}, function(d) {
+        auxSeccion = d;
+      });
       seccion = auxSeccion.nombre;
     }
-    auxMedio = userDATOS.busqueda(o.id_medio,"medio");
+    auxMedio = null;
+    userDATOS.busqueda({"value":o.id_medio,"tabla":"medio"}, function(d) {
+      auxMedio = d;
+    });
     medio = (auxMedio.medio).toUpperCase();
     window.noticiaNUEVA = o;
     window.notificacionNUEVA = id;
     window.notificacionUsuario = idNotificacionUsuario;
-    window.notificacionOBJ = userDATOS.busqueda(id,"notificacion");
+    window.notificacionOBJ = null;
+    userDATOS.busqueda({"value":id,"tabla":"notificacion"}, function(d) {
+      window.notificacionOBJ = d;
+    });
     if(parseInt(window.noticiaNUEVA.relevado) == 1) $("#modalNoticia").find(".btn").addClass("d-none")
     else {
       if(parseInt(window.notificacionOBJ.pasado) == 1) $("#modalNoticia").find(".btn-success,.btn-danger").addClass("d-none");
@@ -203,7 +215,7 @@ userDATOS.verNotificacion = function(t) {
     $("#modalNoticia").modal("show");
   }
   catch (e) {
-    userDATOS.notificacion("Ocurrió un error de parseo o el elemento fue eliminado","warning",false);
+    userDATOS.notificacion(strings.error.parseoEliminado,"warning",false);
   }
 }
 /**
@@ -211,8 +223,10 @@ userDATOS.verNotificacion = function(t) {
  */
 userDATOS.mostrarAtributos = function(e) {
   $(e).addClass("d-none");
-  userDATOS.notificacion("Esto puede tardar un poco","info",false);
-  let atributos = userDATOS.busqueda(window.notificacionOBJ.id_cliente,"alarma",false,"id_cliente");
+  let atributos = null;
+  userDATOS.busqueda({"value":window.notificacionOBJ.id_cliente,"tabla":"alarma","column":"id_cliente"}, function(d) {
+    atributos = d;
+  });
   let atributos_negativos = userDATOS.parseJSON(atributos.atributos_negativos);
   let cuerpo = $("#modalNoticia .modal-body");
   for(var i in atributos_negativos) {
@@ -235,11 +249,11 @@ userDATOS.mostrarAtributos = function(e) {
 userDATOS.busquedaExtraccion = function() {
   let data = null;
   $.ajax({
-     type: 'POST',
-     url: cliente_url,
-     dataType: 'json',
-     async: false,
-     data: { "tipo": "query", "accion": "extraccion" }
+    type: 'POST',
+    url: cliente_url,
+    dataType: 'json',
+    async: false,
+    data: { "tipo": "query", "accion": "extraccion" }
   }).done(function(msg) {
     data = msg;
   });
@@ -250,128 +264,153 @@ userDATOS.busquedaExtraccion = function() {
  */
 userDATOS.change = function(id, tabla, column, value, massive = 0, asy = false) {
   $.ajax({
+    type: 'POST',
+    url: cliente_url,
+    async: asy,
+    data: { "tipo": "query", "accion": "change", "tabla": tabla, "id": id, "value": value, "column": column, "massive": massive }
+  });
+}
+/**
+ * Buqueda de último acceso de un usuario
+ */
+userDATOS.ultimaHora = function(id) {
+  $.ajax({
+    type: 'POST',
+    url: cliente_url,
+    data: { "tipo": "acceso", "id": id }
+  });
+}
+/**
+ * Traer clientes finales, relacionado con unidades de análisis
+ */
+userDATOS.busquedaUsuariosFinales = function(callbackOK, asy = false) {
+  let data = {
+    "tipo": "query",
+    "accion": "usuariosFinales"
+  };
+  $.ajax({
      type: 'POST',
      url: cliente_url,
+     dataType: 'json',
      async: asy,
-     data: { "tipo": "query", "accion": "change", "tabla": tabla, "id": id, "value": value, "column": column, "massive": massive }
+     data: data
+  }).done(function(msg) {
+    callbackOK.call(this,msg);
   });
 }
 /**
  * Busqueda directo en la BD
+ * {tabla:X,value:X,column:?,retorno:1,elim:0}
  */
-userDATOS.busqueda = function(value, tabla, asy = false, column = "id", retorno = 1, elim = 0) {
-  let data = null;
+userDATOS.busqueda = function( values, callbackOK, asy = false ) {
+  let data = {
+    "tipo": "query",
+    "accion": values.tabla,
+    "value": values.value,
+    "column": (values.column !== undefined ? values.column : "id"),//id
+    "retorno": (values.retorno !== undefined ? values.retorno : 1),//1
+    "elim": (values.elim !== undefined ? values.elim : 0)//0
+  };
   $.ajax({
      type: 'POST',
      url: cliente_url,
      dataType: 'json',
      async: asy,
-     data: { "tipo": "query", "accion": tabla, "value": value, "column": column, "retorno": retorno, "elim": elim }
+     data: data
   }).done(function(msg) {
-    data = msg;
-    if(asy) return data;
+    callbackOK.call(this,msg);
   });
-  if(!asy) return data;
 }
 /**
  * Función para insertar datos directo en la tabla
  * @param tabla STRING - identificador de tabla en la base
- * @param data OBJECT - OJO!!! cada key tiene que ser las columnas de la tabla que se desea agregar un dato
+ * @param values OBJECT - OJO!!! cada key tiene que ser las columnas de la tabla que se desea agregar un dato
  */
- userDATOS.insertDatos = function(tabla,data) {
-   let msg = null;
-   let obj = {
-     "tipo": "query",
-     "accion": "insert",
-     "tabla": tabla,
-     "data": data
-   };
-   $.ajax({
-      type: 'POST',
-      url: cliente_url,
-      dataType: 'json',
-      async: false,
-      data: obj
-   }).done(function(m) {
-     msg = m["id"];
-   });
-   return msg;
- }
-/**
- * Función para la busqueda con tablas relacionadas
- * data = {t1:"",t2:"",a1:"",a2:""}
- * SELECT  FROM {$t1} INNER JOIN {$t2} ON ({$t1}.{$a1} = {$t2}.{$a2} AND {$t1}.elim = 0)
- */
-userDATOS.busquedaTabla = function(tabla,value = null) {
-  let data = null;
-  let obj = {
+userDATOS.insertDatos = function(tabla,values, callbackOK = null) {
+  let data = {
     "tipo": "query",
-    "accion": "busqueda",
-    "tabla": tabla
+    "accion": "insert",
+    "tabla": tabla,
+    "data": values
   };
-  if(value !== null) {
-    if(value.desde !== undefined) obj["desde"] = value.desde;
-    if(value.hasta !== undefined) obj["hasta"] = value.hasta;
-    if(value.cliente !== undefined) {
-      obj["column"] = value.column;
-      obj["data"] = value.cliente;
-    }
-  }
   $.ajax({
-     type: 'POST',
-     url: cliente_url,
-     dataType: 'json',
-     async: false,
-     data: obj
-  }).done(function(msg) {
-    data = msg;
-  });
-  return data;
-}
-userDATOS.busquedaAlerta = function(id, retorno = 1) {
-  let data = null;
-  let obj = {
-    "tipo": "query",
-    "retorno": retorno,
-    "accion": "busquedaAlerta",
-    "id": id
-  }
-  $.ajax({
-     type: 'POST',
-     url: cliente_url,
-     dataType: 'json',
-     async: false,
-     data: obj
-  }).done(function(msg) {
-    data = msg;
-  });
-  return data;
-}
-/**
- *
- */
-userDATOS.busquedaPeriodista = function(id, retorno = 1) {
- let data = null;
- let obj = {
-   "tipo": "query",
-   "retorno": retorno,
-   "accion": "busquedaPeriodista",
-   "id": id
- }
- $.ajax({
     type: 'POST',
     url: cliente_url,
     dataType: 'json',
     async: false,
-    data: obj
- }).done(function(msg) {
-   data = msg;
- });
- return data;
+    data: data
+  }).done(function(m) {
+    if(callbackOK !== null) {
+      callbackOK.call(this,m["id"]);
+    }
+  });
+}
+/**
+ * Función para la busqueda de tablas
+ * @param dates OBJ de fechas a buscar
+ */
+userDATOS.busquedaTabla = function(tabla, callbackOK, dates = null, asy = false) {
+  let data = {
+    "tipo": "query",
+    "accion": "busqueda",
+    "tabla": tabla
+  };
+  if(dates !== null) {
+    if(dates.desde !== undefined) data["desde"] = dates.desde;
+    if(dates.hasta !== undefined) data["hasta"] = dates.hasta;
+  }
+  $.ajax({
+     type: 'POST',
+     url: cliente_url,
+     dataType: 'json',
+     async: asy,
+     data: data
+  }).done(function(msg) {
+    callbackOK.call(this,msg);
+  });
+}
+/**
+ * Función para la buqueda de una alerta
+ * @param values OBJ contiene el id
+ */
+userDATOS.busquedaAlerta = function(values, callbackOK) {
+  let data = {
+    "tipo": "query",
+    "retorno": (values.retorno !== undefined ? values.retorno : 1),
+    "accion": "busquedaAlerta",
+    "id": values.id
+  }
+  $.ajax({
+     type: 'POST',
+     url: cliente_url,
+     dataType: 'json',
+     async: false,
+     data: data
+  }).done(function(msg) {
+    callbackOK.call(this,msg)
+  });
+}
+/**
+ * Función para traer datos de un periodista que esta relacionado con una noticia
+ */
+userDATOS.busquedaPeriodista = function(id, callbackOK) {
+  let data = {
+    "tipo": "query",
+    "accion": "busquedaPeriodista",
+    "id": id
+  }
+  $.ajax({
+    type: 'POST',
+    url: cliente_url,
+    dataType: 'json',
+    async: false,
+    data: data
+  }).done(function(msg) {
+    callbackOK.call(this,msg);
+  });
 }
 //
-userDATOS.noticiasVALOR = function() {
-  let d;
+userDATOS.noticiasVALOR = function(callbackOK) {
   $.ajax({
      type: 'POST',
      url: cliente_url,
@@ -379,9 +418,8 @@ userDATOS.noticiasVALOR = function() {
      async: false,
      data: { "tipo": "noticiasINFORME","id_usuario":userDATOS.user()["id"],"nivel":window.usuario.nivel }
   }).done(function(msg) {
-    d = msg;
+    callbackOK.call(this,msg)
   });
-  return d;
 }
 userDATOS.noticiasSELECT = function(tipo = "", select = null) {
   let d;
@@ -409,15 +447,16 @@ userDATOS.log = function(id_usuario, accion, acceso = 1, id_tabla = 0, tabla = n
   });
 }
 /**
- *@return cantidad de noticias con estado 0 y moderado 0
+ * @return cantidad de noticias con estado 0 y moderado 0
+ * OBSOLETO?
  */
-userDATOS.noticiasRELEVO = function() {
-  ARR_busqueda = $.map(window.variables.noticias.resultado, function(value, index) { return [value]; });
-  ARR_aux = ARR_busqueda.filter(function(x) {
-    return x.estado == 0 && x.moderado == 0
-  });
-  return ARR_aux.length;
-}
+// userDATOS.noticiasRELEVO = function() {
+//   ARR_busqueda = $.map(window.variables.noticias.resultado, function(value, index) { return [value]; });
+//   ARR_aux = ARR_busqueda.filter(function(x) {
+//     return x.estado == 0 && x.moderado == 0
+//   });
+//   return ARR_aux.length;
+// }
 /**
  * Función para verificar si la session se encunetra activa
  *@param f BOOLEANO: flag
@@ -433,9 +472,9 @@ userDATOS.verificar = function(f) {
      data: { "tipo": "login" }
   }).done(function(msg) {
     if(f) {
-      if(jQuery.isEmptyObject(msg)) v = false//window.location = "index.html";
+      if(msg["user_id"] === undefined) v = false//window.location = "index.html";
     } else {
-      if(!jQuery.isEmptyObject(msg)) v = false;
+      if(msg["user_id"] !== undefined) v = false;
     }
   });
   return v;
@@ -455,22 +494,21 @@ userDATOS.notificacionLEIDA = function(id) {
  */
 userDATOS.mostrarNoticia = function(t,id) {
   let modal = $("#modalNoticia");
-  let notificacion = userDATOS.busqueda(id,"notificacion");
-  let o = userDATOS.busqueda(notificacion.id_noticia,"noticias");
+  let notificacion = null;
+  userDATOS.busqueda({"value":id,"tabla":"notificacion"}, function(d) {
+    notificacion = d;
+  });
+  let o = null;
+  userDATOS.busqueda({"value": notificacion.id_noticia,"tabla":"noticias"}, function(d) {
+    o = d;
+  });
   let data = userDATOS.parseJSON(o.data);
   let html = "";
   let user = userDATOS.user();
   window.noticiaNUEVA = o;
 
   userDATOS.log(window.user_id,"Notificación vista",0,id,"notificacion");
-
-  /*d = new Date();
-  notificacion["leido"] = "1";
-  notificacion["aviso"] = "1";
-  notificacion["id_usuario"] = user.id;
-  notificacion["fecha_lectura"] = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();*/
   userDATOS.notificacionLEIDA(notificacion.id)
-  //window.variables.notificacion.guardar_1(notificacion);
   $(t).find("> span").removeClass("badge-success");
   $(t).find("> span").addClass("badge-secondary");
   $(t).find("> span").text("Leido")
@@ -510,10 +548,12 @@ userDATOS.user = function() {
   let OBJ_dato = {};
   x.query("obtener_sesion",null,
     function(e){
+      if(e["session"] === undefined) return false;
       if(e["session"]["user_name"] === undefined) window.location = "index.html";
       OBJ_dato["id"] = e["session"]["user_id"];
       OBJ_dato["user"] = e["session"]["user_name"];
       OBJ_dato["nivel"] = e["session"]["user_lvl"];
+      OBJ_dato["last"] = e["session"]["user_last"];
     },
   null,
   false);
@@ -526,17 +566,18 @@ userDATOS.user = function() {
 userDATOS.noticiaATTR = function(e) {//agregar si no encuentra y si no puede remarcar
   let x = $(e).find("input").val();
   if(x == "") return false;
+  if(!$(".note-editable").buscar(x)) {
+    userDATOS.notificacion(strings.attr.no);
+    return false;
+  }
   $("#noticiaATTR").append("<span class=\"bg-light border rounded p-2 m-2\">" + x + " <i class=\"fas fa-times-circle text-danger btn-click\" onclick=\"userDATOS.eliminarATTR(this)\"></i></span>");
   $(e).find("input").val("");
-  /*userDATOS.attr();
-  $("*[data-tipo=\"cuerpo\"]").html(userDATOS.marcar($("*[data-tipo=\"cuerpo\"]").html(),[x]));*/
-  //if(!$(".note-editable").find("iframe").length) {
-    if(window.ARR_atributos === undefined) window.ARR_atributos = [];
-    if(window.ARR_atributos[x] === undefined) {
-      window.ARR_atributos[x] = "";
-      $(".note-editable").resaltar(x,"resaltarCLASS");
-    }
-  //}
+  
+  if(window.ARR_atributos === undefined) window.ARR_atributos = [];
+  if(window.ARR_atributos[x] === undefined) {
+    window.ARR_atributos[x] = "";
+    $(".note-editable").resaltar(x,"resaltarCLASS");
+  }
 };
 /**
  * Funciones varias
@@ -673,7 +714,10 @@ userDATOS.modalNOTICIA = function(STR_body,STR_footer,tipo, id = null) {
               total = 99999;
               continue;
             }
-            c = window.variables["calificacion"].busqueda("id",s.substring(4,5))
+            c = null;
+            userDATOS.busqueda({"value":s.substring(4,5),"tabla":"calificacion"}, function(d) {
+              c = d
+            });
             if(parseInt(window.ARR_cliente[i]["valoracion"][s]) == 1)
               total += parseFloat(c.valor);
             else if(parseInt(window.ARR_cliente[i]["valoracion"][s]) == 3)
@@ -841,8 +885,52 @@ userDATOS.notificacion = function (mensaje,tipo = 'info',dlay = true){
  * Función que muestra el modal especifico de usuarios
  */
 userDATOS.cambiarClave = function() {
-  let modal = $("#modalUsuario");
-  modal.modal("show");
+  let u = null;
+  userDATOS.busqueda({"value":window.user_id,"tabla":"usuario"}, function(d) {
+    u = d;
+  });
+  $('#dropdown-menu').dropdown('toggle');
+  $.MessageBox({
+    buttonDone  : strings.btn.cambiar,
+    buttonFail  : strings.btn.cancelar,
+    message : strings.usuario.contrasela,
+    input   : { 
+      inputPass     : {
+        type         : "password",
+        label        : "Contraseña actual (*):",
+        title        : "Contraseña actual",
+      },
+      inputPassNew1  : {
+        type         : "password",
+        label        : "Contraseña nueva (*):",
+        title        : "Contraseña nueva",
+      },
+      inputPassNew2  : {
+        type         : "password",
+        label        : "Repita contraseña nueva (*):",
+        title        : "Repita contraseña nueva",
+      },
+    },
+    top     : "auto",
+    filterDone      : function(data){
+      setTimeout(() => {
+        $(".messagebox_content_error").hide();
+      }, 3000);
+      if(data.inputPass == "" || data.inputPassNew1 == "" || data.inputPassNew2 == "")
+        return strings.faltan.datos;
+      if(md5(data.inputPass) != u.pass)
+        return strings.contrasela.erronea
+      if(data.inputPassNew1 != data.inputPassNew2)
+        return strings.contrasela.noCoinciden
+    }
+  }).done(function(data){
+    auxPyrus = new Pyrus("usuario", false);
+    u.cantidad = data.inputPassNew1.length
+    u.pass = md5(data.inputPassNew1);
+    auxPyrus.guardar_1(u);
+    userDATOS.log(window.user_id,"Cambio de contraseña del usuario",0,window.user_id,"usuario");
+    userDATOS.notificacion(strings.cambiadoDatos,"success");
+  });
 }
 /**
  *
@@ -861,29 +949,22 @@ userDATOS.borrarREGISTROlog = function(id) {
 userDATOS.logout = function() {
   userDATOS.log(window.user_id,"Salida del sistema",1);
   userDATOS.borrarREGISTROlog(window.user_id);
-  window.evtSource.close();
+  if(window.evtSource !== undefined) window.evtSource.close();
+  /** Si hay una noticia abierta, cambia los flags correspondientes */
+  if(window.noticiaSELECCIONADA !== undefined) {
+    if(parseInt(window.noticiaSELECCIONADA.estado) == 1) {
+      userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","estado",0);
+      userDATOS.change(window.noticiaSELECCIONADA.id_noticia,"noticias","estado",0);
+    } else if(parseInt(window.noticiaSELECCIONADA.estado) == 6) {
+      userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","estado",2);
+      userDATOS.change(window.noticiaSELECCIONADA.id_noticia,"noticias","estado",2);
+    }
+  }
   x = new Pyrus();
   document.getElementById("div").classList.remove("d-none");
   x.query("NS_logout",null,
    function(){ window.location = "index.html"; },
    null);
-}
-/**
- * Función especial <-- OJO con el funcionamiento y parámetros
- *@param {"entidad":X,"column":[{nom:"NOM"}],"relacion":[{"t1":"col"},{"t2":"col"}]}
- */
-userDATOS.cliente_usuario = function() {
-  let objetos = null;
-  $.ajax({
-     type: 'POST',
-     url: cliente_url,
-     dataType: 'json',
-     async: false,
-     data: { "tipo": "query","accion": "cliente_usuario" }
-  }).done(function(msg) {
-    objetos = msg
-  });
-  return objetos;
 }
 /**
  * Función que construye la tabla DATATABLE de forma genérica en la vista
@@ -897,18 +978,21 @@ userDATOS.cliente_usuario = function() {
 userDATOS.listador = function(target,OBJ_pyrus,searching = true, id = 0, OBJ_btn = null, BTN_default = ["add","show","delete"]) {
 	let nombre_tabla = "tabla_" + id;
 	let column = OBJ_pyrus.columnaDT;
-  // let rows = OBJ_pyrus.getContenidoDATATABLE();
-  // console.log(rows)
+  
   let order = OBJ_pyrus.order;
 	let ARR_btn = [];
 
   ///////
   if(OBJ_pyrus.entidad == "cliente") {
-    data = userDATOS.cliente_usuario();
-    column = $.map(data.column, function(value, index) { return [value]; });
-    rows = $.map(data.data, function(value, index) { return [value]; });
-    order[0]["targets"].push(2);
-    order[0]["targets"].push(3);
+    console.log(column.length)
+    if(column.length == 1) {
+      column.push({"title":"UNIDAD DE ANÁLISIS", "data":"nombre"});
+      column.push({"title":"CLIENTE FINAL", "data":"user"});
+      column.push({"title":"ESTADO C. FINAL", "data":"activo"});
+      
+      order[0]["targets"].push(2);
+      order[0]["targets"].push(3);
+    }
   }
 
 	if(BTN_default.indexOf("add") >= 0)
@@ -975,26 +1059,19 @@ userDATOS.listador = function(target,OBJ_pyrus,searching = true, id = 0, OBJ_btn
     },
 		"select": 'single',
 		"destroy": true,
-		"order": [[ 1, "desc" ]],
+		"order": [[ 0, "desc" ]],
     "searching": searching,
     "dom": 'lBfrtip',
-		// "sDom": "<'row pb-3'"+
-		// 			"<'col col-12 col-sm-6 d-flex justify-content-start __lenght_buttons'>"+
-		// 			"<'col col-12 col-sm-6'f>r>"+
-		// 			"<'table-scrollable pb-3't>"+
-		// 		"<'row'"+
-		// 			"<'col col-12 col-sm-6 d-flex justify-content-start align-items-center'li>"+
-		// 			"<'col col-12 col-sm-6 d-flex justify-content-end align-items-center __paginate'p>>",
 		"scrollX":true,
-		"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+		"lengthMenu": [[10, 25, 50], [10, 25, 50]],
 		"buttons": ARR_btn,
 		"language": translate_spanish
 	});
 	window[nombre_tabla].buttons().container().appendTo( $('.col-sm-6:eq(0)', window[nombre_tabla].table().container() ) );
-	window[nombre_tabla].column( 0 ).visible( false );
+	// window[nombre_tabla].column( 0 ).visible( false );
   $(".form-control-sm").removeClass("form-control-sm");
   $(".animate-flicker").removeClass("animate-flicker");
-	$("div.dt-buttons button").removeClass("btn-secondary");
+	$("div.dt-buttons button").removeClass("btn-default");
 }
 /**
  * Función para la remoción de ATRIBUTOS
@@ -1074,7 +1151,8 @@ userDATOS.modal = function(tabla, OBJ_pyrus, tipo = null) {
 userDATOS.addUsuario = function(tabla,OBJ_pyrus) {
   let modal = $("#modal");
   let html = "", footer = "";
-  let niveles = window.variables.usuario_nivel.selector();
+  let pyrusObjeto = new Pyrus("usuario_nivel",false)
+  let niveles = pyrusObjeto.selector();
   delete niveles[1];
   if(parseInt(window.usuario.nivel) == 3) {
     //solo se deja monitor
@@ -1115,15 +1193,16 @@ userDATOS.addUsuario = function(tabla,OBJ_pyrus) {
  */
 userDATOS.restaurarClave = function() {
   $.MessageBox({
-		buttonDone  : "Si",
-		buttonFail  : "No",
-		message   : "¿Está seguro de restaurar la clave?<br>La contraseña será 12345678"
+		buttonDone  : strings.btn.si,
+		buttonFail  : strings.btn.no,
+		message   : strings.messege.restaurar
 	}).done(function(){
 		window.usuarioTABLA.cantidad = "8";
     window.usuarioTABLA.pass = md5("12345678");
-    window.variables.usuario.guardar_1(window.usuarioTABLA);
+    pyrusObjeto = new Pyrus("usuario",false);
+    pyrusObjeto.guardar_1(window.usuarioTABLA);
 
-    userDATOS.notificacion("Clave restaurada del usuario <strong>" + window.usuarioTABLA.user + "</strong>")
+    userDATOS.notificacion(strings.restaurado(window.usuarioTABLA.user))
     window.usuarioTABLA = undefined;
 	}).fail(function(){});
 }
@@ -1133,12 +1212,14 @@ userDATOS.restaurarClave = function() {
 userDATOS.showUsuario = function(tabla,OBJ_pyrus) {
   let modal = $("#modal");
   let html = "", footer = "";
-  let niveles = window.variables.usuario_nivel.selector();
-  let adata = tabla.rows( { selected: true } );
-	let data = adata.data()[0];
-	let id = data[0];
-  let o = userDATOS.busqueda(id,"usuario");
-  let un = window.variables.usuario_nivel.busqueda("nivel",o.nivel);
+  let pyrusObjeto = new Pyrus("usuario_nivel",false);
+  let niveles = pyrusObjeto.selector();
+  let row = tabla_0.rows( { selected: true } ).data()[0];
+  let o = null;
+  userDATOS.busqueda({"value": row.id,"tabla":"usuario"}, function(d) {
+    o = d;
+  });
+  let un = pyrusObjeto.busqueda("nivel",o.nivel);
   let data_nivel = userDATOS.parseJSON(un.data);
   window.usuarioTABLA = o;
   modal.find(".modal-title").html("<strong>USUARIO</strong>");
@@ -1199,16 +1280,15 @@ userDATOS.show__ = function(tabla,OBJ_pyrus) {
  */
 userDATOS.delete__ = function(tabla,OBJ_pyrus) {
 	$.MessageBox({
-		buttonDone  : "Si",
-		buttonFail  : "No",
-		message   : "¿Está seguro de eliminar el registro?"
+		buttonDone  : strings.btn.si,
+		buttonFail  : strings.btn.no,
+		message   : strings.eliminar.comun
 	}).done(function(){
 		let adata = tabla.rows( { selected: true } );
 		let data = adata.data()[0];
-		let id = data[0];
+		let id = data.id;
     userDATOS.log(window.user_id,"Baja de registro",0,id,OBJ_pyrus.entidad,1);
 		OBJ_pyrus.remove(id);
-		OBJ_pyrus.reload();
     tabla.row('.selected').remove().draw( false );
     //userDATOS.listador("#t_actores",OBJ_pyrus.entidad,OBJ_pyrus);
 		//function(target,entidad,OBJ_pyrus,searching = true, id = 0, OBJ_btn = null)
@@ -1295,7 +1375,7 @@ userDATOS.dataTableNOTIFICACIONES = function(target) {
 	});
 	tabla_noticia.buttons().container().appendTo( $('.col-sm-6:eq(0)', tabla_noticia.table().container() ) );
   $(".form-control-sm").removeClass("form-control-sm");
-	$("div.dt-buttons button").removeClass("btn-secondary");
+	$("div.dt-buttons button").removeClass("btn-default");
   $(".animate-flicker").removeClass("animate-flicker");
 }
 userDATOS.dataTableNOTICIASeliminadas = function(target) {
@@ -1364,7 +1444,7 @@ userDATOS.dataTableNOTICIASeliminadas = function(target) {
 	});
 	tabla_noticia.buttons().container().appendTo( $('.col-sm-6:eq(0)', tabla_noticia.table().container() ) );
   $(".form-control-sm").removeClass("form-control-sm");
-	$("div.dt-buttons button").removeClass("btn-secondary");
+	$("div.dt-buttons button").removeClass("btn-default");
   $(".animate-flicker").removeClass("animate-flicker");
 }
 /**
@@ -1379,63 +1459,64 @@ userDATOS.dataTableNOTICIAS = function(target,datos = {}) {
   let ARR_btn = [];
   let columnDefs = [];
   let columns = null;
-    columnDefs.push({"width": "0%", "targets": [0]});
-    columnDefs.push({"width": "10%", "targets": [1], "className": "text-center",
-      'render': function (data, type, full, meta){
-          return moment(data).format('YYYY/MM/DD HH:mm');
-      }
-    });//FECHA
-    if(datos["moderado"] !== undefined) {
-      columnDefs.push({"width": "24%", "targets": [2], "className": "text-left text-uppercase"});//UNIDAD DE ANALISIS
-      columnDefs.push({"width": "7%", "targets": [3], "className": "text-left text-uppercase"});//TIPO
-      columnDefs.push({"width": "7%", "targets": [4], "className": "text-left text-uppercase"});//MEDIO
-      columnDefs.push({"width": "10%", "targets": [5], "className": "text-left text-uppercase"});//SECCION
-      columnDefs.push({"width": "35%", "targets": [6], "className": "text-left"});//TITULO
-      columnDefs.push({"width": "7%", "targets": [7], "className": "text-center text-uppercase"});//ESTADO
-      columns = [
-        {"data":"id"},
-        {"data":"fecha"},
-        {"data":"cliente"},
-        {"data":"medio_tipo"},
-        {"data":"medio"},
-        {"data":"seccion"},
-        {"data":"titulo"},
-        {"data":"estado"}
-      ];
-    } else {
-      columnDefs.push({"width": "10%", "targets": [2], "className": "text-left text-uppercase"});//TIPO
-      columnDefs.push({"width": "10%", "targets": [3], "className": "text-left text-uppercase"});//MEDIO
-      columnDefs.push({"width": "20%", "targets": [4], "className": "text-left text-uppercase"});//SECCION
-      columnDefs.push({"width": "50%", "targets": [5], "className": "text-left"});//TITULO
-      columnDefs.push({"width": "10%", "targets": [6], "className": "text-center text-uppercase"});//ESTADO
-
-      columns = [
-        {"data":"id"},
-        {"data":"fecha"},
-        {"data":"medio_tipo"},
-        {"data":"medio"},
-        {"data":"seccion"},
-        {"data":"titulo"},
-        {"data":"estado"}
-      ];
+  columnDefs.push({"width": "0%", "targets": [0]});
+  columnDefs.push({"width": "10%", "targets": [1], "className": "text-center",
+    'render': function (data, type, full, meta){
+        return moment(data).format('YYYY/MM/DD HH:mm');
     }
+  });//FECHA
+  if(datos["moderado"] !== undefined) {
+    columnDefs.push({"width": "24%", "targets": [2], "className": "text-left text-uppercase"});//UNIDAD DE ANALISIS
+    columnDefs.push({"width": "7%", "targets": [3], "className": "text-left text-uppercase"});//TIPO
+    columnDefs.push({"width": "7%", "targets": [4], "className": "text-left text-uppercase"});//MEDIO
+    columnDefs.push({"width": "10%", "targets": [5], "className": "text-left text-uppercase"});//SECCION
+    columnDefs.push({"width": "35%", "targets": [6], "className": "text-left"});//TITULO
+    columnDefs.push({"width": "7%", "targets": [7], "className": "text-center text-uppercase"});//ESTADO
+    columns = [
+      {"data":"id",title: "id"},
+      {"data":"fecha",title: "FECHA"},
+      {"data":"cliente",title: "U. ANÁLISIS"},
+      {"data":"medio_tipo",title: "TIPO"},
+      {"data":"medio",title: "MEDIO"},
+      {"data":"seccion",title: "SECCIÓN"},
+      {"data":"titulo",title: "TÍTULO"},
+      {"data":"estado",title: "ESTADO"}
+    ];
+  } else {
+    columnDefs.push({"width": "10%", "targets": [2], "className": "text-left text-uppercase"});//TIPO
+    columnDefs.push({"width": "10%", "targets": [3], "className": "text-left text-uppercase"});//MEDIO
+    columnDefs.push({"width": "20%", "targets": [4], "className": "text-left text-uppercase"});//SECCION
+    columnDefs.push({"width": "50%", "targets": [5], "className": "text-left"});//TITULO
+    columnDefs.push({"width": "10%", "targets": [6], "className": "text-center text-uppercase"});//ESTADO
+
+    columns = [
+      {"data":"id",title: "id"},
+      {"data":"fecha",title: "FECHA"},
+      {"data":"medio_tipo",title: "TIPO"},
+      {"data":"medio",title: "MEDIO"},
+      {"data":"seccion",title: "SECCIÓN"},
+      {"data":"titulo",title: "TÍTULO"},
+      {"data":"estado",title: "ESTADO"}
+    ];
+  }
   if(datos["moderado"] !== undefined) {
     ARR_btn.push({
-        text: '<i class="fas fa-plus"></i>',
-        className: 'btn-primary',
-        action: function ( e, dt, node, config ) {
-          userDATOS.pantalla_ON();
-        }
-      });
+      text: '<i class="fas fa-plus"></i>',
+      className: 'btn-primary',
+      action: function ( e, dt, node, config ) {
+        userDATOS.pantalla_ON();
+      }
+    });
   }
   ARR_btn.push({
     extend: 'selected',
     text: '<i class="fas fa-eye"></i>',
     className: 'btn-dark',
     action: function ( e, dt, node, config ) {
-      let rows = dt.rows( { selected: true } ).count();
-      if(Object.keys(datos).length > 0) userDATOS.distribuidorNOTICIA(datos.moderado)
-      else userDATOS.distribuidorNOTICIA()
+      if(Object.keys(datos).length > 0)
+        userDATOS.distribuidorNOTICIA(3);
+      else
+        userDATOS.distribuidorNOTICIA(1);
     }
   });
 	tabla_noticia = $(target).DataTable({
@@ -1472,9 +1553,10 @@ userDATOS.dataTableNOTICIAS = function(target,datos = {}) {
 	tabla_noticia.buttons().container().appendTo( $('.col-sm-6:eq(0)', tabla_noticia.table().container() ) );
 	tabla_noticia.column( 0 ).visible( false );
   $(".form-control-sm").removeClass("form-control-sm");
-	$("div.dt-buttons button").removeClass("btn-secondary");
+	$("div.dt-buttons button").removeClass("btn-default");
   $(".animate-flicker").removeClass("animate-flicker");
-  $("#date_filter").removeClass("d-none");
+  $("#date_filter").find("input,select,button").removeAttr("disabled");
+  $("#date_filter").find("select").select2();
 }
 //-----------------------
 
@@ -1501,14 +1583,14 @@ userDATOS.dataTableNOTICIAS2 = function(target,datos = {}) {
 
   ARR_btn.push({
         text: '<i class="fas fa-check"></i>',
-        className: 'btn-success',
+        className: 'btn-success buttons-selected disabled',
         action: function ( e, dt, node, config ) {
           userDATOS.relevarNOTICIA();
         }
       });
   ARR_btn.push({
         text: '<i class="fas fa-trash-alt"></i>',
-        className: 'btn-danger',
+        className: 'btn-danger buttons-selected disabled',
         action: function ( e, dt, node, config ) {
           userDATOS.eliminarNOTICIA();
         }
@@ -1518,10 +1600,7 @@ userDATOS.dataTableNOTICIAS2 = function(target,datos = {}) {
         text: '<i class="fas fa-eye"></i>',
         className: 'btn-dark',
         action: function ( e, dt, node, config ) {
-          let rows = dt.rows( { selected: true } ).count();
-          let adata = tabla_noticia.rows( { selected: true } );
-        	let data = adata.data()[0];
-          userDATOS.distribuidorNOTICIA();
+          userDATOS.distribuidorNOTICIA(2);
         }
       });
   let dataSrc = [];
@@ -1569,9 +1648,10 @@ userDATOS.dataTableNOTICIAS2 = function(target,datos = {}) {
 	tabla_noticia.buttons().container().appendTo( $('.col-sm-6:eq(0)', tabla_noticia.table().container() ) );
 
   $(".form-control-sm").removeClass("form-control-sm");
-	$("div.dt-buttons button").removeClass("btn-secondary");
+	$("div.dt-buttons button").removeClass("btn-default");
   $(".animate-flicker").removeClass("animate-flicker");
-  $("#date_filter").removeClass("d-none");
+  $("#date_filter").find("input,select,button").removeAttr("disabled");
+  $("#date_filter").find("select").select2();
 
   tabla_noticia.on( 'draw', function () {
     let flag = true;
@@ -1609,14 +1689,14 @@ userDATOS.dataTableNOTICIAS3 = function(target,datos,searching = true) {
     columnDefs.push({"width": "32%", "targets": [7], "className": "text-left"});//TITULO
 
     columns = [
-      {"data":"id"},
-      {"data":"fecha"},
-      {"data":"fecha_proceso"},
-      {"data":"cliente"},
-      {"data":"medio_tipo"},
-      {"data":"medio"},
-      {"data":"seccion"},
-      {"data":"titulo"}
+      {"data":"id","title": "ID"},
+      {"data":"fecha","title": "FECHA"},
+      {"data":"fecha_proceso","title": "F. PROCESO"},
+      {"data":"cliente","title": "U. ANÁLISIS"},
+      {"data":"medio_tipo","title": "TIPO"},
+      {"data":"medio","title": "MEDIO"},
+      {"data":"seccion","title": "SECCIÓN"},
+      {"data":"titulo","title": "TÍTULO"}
     ];
   } else {
     columnDefs.push({"width": "0%",'targets': 0,'className': 'text-center'});
@@ -1633,15 +1713,15 @@ userDATOS.dataTableNOTICIAS3 = function(target,datos,searching = true) {
     columnDefs.push({"width": "29%", "targets": [8], "className": "text-left"});//TITULO
 
     columns = [
-      {"data":"id"},
-      {"data":"fecha"},
-      {"data":"fecha_proceso"},
-      {"data":"usuario"},
-      {"data":"cliente"},
-      {"data":"medio_tipo"},
-      {"data":"medio"},
-      {"data":"seccion"},
-      {"data":"titulo"}
+      {"data":"id","title": "ID"},
+      {"data":"fecha","title": "FECHA"},
+      {"data":"fecha_proceso","title": "F. PROCESO"},
+      {"data":"usuario","title": "USUARIO"},
+      {"data":"cliente","title": "U. ANÁLISIS"},
+      {"data":"medio_tipo","title": "TIPO"},
+      {"data":"medio","title": "MEDIO"},
+      {"data":"seccion","title": "SECCIÓN"},
+      {"data":"titulo","title": "TÍTULO"}
     ];
   }
   if(parseInt(window.usuario.nivel) <= 3) {
@@ -1668,7 +1748,7 @@ userDATOS.dataTableNOTICIAS3 = function(target,datos,searching = true) {
         text: '<i class="fas fa-eye"></i>',
         className: 'btn-dark',
         action: function ( e, dt, node, config ) {
-          userDATOS.distribuidorNOTICIA("1");
+          userDATOS.distribuidorNOTICIA(4);
         }
       });
   ARR_btn.push({
@@ -1717,9 +1797,10 @@ userDATOS.dataTableNOTICIAS3 = function(target,datos,searching = true) {
   //new $.fn.dataTable.FixedHeader( tabla_noticia );
   tabla_noticia.column( 0 ).visible( false );
   $(".form-control-sm").removeClass("form-control-sm");
-	$("div.dt-buttons button").removeClass("btn-secondary");
+	$("div.dt-buttons button").removeClass("btn-default");
   $(".animate-flicker").removeClass("animate-flicker");
-  $("#date_filter").removeClass("d-none");
+  $("#date_filter").find("input,select,button").removeAttr("disabled");
+  $("#date_filter").find("select").select2();
 }
 /**
  *
@@ -1741,21 +1822,21 @@ userDATOS.dataTableNOTICIAS4 = function(target) {
   columnDefs.push({"width": "32%", "targets": [6], "className": "text-left"});//TITULO
 
   columns = [
-    {"data":"fecha"},
-    {"data":"fecha_clipping"},
-    {"data":"cliente_final"},
-    {"data":"cliente"},
-    {"data":"medio"},
-    {"data":"estado"},
-    {"data":"titulo"}
+    {"data":"fecha","title": "FECHA"},
+    {"data":"fecha_clipping","title": "FECHA PUBLICADA"},
+    {"data":"cliente_final","title": "CLIENTE"},
+    {"data":"cliente","title": "U. ANÁLISIS"},
+    {"data":"medio","title": "MEDIO"},
+    {"data":"estado","title": "ESTADO"},
+    {"data":"titulo","title": "TÍTULO"}
   ];
 
   ARR_btn.push({
       extend: 'selected',
-      text: '<i class="fas fa-clipboard-check"></i>',
+      text: '<i class="fas fa-paperclip"></i>',
       className: 'btn-success',
       action: function ( e, dt, node, config ) {
-        userDATOS.publicarNOTICIA();
+        userDATOS.clippingNOTICIA();
       }
     });
 
@@ -1794,126 +1875,189 @@ userDATOS.dataTableNOTICIAS4 = function(target) {
 		"language": translate_spanish
 	});
   $(".form-control-sm").removeClass("form-control-sm");
-	$("div.dt-buttons button").removeClass("btn-secondary");
+	$("div.dt-buttons button").removeClass("btn-default");
   $(".animate-flicker").removeClass("animate-flicker");
-  $("#date_filter").removeClass("d-none");
+  $("#date_filter").find("input,select,button").removeAttr("disabled");
+  $("#date_filter").find("select").select2();
 }
 /**
- * Distribuidor de noticias
- *@param tipo: si es relevado o no.
+ * Distribuidor de noticias.
+ * @param lugar INT - Indica de dónde se llama la función
+ * 1 -> TODAS
+ * 2 -> RELEVO
+ * 3 -> A PROCESAR
+ * 4 -> PROCESADAS
+ * 5 -> CLIPPING
  */
-userDATOS.distribuidorNOTICIA = function(tipo = 0,elim = 0) {
-  userDATOS.notificacion("Abriendo espacio. <strong>Espere</strong>","info",false);
+userDATOS.distribuidorNOTICIA = function(lugar = 0,elim = 0) {
+  let adata = tabla_noticia.rows( { selected: true } );
+  let data = adata.data()[0];
+  window.noticiaSELECCIONADA = null;
+  userDATOS.busqueda({"value": data.id,"tabla":"noticia","column":"id","retorno":1,"elim":elim},function(d) {
+    window.noticiaSELECCIONADA = d;
+  });
+  window.noticiaTABLA = null;
+  userDATOS.busqueda({"value": window.noticiaSELECCIONADA.id_noticia,"tabla":"noticias","column":"id","retorno":1,"elim":elim}, function(d) {
+    window.noticiaTABLA = d;
+  });
+  try {
+    window.noticiaTABLA.data = userDATOS.parseJSON(window.noticiaTABLA.data);
+  } catch {
+    userDATOS.notificacion("<p class='p-0 m-0'>Ocurrió un error de conversión de datos.</p><p class='p-0 m-0'>Es posible que no se muestren algunas cosas. [<a href='" + window.noticiaSELECCIONADA.url + "' class='text-dark' target='_blank'>LINK</a>]</p>","warning",false);
+  }
+  userDATOS.noticiaBasica($("#pantalla"), window.noticiaSELECCIONADA, window.noticiaTABLA);
+  if(lugar <= 2) {
+    window.showNOTICIA = true;
+    setTimeout(function() {
+      $("#pantalla").removeClass("d-none");
+      $("#div_img").addClass("d-none").removeClass("d-flex");
+      $(".body").addClass("hidden-overflow");
+    },100);
+    return false;
+  }
+  window.showNOTICIA = false;//cierra el modal de forma simple, sin ningun cambio
+  if(parseInt(window.noticiaSELECCIONADA.estado) == 1) {
+    $("#pantalla").addClass("d-none");
+    $("#div_img").addClass("d-none").removeClass("d-flex");
+    userDATOS.notificacion(strings.noticia.abierta[1],"warning",false);
+    return false;
+  }
+  if(lugar == 3)
+    userDATOS.notificacion(strings.noticia.abriendo[0],"info",false);
+  else
+    userDATOS.notificacion(strings.noticia.abriendo[1],"info",false);
 
   $("#div_img").addClass("d-flex").removeClass("d-none");
   setTimeout(function() {
-    userDATOS.distribuidorNOTICIA_behavior(tipo,elim);
-  },500)
+    userDATOS.distribuidorNOTICIA_behavior(lugar,elim);
+  },100)
 }
-userDATOS.distribuidorNOTICIA_behavior = function(tipo,elim) {
-  let adata = tabla_noticia.rows( { selected: true } );
-  let data = adata.data()[0];
-  let html = $("#pantalla");
-  window.noticiaSELECCIONADA = userDATOS.busqueda(data.id,"noticia",false,"id",1,elim);
-  let medio = userDATOS.busqueda(window.noticiaSELECCIONADA.id_medio,"medio");
-  let noticiaTABLA = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticias",false,"id",1,elim);
-  let noticiaData = null;
-
-  try {
-    noticiaDATA = userDATOS.parseJSON(noticiaTABLA.data);
-  }
-  catch (e) {
-    noticiaDATA = {}
-    userDATOS.notificacion("<p class='p-0 m-0'>Ocurrió un error de conversión de datos.</p><p class='p-0 m-0'>Es posible que no se muestren algunas cosas. [<a href='" + window.noticiaSELECCIONADA.url + "' class='text-dark' target='_blank'>LINK</a>]</p>","warning",false)
-  }
-
-  // BUSCAR subtitulo e imagen
-  let body = window.noticiaSELECCIONADA.cuerpo;//buscar
-  let body_span = $(".body");
-  /**
-   * Muestro datos comunes de noticias.
-   * En una nota abierta simple, solo el cuerpo/titulo/subtitulo/imagen
-   * En una compuesta, lo anterior y atributos
-   */
-  if(parseInt(window.noticiaSELECCIONADA.elim)) {
-    html.append("<button id='btn_restaurar' style='top:0; left:0;' onclick='userDATOS.restaurarNoticia(this)' class='btn rounded-0 btn-warning position-fixed text-uppercase'>restaurar</button>")
-  }
-  html.find("*[data-tipo=\"titulo\"]").html("<div class='form-noticia'>" + window.noticiaSELECCIONADA.titulo + "</div>");
-  if(noticiaDATA.bajada !== undefined) {
-    html.find("*[data-tipo=\"subtitulo\"]").parent().removeClass("d-none");
-    html.find("*[data-tipo=\"subtitulo\"]").html("<div class='form-noticia'>" + noticiaDATA.bajada + "</div>");
-  } else html.find("*[data-tipo=\"subtitulo\"]").parent().addClass("d-none");
-  if(noticiaDATA.imagen !== undefined) {
-    html.find("*[data-tipo=\"imagen\"]").parent().removeClass("d-none");
-    html.find("*[data-tipo=\"imagen\"]").attr("src",noticiaDATA.imagen);
-  } else html.find("*[data-tipo=\"imagen\"]").parent().addClass("d-none");
-
-  $("#noticia-detalle").removeClass("d-none");
-  datoNoticia = "";
-  datoNoticia += "<p class='m-0 text-center'>" +
-            "<span class='border-right pr-3 mr-3'>" + medio.medio + "</span>" +
-              "<a target='_blank' class='text-truncate w-50' href='" + window.noticiaSELECCIONADA.url + "'>" + window.noticiaSELECCIONADA.url + "<i class=\"fas ml-2 fa-external-link-alt\"></i></a>" +
-              "<span class='border-left pl-3 ml-3'>" + window.noticiaSELECCIONADA.fecha + "</span></p>"
-  $("#noticia-detalle").find("> div div").html(datoNoticia);
-  proceso = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"proceso",false,"id_noticia",1,elim);
-  if(proceso !== null) {
-    console.log(proceso);
-    body = proceso.cuerpo_noticia;
-  }
+/**
+ * Función para agregar elementos básicos de una noticia
+ */
+userDATOS.noticiaBasica = function(target, noticia, noticiaDATA) {
+  let body = noticia.cuerpo;
+  let medio = null;
+  userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_medio,"tabla":"medio"}, function(d) {
+    medio = d;
+  });
   var SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
   while (SCRIPT_REGEX.test(body)) body = body.replace(SCRIPT_REGEX, "");
-  html.find("*[data-tipo=\"cuerpo\"]").html(body);
+  target.find("*[data-tipo=\"cuerpo\"]").html(body);
+
   $('#tipo_cuerpo').summernote({
     toolbar: false,
     airMode: false,
     dialogsInBody: false,
-    popover: {
-      image: [],
-      link: [],
-      air: []
-    }
+    popover: { image: [], link: [], air: [] }
   });
   $('#tipo_cuerpo').summernote('disable');
-  if(parseInt(tipo) || parseInt(window.noticiaSELECCIONADA.estado) == 2) {
-    switch(parseInt(window.noticiaSELECCIONADA.estado)) {
-      case 0://normal
-        console.log("PROCESANDO NOTICIA");
-        relevo = userDATOS.busqueda(window.noticiaSELECCIONADA.id,"noticiarelevo",false,"did_noticia",0,elim)
+  
+  target.find("*[data-tipo=\"titulo\"]").html("<div class='form-noticia'>" + noticia.titulo + "</div>");
+  if(noticiaDATA.bajada !== undefined) {
+    target.find("*[data-tipo=\"subtitulo\"]").parent().removeClass("d-none");
+    target.find("*[data-tipo=\"subtitulo\"]").html("<div class='form-noticia'>" + noticiaDATA.bajada + "</div>");
+  } else target.find("*[data-tipo=\"subtitulo\"]").parent().addClass("d-none");
+  if(noticiaDATA.data.imagen !== undefined) {
+    target.find("*[data-tipo=\"imagen\"]").parent().removeClass("d-none");
+    target.find("*[data-tipo=\"imagen\"]").attr("src",noticiaDATA.data.imagen);
+  } else target.find("*[data-tipo=\"imagen\"]").parent().addClass("d-none");
+
+  $("#noticia-detalle").removeClass("d-none");
+  datoNoticia = "";
+  datoNoticia += "<p class='m-0 text-center'>";
+    datoNoticia += "<span class='border-right pr-3 mr-3'>" + medio.medio + "</span>";
+    if(window.noticiaSELECCIONADA.url !== null)
+      datoNoticia += "<a target='_blank' class='text-truncate w-50' href='" + window.noticiaSELECCIONADA.url + "'>" + window.noticiaSELECCIONADA.url + "<i class=\"fas ml-2 fa-external-link-alt\"></i></a>";
+    else datoNoticia += "-";
+    datoNoticia += "<span class='border-left pl-3 ml-3'>" + window.noticiaSELECCIONADA.fecha + "</span>";
+  datoNoticia += "</p>"
+  $("#noticia-detalle").find("> div div").html(datoNoticia);
+}
+userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
+  let html = $("#pantalla");
+  let noticiaData = null;
+  let medio = null;
+  userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_medio,"tabla":"medio"}, function(d) {
+    medio = d;
+  });
+
+  let body_span = $(".body");
+  if(parseInt(window.noticiaSELECCIONADA.elim)) {
+    html.append("<button id='btn_restaurar' style='top:0; left:0;' onclick='userDATOS.restaurarNoticia(this)' class='btn rounded-0 btn-warning position-fixed text-uppercase'>restaurar</button>")
+  }
+  
+  let periodista = null;
+  userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia,function(d) {
+    periodista = d;
+  });
+  switch(lugar) {
+    case 3://normal
+      console.log("PROCESANDO NOTICIA");
+      userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id,"tabla":"noticiarelevo","column":"did_noticia","retorno":0,"elim":elim}, function(relevo) {
         for(var i in relevo) {
           if(parseInt(relevo[i]["id_cliente"]) == 0) continue
           if(window.ARR_cliente === undefined) window.ARR_cliente = {}
-        	if(window.ARR_cliente[relevo[i]["id_cliente"]] === undefined) window.ARR_cliente[relevo[i]["id_cliente"]] = {}
+          if(window.ARR_cliente[relevo[i]["id_cliente"]] === undefined) window.ARR_cliente[relevo[i]["id_cliente"]] = {}
 
-        	window.ARR_cliente[relevo[i]["id_cliente"]]["valoracion"] = null
-        	window.ARR_cliente[relevo[i]["id_cliente"]]["tema"] = null
+          window.ARR_cliente[relevo[i]["id_cliente"]]["valoracion"] = null
+          window.ARR_cliente[relevo[i]["id_cliente"]]["tema"] = null
         }
-        userDATOS.showNOTICIA(window.noticiaSELECCIONADA,noticiaDATA,medio,elim);
-      break;
-      case 1://abierto
-        console.log("NOTICIA ABIERTA");
-        window.showNOTICIA = true;
-        userDATOS.notificacion("<strong>Noticia</strong> en proceso. No se puede abrir.",false);
-      break;
-      case 2://procesada
-        console.log("NOTICIA PROCESADA");
-        let proceso = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia",1,elim);
-        let actores = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasactor",false,"id_noticia",0,elim);
-        let clientes = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiascliente",false,"id_noticia",0,elim);
-        let instituciones = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasinstitucion",false,"id_noticia",0,elim);
-        window.ARR_actor = {};
-        window.ARR_cliente = {};
-        window.ARR_institucion = {};
-        for(var i in instituciones) window.ARR_institucion[instituciones[i]["id_institucion"]] = userDATOS.parseJSON(instituciones[i]["data"]);
-        for(var i in clientes) {
-          if(window.ARR_cliente[clientes[i]["id_cliente"]] === undefined) window.ARR_cliente[clientes[i]["id_cliente"]] = {}
-          if(window.ARR_cliente[clientes[i]["id_cliente"]]["valoracion"] === undefined) window.ARR_cliente[clientes[i]["id_cliente"]]["valoracion"]
-          if(window.ARR_cliente[clientes[i]["id_cliente"]]["tema"] === undefined) window.ARR_cliente[clientes[i]["id_cliente"]]["tema"]
-          window.ARR_cliente[clientes[i]["id_cliente"]]["valoracion"] = userDATOS.parseJSON(clientes[i]["valoracion"]);
-          window.ARR_cliente[clientes[i]["id_cliente"]]["tema"] = userDATOS.parseJSON(clientes[i]["tema"]);
-        }
-        for(var i in actores) window.ARR_actor[actores[i]["id_actor"]] = userDATOS.parseJSON(actores[i]["data"]);
+      },true);
+      
+      userDATOS.showNOTICIA(window.noticiaSELECCIONADA);
+      $('periodista_noticia').removeClass('d-none');
+      $("#url_noticia").find(".text-truncate").html("<a href='" + window.noticiaSELECCIONADA.url + "' target='blank'>" + window.noticiaSELECCIONADA.url + "</a>");
+
+      if(periodista === null) autor = "SIN IDENTIFICAR";
+      else autor = periodista.nombre;
+      $("#periodista_noticia").find(".text-truncate").html("<p class='m-0 text-uppercase'>" + autor + "</p>");
+
+      $("#select_periodista").closest(".input-group").addClass("d-none");
+      $("#select_periodista").closest(".input-group").removeClass("d-flex");
+
+      if(periodista !== null) {
+        $("#select_periodista").val(periodista.id).trigger("change");
+      }
+
+      if(window.noticiaSELECCIONADA.video !== null) {
+        $("#video_noticia").removeClass("d-none");
+        $("#video_noticia").find("div").html("<a href='" + window.noticiaSELECCIONADA.video + "' target='blank'>" + window.noticiaSELECCIONADA.video + "</a>")
+      } else {
+        $("#video_noticia").addClass("d-none");
+        $("#video_noticia").find("div").html("")
+      }
+
+      $("#select_medio").val(medio.id).trigger("change");
+      $("#select_medio").attr("disabled",true);
+
+      html.find(".select__2").select2({width: 'resolve'});
+      $('#tipo_cuerpo').summernote('disable');
+      window.showNOTICIA = true;
+      //VERIFICAR si detecto periodista
+      $("#periodista_noticia").addClass("d-none");
+      $("#select_periodista").closest(".input-group").removeClass("d-none").addClass("d-flex")
+
+      if(window.noticiaSELECCIONADA.id_seccion == 0) {
+        $("#select_seccion").val(0).trigger("change");
+        $("#select_seccion").closest(".input-group").removeClass("d-none").addClass("d-flex")
+      }
+
+      if(window.noticiaSELECCIONADA.video === null) {
+        $("#video_noticia").removeClass("d-none");
+        $("#video_noticia").find("div").html("<input placeholder='Link de video' name='frm_video' type='text' class='form-control' />");
+      }
+      if(window.ARR_cliente !== undefined) {
+        userDATOS.notificacion("Agregando <strong class='text-uppercase'>" + (Object.keys(window.ARR_cliente).length == 1 ? "unidad de análisis" : "unidades de análisis") + "</strong>","info",false);
+      }
+      $("#fecha_noticia").addClass("d-none");
+    break;
+    case 4://procesada
+      console.log("NOTICIA PROCESADA");
+      
+      $("#select_medio").val(window.noticiaSELECCIONADA.id_medio).trigger("change");
+      userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia","retorno":1,"elim":elim}, function(proceso) {
         let procesoDATA = userDATOS.parseJSON(proceso.data);
-        $("#select_medio").val(window.noticiaSELECCIONADA.id_medio).trigger("change")
         setTimeout(function() {
           for(var i in procesoDATA) {
             if($("select#" + i).length) {
@@ -1922,17 +2066,6 @@ userDATOS.distribuidorNOTICIA_behavior = function(tipo,elim) {
             }
           }
         },500);
-
-        //-------------
-        if(parseInt(window.usuario.nivel) <= 3)//si es administrador y relevo, permito editar
-          $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-success position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
-        else {//Si es monitor, verificar que él haya hecho el proceso
-          u = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia",1,elim)
-          if(u !== null) {
-            if(u.id_usuario == window.window.user_id)
-              $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-primary position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
-          }
-        }
         ////
         ARR_attr = userDATOS.parseJSON(procesoDATA.noticiaATTR);
         for(var i in ARR_attr) {
@@ -1940,82 +2073,107 @@ userDATOS.distribuidorNOTICIA_behavior = function(tipo,elim) {
           if(window.ARR_atributos === undefined) window.ARR_atributos = [];
           if(window.ARR_atributos[ARR_attr[i]] === undefined) window.ARR_atributos[ARR_attr[i]] = "";
         }
-        userDATOS.showNOTICIA(window.noticiaSELECCIONADA,noticiaDATA,medio,elim);
-      break;
-    }
-  } else {
-    // $("html").scrollTop(0);
-    window.showNOTICIA = true;
-    setTimeout(function() {
-      html.removeClass("d-none");
-      $("#div_img").addClass("d-none").removeClass("d-flex")
-      body_span.addClass("hidden-overflow");
-    },1000)
+      },true);
+      let actores = null;
+      userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasactor","column":"id_noticia","retorno":0,"elim":elim}, function(actores) {
+        window.ARR_actor = {};
+        for(var i in actores) window.ARR_actor[actores[i]["id_actor"]] = userDATOS.parseJSON(actores[i]["data"]);
+      });
+      let clientes = null;
+      userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiascliente","column":"id_noticia","retorno":0,"elim":elim}, function(clientes) {
+        window.ARR_cliente = {};
+        for(var i in clientes) {
+          if(window.ARR_cliente[clientes[i]["id_cliente"]] === undefined) window.ARR_cliente[clientes[i]["id_cliente"]] = {}
+          if(window.ARR_cliente[clientes[i]["id_cliente"]]["valoracion"] === undefined) window.ARR_cliente[clientes[i]["id_cliente"]]["valoracion"]
+          if(window.ARR_cliente[clientes[i]["id_cliente"]]["tema"] === undefined) window.ARR_cliente[clientes[i]["id_cliente"]]["tema"]
+          window.ARR_cliente[clientes[i]["id_cliente"]]["valoracion"] = userDATOS.parseJSON(clientes[i]["valoracion"]);
+          window.ARR_cliente[clientes[i]["id_cliente"]]["tema"] = userDATOS.parseJSON(clientes[i]["tema"]);
+        }
+      }, true);
+      userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasinstitucion","column":"id_noticia","retorno":0,"elim":elim}, function(instituciones) {
+        window.ARR_institucion = {};
+        for(var i in instituciones) window.ARR_institucion[instituciones[i]["id_institucion"]] = userDATOS.parseJSON(instituciones[i]["data"]);
+      }, true);
+      
+      window.showNOTICIA = false;
+      //-------------
+      if(parseInt(window.usuario.nivel) <= 3)//si es administrador y relevo, permito editar
+        $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-success position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
+      else {//Si es monitor, verificar que él haya hecho el proceso
+        u = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia",1,elim)
+        if(u !== null) {
+          if(u.id_usuario == window.window.user_id)
+            $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-primary position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
+        }
+      }
+      
+      userDATOS.showNOTICIA(window.noticiaSELECCIONADA);
+
+      userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia","elim":elim}, function(proceso) {
+        if(proceso !== null) {
+          body = proceso.cuerpo_noticia;
+          var SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
+          while (SCRIPT_REGEX.test(body)) body = body.replace(SCRIPT_REGEX, "");
+          $('#tipo_cuerpo').summernote('destroy');
+          html.find("*[data-tipo=\"cuerpo\"]").html(body);
+          $('#tipo_cuerpo').summernote({
+            toolbar: false,
+            airMode: false,
+            dialogsInBody: false,
+            popover: { image: [], link: [], air: [] }
+          });
+          $('#tipo_cuerpo').summernote('disable');
+        }
+      },true);
+
+      $('periodista_noticia').removeClass('d-none');
+      if(window.noticiaSELECCIONADA.url === null)
+        $("#url_noticia").find(".text-truncate").html("SIN IDENTIFICAR");
+      else
+        $("#url_noticia").find(".text-truncate").html("<a href='" + window.noticiaSELECCIONADA.url + "' target='blank'>" + window.noticiaSELECCIONADA.url + "</a>");
+
+      if(periodista === null) autor = "SIN IDENTIFICAR";
+      else autor = periodista.nombre;
+      $("#periodista_noticia").find(".text-truncate").html("<p class='m-0 text-uppercase'>" + autor + "</p>");
+
+      $("#select_periodista").closest(".input-group").addClass("d-none");
+      $("#select_periodista").closest(".input-group").removeClass("d-flex");
+
+      if(periodista !== null) {
+        $("#select_periodista").val(periodista.id).trigger("change");
+      }
+
+      if(window.noticiaSELECCIONADA.video !== null) {
+        $("#video_noticia").removeClass("d-none");
+        $("#video_noticia").find("div").html("<a href='" + window.noticiaSELECCIONADA.video + "' target='blank'>" + window.noticiaSELECCIONADA.video + "</a>")
+      } else {
+        $("#video_noticia").addClass("d-none");
+        $("#video_noticia").find("div").html("")
+      }
+
+      $("#select_medio").val(medio.id).trigger("change");
+      $("#select_medio").attr("disabled",true);
+
+      html.find(".select__2").select2({width: 'resolve'});
+      $('#tipo_cuerpo').summernote('disable');
+      html.find(".select__2").select2();
+    break;
   }
 }
 /**
  * Función para mostrar modal personalizado
  *@param data ELEMENTO: selección de row de DATATABLE
  */
-userDATOS.showNOTICIA = function(noticia,noticiaDATA,medio,elim = 0) {
+userDATOS.showNOTICIA = function(noticia) {
 	//let adata = tabla.rows( { selected: true } );
 	//let data = adata.data()[0];
   // $("html").scrollTop(0)
   let autor = "";
   let body_span = $(".body");
   let html = $("#pantalla");
-  let periodista = userDATOS.busquedaPeriodista(noticia.id_noticia);
-
-  $('periodista_noticia').removeClass('d-none');
-  $("#url_noticia").find(".text-truncate").html("<a href='" + noticia.url + "' target='blank'>" + noticia.url + "</a>");
-
-  if(periodista === null) autor = "SIN IDENTIFICAR";
-  else autor = periodista.nombre;
-  $("#periodista_noticia").find(".text-truncate").html("<p class='m-0 text-uppercase'>" + autor + "</p>");
-
-  $("#select_periodista").closest(".input-group").addClass("d-none");
-  $("#select_periodista").closest(".input-group").removeClass("d-flex");
-
-  if(periodista !== null) {
-    $("#select_periodista").val(periodista.id).trigger("change");
-  }
-
-  if(noticia.video !== null) {
-    $("#video_noticia").removeClass("d-none");
-    $("#video_noticia").find("div").html("<a href='" + noticia.video + "' target='blank'>" + noticia.video + "</a>")
-  } else {
-    $("#video_noticia").addClass("d-none");
-    $("#video_noticia").find("div").html("")
-  }
-
-  $("#select_medio").val(medio.id).trigger("change");
-  $("#select_medio").attr("disabled",true);
-
-  html.find(".select__2").select2({width: 'resolve'});
-  $('#tipo_cuerpo').summernote('disable');
-  html.find(".select__2").select2();
   switch(parseInt(noticia.estado)) {
     case 0:
-      window.showNOTICIA = true;
-      //VERIFICAR si detecto periodista
-      $("#periodista_noticia").addClass("d-none");
-      $("#select_periodista").closest(".input-group").removeClass("d-none").addClass("d-flex")
-
-      if(noticia.id_seccion == 0) {
-        $("#select_seccion").val(0).trigger("change");
-        $("#select_seccion").closest(".input-group").removeClass("d-none").addClass("d-flex")
-      }
-
-      if(noticia.video === null) {
-        $("#video_noticia").removeClass("d-none");
-        $("#video_noticia").find("div").html("<input placeholder='Link de video' name='frm_video' type='text' class='form-control' />");
-      }
-      userDATOS.change(noticia.id,"noticia","estado",1);//CAMBIO estado
-      //Si posee sección, lo saco de la vista
-      if(window.ARR_cliente !== undefined) {
-        userDATOS.notificacion("Agregando <strong class='text-uppercase'>" + (Object.keys(window.ARR_cliente).length == 1 ? "unidad de análisis" : "unidades de análisis") + "</strong>","info",false);
-      }
-      $("#fecha_noticia").addClass("d-none");
+      
     break;
     case 2:
       window.showNOTICIA = false;//aca
@@ -2053,12 +2211,20 @@ userDATOS.procesar_noticia = function(callback) {
   setTimeout(function() {
     let CUERPO_noticia = $(".note-editable");
     let OBJ = {};
+    let actores = null;
+    userDATOS.busquedaTabla("actor",function(d) {
+      actores = d;
+    });
+    let instituciones = null;
+    userDATOS.busquedaTabla("attr_institucion",function(d) {
+      instituciones = d;
+    });
     OBJ["actores"] = undefined;
     OBJ["instituciones"] = undefined;
     if(!CUERPO_noticia.find("iframe").length) {
-      for(var i in window.variables["actor"].resultado) {
+      for(var i in actores) {
         flag = false;
-        nombre = window.variables["actor"].resultado[i]["nombre"];
+        nombre = actores[i]["nombre"];
         if(CUERPO_noticia.buscar(nombre)) {//BUSQUEDA de nombre completo
           console.log("NOMBRE completo: " + nombre);
           flag = true;
@@ -2075,7 +2241,7 @@ userDATOS.procesar_noticia = function(callback) {
             }
           }
         }
-        let attr = eval("(" + window.variables["actor"].resultado[i]["atributos"] + ")");//PARSEO atributos del actor
+        let attr = eval("(" + actores[i]["atributos"] + ")");//PARSEO atributos del actor
         for(var i_attr in attr) {
           if(CUERPO_noticia.buscar(attr[i_attr])) {
             flag = true;
@@ -2089,17 +2255,17 @@ userDATOS.procesar_noticia = function(callback) {
         }
         if(flag) {
           if(window.ARR_actor === undefined) window.ARR_actor = {};
-          if(window.ARR_actor[window.variables["actor"].resultado[i]["id"]] === undefined)
-            window.ARR_actor[window.variables["actor"].resultado[i]["id"]] = {"frm_img": "0", "frm_emisor": "0", "frm_descripcion": ""};
+          if(window.ARR_actor[actores[i]["id"]] === undefined)
+            window.ARR_actor[actores[i]["id"]] = {"frm_img": "0", "frm_emisor": "0", "frm_descripcion": ""};
         }
       }
-      for(var i in window.variables["attr_institucion"].resultado) {
-        if(CUERPO_noticia.buscar(window.variables["attr_institucion"].resultado[i]["nombre"])) {
-          CUERPO_noticia.resaltar(window.variables["attr_institucion"].resultado[i]["nombre"],"resaltarCLASS_ins");
+      for(var i in instituciones) {
+        if(CUERPO_noticia.buscar(instituciones[i]["nombre"])) {
+          CUERPO_noticia.resaltar(instituciones[i]["nombre"],"resaltarCLASS_ins");
 
           if(window.ARR_institucion === undefined) window.ARR_institucion = {};
-          if(window.ARR_institucion[window.variables["attr_institucion"].resultado[i]["id"]] === undefined)
-            window.ARR_institucion[window.variables["attr_institucion"].resultado[i]["id"]] = {"frm_emisor": "0", "frm_descripcion": ""};
+          if(window.ARR_institucion[instituciones[i]["id"]] === undefined)
+            window.ARR_institucion[instituciones[i]["id"]] = {"frm_emisor": "0", "frm_descripcion": ""};
         }
       }
     }
@@ -2132,23 +2298,25 @@ userDATOS.pantalla_cerrarSIMPLE = function() {
   $("#pantalla").find("*[data-tipo=\"url\"]").html("");
 }
 userDATOS.pantalla_cerrar = function() {
-  if(window.showNOTICIA) {
+  if(window.showNOTICIA || window.noticiaSELECCIONADAeditar !== undefined) {
     if(window.noticiaSELECCIONADA === undefined) {
       $.MessageBox({
-    		buttonDone  : "Si",
-    		buttonFail  : "No",
-    		message   : "¿Está seguro de cerrar?<br><small>No se guardará la noticia</small>"
+    		buttonDone  : strings.btn.si,
+    		buttonFail  : strings.btn.no,
+    		message   : strings.noticia.cerrar[0]
     	}).done(function(){
         userDATOS.pantalla_OFF();
     	}).fail(function(){});
     } else {
       $.MessageBox({
-    		buttonDone  : "Si",
-    		buttonFail  : "No",
-    		message   : "¿Está seguro de cerrar?<br><small>No se procesará la noticia</small>"
+    		buttonDone  : strings.btn.si,
+    		buttonFail  : strings.btn.no,
+    		message   : strings.noticia.cerrar[1]
     	}).done(function(){
-        userDATOS.change(noticiaSELECCIONADA.id,"noticia","estado",0);//CAMBIO estado
-
+        if(window.noticiaSELECCIONADAeditar === undefined)
+          userDATOS.change(noticiaSELECCIONADA.id,"noticia","estado",0, true);//CAMBIO estado
+        else
+          userDATOS.change(noticiaSELECCIONADA.id,"noticia","estado",2, true);//CAMBIO estado para noticias procesadas
         userDATOS.pantalla_OFF();
     	}).fail(function(){});
     }
@@ -2165,9 +2333,9 @@ userDATOS.pantalla_cerrar = function() {
       if(flag_variables) userDATOS.pantalla_OFF();
       else {
         $.MessageBox({
-      		buttonDone  : "Si",
-      		buttonFail  : "No",
-      		message   : "¿Está seguro de cerrar?<br><small>Perderá los avances</small>"
+      		buttonDone  : strings.btn.si,
+      		buttonFail  : strings.btn.no,
+      		message   : strings.noticia.cerrar[2]
       	}).done(function(){
           userDATOS.pantalla_OFF();
         });
@@ -2218,8 +2386,6 @@ userDATOS.pantalla_OFF = function(reload = 0) {
   $("#pantalla").find("select.select__2").val("").trigger("change");
   $("#pantalla").find("select.select__2").removeAttr("disabled")
   $("#pantalla").find("select.select__2").select2();
-
-  if(reload) location.reload(true)
 }
 
 userDATOS.pantalla_ON = function() {
@@ -2268,22 +2434,21 @@ userDATOS.pantalla_ON = function() {
 
 //--- USUARIO
 userDATOS.bloquearUsuario = function(tabla,OBJ_pyrus) {
-	let adata = tabla.rows( { selected: true } );
-	let data = adata.data()[0];
-	let id = data[0];
-  let o = userDATOS.busqueda(id,"usuario");
-  let str = (o.activo == "1" ? "¿Está seguro de bloquear a <strong>" + data[1] + "</strong>?" : "¿Está seguro de desbloquear a <strong>" + data[1] + "</strong>?");
-
+	let row = tabla_0.rows( { selected: true } ).data()[0];
+  let o = null;
+  userDATOS.busqueda({"value": row.id,"tabla":"usuario"},function(d) {
+    o = d;
+  });
   $.MessageBox({
-    buttonDone  : "Si",
-    buttonFail  : "No",
-    message   : str,
+    buttonDone  : strings.btn.si,
+    buttonFail  : strings.btn.no,
+    message   : strings.usuario.cambio(o.activo,row.user),
   }).done(function(){
-    userDATOS.log(window.user_id,"Cambio de Estado de Usuario: " + o.user,0,id,"usuario");
+    userDATOS.log(window.user_id,"Cambio de Estado de Usuario: " + o.user,0,o.id,"usuario");
     o.activo = (o.activo == "1" ? "0" : "1");
     OBJ_pyrus.guardar_1(o);
-    OBJ_pyrus.reload();
-    tabla.row( $(".selected").find("td:last-child").text((o.activo == "1" ? "Activo" : "Bloqueado")) ).draw();
+    
+    tabla.draw();
   });
 }
 // ---------------> VISTA PROCESAR Y PROCESADAS
@@ -2333,13 +2498,13 @@ userDATOS.actorUnico = function(e,i) {
       table.find("td:nth-child(2) select").select2();
     }
     tr.find("td:last-child() input").removeAttr("disabled");
-    tr.find("td:last-child() .btn-group label").removeClass("bg-light");
+    tr.find("td:last-child() .btn-group label").removeClass("bg-light disabled");
     tr.find("td:last-child() .btn-group label:first-child()").addClass("bg-success");
     tr.find("td:last-child() .btn-group label:nth-child(2)").addClass("bg-warning");
     tr.find("td:last-child() .btn-group label:last-child()").addClass("bg-danger");
   } else {
     tr.find("td:last-child() input").attr("disabled",true);
-    tr.find("td:last-child() .btn-group label").addClass("bg-light");
+    tr.find("td:last-child() .btn-group label").addClass("bg-light disabled");
     tr.find("td:last-child() .btn-group label:first-child()").removeClass("bg-success");
     tr.find("td:last-child() .btn-group label:nth-child(2)").removeClass("bg-warning");
     tr.find("td:last-child() .btn-group label:last-child()").removeClass("bg-danger");
@@ -2385,13 +2550,13 @@ userDATOS.institucionUnico = function(e) {
       }
     }
     tr.find("td:last-child() input").removeAttr("disabled");
-    tr.find("td:last-child() .btn-group label").removeClass("bg-light");
+    tr.find("td:last-child() .btn-group label").removeClass("bg-light disabled");
     tr.find("td:last-child() .btn-group label:first-child()").addClass("bg-success");
     tr.find("td:last-child() .btn-group label:nth-child(2)").addClass("bg-warning");
     tr.find("td:last-child() .btn-group label:last-child()").addClass("bg-danger");
   } else {
     tr.find("td:last-child() input").attr("disabled",true);
-    tr.find("td:last-child() .btn-group label").addClass("bg-light");
+    tr.find("td:last-child() .btn-group label").addClass("bg-light disabled");
     tr.find("td:last-child() .btn-group label:first-child()").removeClass("bg-success");
     tr.find("td:last-child() .btn-group label:nth-child(2)").removeClass("bg-warning");
     tr.find("td:last-child() .btn-group label:last-child()").removeClass("bg-danger");
@@ -2417,7 +2582,7 @@ userDATOS.temaUnico = function(e,id) {
   let value = select.val();
   if(value != "") {
     tr.find("td:last-child() input").removeAttr("disabled");
-    tr.find("td:last-child() label").removeClass("bg-light");
+    tr.find("td:last-child() label").removeClass("bg-light disabled");
     tr.find("td:last-child() label:first-child()").addClass("bg-success");
     tr.find("td:last-child() label:nth-child(2)").addClass("bg-warning");
     tr.find("td:last-child() label:last-child()").addClass("bg-danger");
@@ -2441,7 +2606,7 @@ userDATOS.temaUnico = function(e,id) {
     }
   } else {
     tr.find("td:last-child() input").attr("disabled",true);
-    tr.find("td:last-child() label").addClass("bg-light");
+    tr.find("td:last-child() label").addClass("bg-light disabled");
     tr.find("td:last-child() label:first-child()").removeClass("bg-success");
     tr.find("td:last-child() label:nth-child(2)").removeClass("bg-warning");
     tr.find("td:last-child() label:last-child()").removeClass("bg-danger");
@@ -2627,9 +2792,9 @@ userDATOS.removeActor = function(e) {
     return false;
   }
   $.MessageBox({
-    buttonDone  : "Si",
-    buttonFail  : "No",
-    message   : "¿Está seguro de eliminar al <strong>Actor</strong>?"
+    buttonDone  : strings.btn.si,
+    buttonFail  : strings.btn.no,
+    message   : strings.eliminar.actor
   }).done(function(){
     if(value != "") {
       delete window.ARR_actor[value];
@@ -2656,9 +2821,9 @@ userDATOS.removeInstitucion = function(e) {
     return false;
   }
   $.MessageBox({
-    buttonDone  : "Si",
-    buttonFail  : "No",
-    message   : "¿Está seguro de eliminar la <strong>Institución</strong>?"
+    buttonDone  : strings.btn.si,
+    buttonFail  : strings.btn.no,
+    message   : strings.eliminar.institucion
   }).done(function(){
     if(value != "") {
       delete window.ARR_institucion[value];
@@ -2687,9 +2852,9 @@ userDATOS.removeUnidad = function(e) {
     return false;
   }
   $.MessageBox({
-    buttonDone  : "Si",
-    buttonFail  : "No",
-    message   : "¿Está seguro de eliminar la información de la <strong>Unidad o Agenda</strong>?"
+    buttonDone  : strings.btn.si,
+    buttonFail  : strings.btn.no,
+    message   : strings.eliminar.unidad
   }).done(function(){
     if(value != "") {
       delete window.ARR_cliente[value];
@@ -2720,9 +2885,9 @@ userDATOS.removeTemas = function(e,id) {
     return false;
   }
   $.MessageBox({
-    buttonDone  : "Si",
-    buttonFail  : "No",
-    message   : "¿Está seguro de eliminar el tema de la <strong>Unidad o Agenda</strong>?"
+    buttonDone  : strings.btn.si,
+    buttonFail  : strings.btn.no,
+    message   : strings.eliminar.tema
   }).done(function(){
     delete window.ARR_cliente[id]["tema"]["frm_tema_" + value]
     table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
@@ -2758,8 +2923,13 @@ userDATOS.closeUnidad = function(e) {
       if(userDATOS.validar("#accordionExample",false,false) == 1 && boolTemas) bool = true;
       else bool = false;
     }
+    if(window.vista == "procesadas") {
+      if(window.noticiaSELECCIONADAeditar === undefined)
+        bool = true
+    }
     if( bool ) {
-      button.closest("tr").find("td:nth-child(2) select").removeAttr("disabled");
+      if(window.vista == "procesar" || (window.vista == "procesadas" && (window.noticiaSELECCIONADAeditar !== undefined)))
+        button.closest("tr").find("td:nth-child(2) select").removeAttr("disabled");
       button.closest("tr").find("td:nth-child(2) select").select2();
       let id = button.closest("tr").find("td:nth-child(2) select").val();
 
@@ -2826,14 +2996,15 @@ userDATOS.updateUnidad = function(e) {
   let valoracion = null;
 
   window.limpiarUnidad = undefined;
-
-  if(table.find("select:disabled").length) {
-    table.find("select:disabled").closest("tr").addClass("bg-warning");
-    userDATOS.notificacion("Cierre primero la unidad / agenda o limpie el elemento");
-    setTimeout(function() {
-      table.find("select:disabled").closest("tr").removeClass("bg-warning");
-    },1500)
-    return false;
+  if(window.vista == "procesar" || (window.vista == "procesada" && window.noticiaSELECCIONADAeditar !== undefined)) {
+    if(table.find("select:disabled").length) {
+      table.find("select:disabled").closest("tr").addClass("bg-warning");
+      userDATOS.notificacion("Cierre primero la unidad / agenda o limpie el elemento");
+      setTimeout(function() {
+        table.find("select:disabled").closest("tr").removeClass("bg-warning");
+      },1500)
+      return false;
+    }
   }
 
   button.closest("tr").find("td:nth-child(2) select").attr("disabled",true);
@@ -2842,7 +3013,10 @@ userDATOS.updateUnidad = function(e) {
   html = "";btn = "";
   if(window.ARR_cliente[id]["tema"] === null) window.ARR_cliente[id]["tema"] = {}
   if(window.ARR_cliente[id]["valoracion"] === null) window.ARR_cliente[id]["valoracion"] = {}
-  let calificacionesBD = userDATOS.busquedaTabla("calificacion");
+  let calificacionesBD = null;
+  userDATOS.busquedaTabla("calificacion",function(d) {
+    calificacionesBD = d;
+  });
   calificaciones = {}
   for(var i in calificacionesBD) {
   	c = calificacionesBD[i];
@@ -2853,6 +3027,8 @@ userDATOS.updateUnidad = function(e) {
   for(var i in window.ARR_cliente[id]["valoracion"]) {
     if(valoracion === null) valoracion = 0;
     valoracion += window.ARR_cliente[id]["valoracion"][i]
+    if(window.ARR_cliente[id]["valoracion"][i] === null)
+      valoracion = null
   }
   html += '<div class="w-100">';
     html += '<div class="accordion" id="accordionExample">';
@@ -2950,14 +3126,17 @@ userDATOS.updateUnidad = function(e) {
       /** ELEMENTOS DE TEMAS */
       selectTemas = "";
       selectTemas += "<option value=''></option>";
-      let temas = userDATOS.busquedaTabla("attr_temas");
+      let temas = null;
+      userDATOS.busquedaTabla("attr_temas",function(d) {
+        temas = d;
+      });
       for(var i in temas)
         selectTemas += "<option value='" + i + "'>" + temas[i]["nombre"] + "</option>";
       selectTemas += "</select>";
       option = '<div class="btn-group" role="group" aria-label="Basic example">'
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="1" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="0" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="-1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-1" value="-1" /></label>';
       option += '</div>';
 
       html += '<div class="card">';
@@ -2967,17 +3146,24 @@ userDATOS.updateUnidad = function(e) {
 
         html += '<div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">';
           html += '<div class="card-body p-0">';
-            html += "<button type='button' class='btn d-block mx-auto my-2 btn-primary text-uppercase' onclick='userDATOS.addTema(" + id + ")'>nuevo tema</button>";
+            if(window.vista == "procesar" || (window.vista == "procesadas" && window.noticiaSELECCIONADAeditar !== undefined))
+              html += "<button type='button' class='btn d-block mx-auto my-2 btn-primary text-uppercase' onclick='userDATOS.addTema(" + id + ")'>nuevo tema</button>";
             html += "<table class='table m-0' id='modal-table-temas'>";
               html += "<tbody>";
                 html += "<tr class='d-none'>" +
-                    '<td><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeTemas(this,' + id + ');"><i class="fas fa-times"></i></button></td>' +
-                    '<td class="px-0 w-75">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE TEMA' required='true' onchange='userDATOS.temaUnico(this," + id + ");' name='frm_tema-0'>" + selectTemas + '</td>' +
-                    '<td>' + option + '</td>';
+                    '<td ' + ((window.vista == "procesadas" && window.noticiaSELECCIONADAeditar === undefined) ? "class='d-none'" : "") + '><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeTemas(this,' + id + ');"><i class="fas fa-times"></i></button></td>' +
+                    '<td class="' + (window.vista == "procesar" ? "px-0" : ((window.vista == "procesadas" && window.noticiaSELECCIONADAeditar === undefined) ? "pr-0" : "px-0")) + ' w-75">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE TEMA' required='true' onchange='userDATOS.temaUnico(this," + id + ");' name='frm_tema-0'>" + selectTemas + '</td>' +
+                    '<td>';
+                    html += '<div class="btn-group" role="group" aria-label="Basic example">'
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-0" value="1" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-0" value="0" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionTema(this);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                    html += '</div>';
+                html += '</td>';
                 html += "</tr>";
                 html += "<tr>" +
-                    '<td><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeTemas(this,' + id + ');"><i class="fas fa-times"></i></button></td>' +
-                    '<td class="px-0 w-75">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE TEMA' required='true' onchange='userDATOS.temaUnico(this," + id + ");' name='frm_tema-1'>" + selectTemas + '</td>' +
+                    '<td ' + ((window.vista == "procesadas" && window.noticiaSELECCIONADAeditar === undefined) ? "class='d-none'" : "") + '><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeTemas(this,' + id + ');"><i class="fas fa-times"></i></button></td>' +
+                    '<td class="' + (window.vista == "procesar" ? "px-0" : ((window.vista == "procesadas" && window.noticiaSELECCIONADAeditar === undefined) ? "pr-0" : "px-0")) + ' w-75">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE TEMA' required='true' onchange='userDATOS.temaUnico(this," + id + ");' name='frm_tema-1'>" + selectTemas + '</td>' +
                     '<td>' + option + '</td>';
                 html += "</tr>";
               
@@ -2988,14 +3174,17 @@ userDATOS.updateUnidad = function(e) {
       html += '</div>';
     html += '</div>';
 
-    html += '<div class="row mt-2 justify-content-center">';
-      html += '<div class="col-12">';
-        html += '<button type="button" onclick="userDATOS.limpiarUnidad(' + id + ');" class="btn btn-block btn-dark text-uppercase">limpiar elemento <i title="Reinicia VALORACIÓN y TEMAS de la UNIDAD DE ANÁLISIS" class="ml-2 fas fa-question-circle"></i></button>';
+    if(window.vista == "procesar" || (window.vista == "procesadas" && window.noticiaSELECCIONADAeditar !== undefined)) {
+      html += '<div class="row mt-2 justify-content-center">';
+        html += '<div class="col-12">';
+          html += '<button type="button" onclick="userDATOS.limpiarUnidad(' + id + ');" class="btn btn-block btn-dark text-uppercase">limpiar elemento <i title="Reinicia VALORACIÓN y TEMAS de la UNIDAD DE ANÁLISIS" class="ml-2 fas fa-question-circle"></i></button>';
+        html += '</div>';
       html += '</div>';
-    html += '</div>';
-
+    }
   html += '</div>';
   button.closest(".modal-container").find("> .row > div:last-child()").html(html);
+  if(window.vista == "procesadas" && window.noticiaSELECCIONADAeditar === undefined)
+    button.closest(".modal-container").find("> .row > div:last-child()").find("input,select").attr("disabled",true);
   button.closest(".modal-container").find("> .row > div:last-child()").find("select").select2();
   button.removeClass("bg-success").addClass("bg-warning text-black").find("i").removeClass("fa-angle-right").addClass("fa-angle-left");
   button.attr("onclick","userDATOS.closeUnidad(this);");
@@ -3011,6 +3200,11 @@ userDATOS.updateUnidad = function(e) {
       $("#collapseTwo > div > button").click();
     }
     $("#modal-table-temas tr td:nth-child(2)").find("select").select2();
+  } else {
+    if(window.vista == "procesadas" && window.noticiaSELECCIONADAeditar === undefined) {
+      $("#modal-table-temas tr:last-child").remove();
+      $("#modal-table-temas").append("<tr><td><p class='m-0 text-center text-uppercase'>SIN temas asociados</p></td></tr>")
+    }
   }
   ////
 }
@@ -3034,9 +3228,9 @@ userDATOS.optionTema = function(e) {
  */
 userDATOS.limpiarUnidad = function(id) {
   $.MessageBox({
-    buttonDone  : "Si",
-    buttonFail  : "No",
-    message   : "¿Está seguro de eliminar la <strong>información</strong>?"
+    buttonDone  : strings.btn.si,
+    buttonFail  : strings.btn.no,
+    message   : strings.eliminar.info
   }).done(function(){
     window.ARR_cliente[id]["tema"] = {};
     window.ARR_cliente[id]["tema"]["texto"] = "";
@@ -3048,16 +3242,34 @@ userDATOS.limpiarUnidad = function(id) {
 /** */
 userDATOS.restaurarNoticia = function(e) {
   $.MessageBox({
-    buttonDone  : "Si",
-    buttonFail  : "No",
-    message   : "¿Está seguro de recuperar la noticia?",
+    buttonDone  : strings.btn.si,
+    buttonFail  : strings.btn.no,
+    message   : strings.noticia.recuparar,
   }).done(function(){
-    let ARR_noticiaproceso = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia",0,1);
-    let ARR_proceso = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"proceso",false,"id_noticia",0,1);
-    let ARR_actores = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasactor",false,"id_noticia",0,1);
-    let ARR_clientes = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiascliente",false,"id_noticia",0,1);
-    let ARR_instituciones = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasinstitucion",false,"id_noticia",0,1);
-    let ARR_periodista = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiaperiodista",false,"id_noticia",0,1);
+    let ARR_noticiaproceso = null;
+    userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia","retorno":0,"elim":1}, function(d) {
+      ARR_noticiaproceso = d;
+    });
+    let ARR_proceso = null;
+    userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia","retorno":0,"elim":1}, function(d) {
+      ARR_proceso = d;
+    });
+    let ARR_actores = null;
+    userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasactor","column":"id_noticia","retorno":0,"elim":1}, function(d) {
+      ARR_actores = d;
+    });
+    let ARR_clientes = null;
+    userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiascliente","column":"id_noticia","retorno":0,"elim":1}, function(d) {
+      ARR_clientes = d;
+    });
+    let ARR_instituciones = null;
+    userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasinstitucion","column":"id_noticia","retorno":0,"elim":1}, function(d) {
+      ARR_instituciones = d;
+    });
+    let ARR_periodista = null;
+    userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiaperiodista","column":"id_noticia","retorno":0,"elim":1}, function(d) {
+      ARR_periodista = d;
+    });
 
     userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","elim",0);
     userDATOS.change(window.noticiaSELECCIONADA.id_noticia,"noticias","elim",0);
@@ -3133,4 +3345,45 @@ userDATOS.selectOption = function(id,entidad,column = "nombre") {
 /** */
 userDATOS.volverUnidad = function() {
   angular.element($("#btn_cliente")).scope().unidadAnalisis(0)//paso atrás
+}
+
+/** */
+/**
+ * @return -1 if a < b
+ * @return 0 if a = b
+ * @return 1 if a > b
+ */
+let dates = {
+  string: function(d = new Date(), flagSecond = 1, formato = "ddmmaaaa") {
+    day = (d.getDate() < 10 ? "0" + d.getDate() : d.getDate());
+    month = d.getMonth() + 1;//los meses [0 - 11]
+    month = (month < 10 ? "0" + month : month);
+    year = d.getFullYear();
+    hour = (d.getHours() < 10 ? "0" + d.getHours() : d.getHours());
+    minute = (d.getMinutes() < 10 ? "0" + d.getMinutes() : d.getMinutes());
+    if(flagSecond) {
+      second = (d.getSeconds() < 10 ? "0" + d.getSeconds() : d.getSeconds());
+      if(formato == "ddmmaaaa")
+        return day + "/" + month + "/" + year + " " + hour + ":" + minute + ":" + second;
+      if(formato == "aaaammdd")
+        return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
+    }
+    if(formato == "ddmmaaaa")
+      return day + "/" + month + "/" + year + " " + hour + ":" + minute;
+    if(formato == "aaaammdd")
+      return year + "-" + month + "-" + day + " " + hour + ":" + minute;
+  },
+  convert:function(d) {
+      return (
+          d.constructor === Date ? d :
+          d.constructor === Array ? new Date(d[0],d[1],d[2]) :
+          d.constructor === Number ? new Date(d) :
+          d.constructor === String ? new Date(d) :
+          typeof d === "object" ? new Date(d.year,d.month,d.date) :
+          NaN
+      );
+  },
+  compare:function(a,b) {
+      return ((a.getTime() === b.getTime()) ? 0 : ((a.getTime() > b.getTime()) ? 1 : - 1));
+  }
 }

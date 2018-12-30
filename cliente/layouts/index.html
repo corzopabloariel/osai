@@ -1,39 +1,61 @@
-<div class="container-fluid" style="margin-top:106px;">
-  <div class="row justify-content-center">
-    <div class="col-6 pb-4">
-      <div class="card shadow-sm position-relative" id="contenedor_1">
-		<div class="card-body">
-			<!-- <iframe src="/cliente/layouts/v3.html" style="width: 100%; height: 100%; border-style: dotted;" ></iframe> -->
-			<iframe src="http://93.188.164.27/informes/grafico_1_wo.html?fecha_max=2018-12-11&fecha_min=2018-11-01&version=1" style="width: 100%; height: 100%; border-style: dotted;" ></iframe>
-			
-		</div>
-        <!-- <div class="card-body"><p class="text-center m-0">#contenedor_1 .card-body</p></div> -->
-      </div>
-      <div class="card shadow-sm position-relative" id="contenedor_2">
-        <div class="card-body">
-			<!-- <iframe src="/cliente/layouts/v4.html" style="width: 100%; height: 100%; border-style: dotted;" ></iframe> -->
-			<iframe src="http://93.188.164.27/informes/grafico_1_wo.html?fecha_max=2018-12-11&fecha_min=2018-11-01&version=2" style="width: 100%; height: 100%; border-style: dotted;" ></iframe>
-		</div>
-      </div>
-      <div class="card shadow-sm position-relative" id="contenedor_3">
-        <div class="card-body">
-			<iframe src="" style="width: 100%; height: 100%; border-style: dotted;" ></iframe>
-		</div>
-      </div>
-      <div class="card shadow-sm position-relative" id="contenedor_4">
-        <div class="card-body">
-			<iframe src="" style="width: 100%; height: 100%; border-style: dotted;" ></iframe>
-		</div>
+<div class="container-fluid">
+  <div class="row border-top border-dark justify-content-end">
+    <div class="col-3 p-0 bg-light position-fixed column-metricas">
+      <h2 class="text-uppercase text-white bg-primary p-3 mb-0">Métricas</h2>
+      <div class="p-3" style="overflow-y: scroll; height: calc(100% - 76px);">
+        <div class="card rounded-0 position-relative" id="contenedor_1">
+          <iframe src="/cliente/layouts/v3.html" class="w-100 border-0 bg-light card-img-top"></iframe>
+          <div class="card-body">
+            <h5 class="card-title mb-0">Título - Gráfico 1</h5>
+            <!-- <iframe src="http://93.188.164.27/informes/grafico_1_wo.html?fecha_max=2018-12-11&fecha_min=2018-11-01&version=1" style="width: 100%; height: 100%; border-style: dotted;" ></iframe> -->
+        
+          </div>
+          <!-- <div class="card-body"><p class="text-center m-0">#contenedor_1 .card-body</p></div> -->
+        </div>
+        <div class="card rounded-0 position-relative" id="contenedor_2">
+          <div class="card-body">
+            <h5 class="card-title mb-0">Título - Gráfico 2</h5>
+            <!-- <iframe src="http://93.188.164.27/informes/grafico_1_wo.html?fecha_max=2018-12-11&fecha_min=2018-11-01&version=2" style="width: 100%; height: 100%; border-style: dotted;" ></iframe> -->
+          </div>
+          <iframe src="/cliente/layouts/v4.html" class="w-100 border-0 bg-light card-img-bottom"></iframe>
+        </div>
+        <div class="card rounded-0 position-relative" id="contenedor_3">
+          <iframe class="w-100 border-0 bg-light card-img-top"></iframe>
+          <div class="card-body mb-0">
+            <h5 class="card-title">Título - Gráfico 3</h5>
+          </div>
+        </div>
+        <div class="card rounded-0 position-relative" id="contenedor_4">
+          <div class="card-body">
+            <h5 class="card-title mb-0">Título - Gráfico 4</h5>
+          </div>
+          <iframe class="w-100 border-0 bg-light card-img-bottom"></iframe>
+        </div>
       </div>
     </div>
 
 
-    <div class="col-6 position-relative">
+    <div class="col-9 py-3 border-left position-relative" style="background:#ececec">
+      <h2 class="text-uppercase pb-3 mb-0">noticias
+        <div class="float-right d-flex">
+          <i data-tipo="0" class="fas fa-th mr-2 text-primary" onclick="userDATOS.view(this,1,'#section_body');"></i>
+          <i data-tipo="1" class="fas fa-th-list text-muted cursor-pointer" onclick="userDATOS.view(this,0,'#section_body');"></i>
+        </div>
+      </h2>
       <!-- <div class="position-absolute py-2" id="secciones" style="left: 15px; top: 0; width: calc(100% - 30px); ">
         <h5 class="text-uppercase m-0 p-2 bg-dark text-white">secciones</h5>
         <ul class="list-group list-group-flush"></ul>
       </div> -->
-      <div class="" id="section_body"></div>
+      <div class="" id="section_body">
+        <div class="text-center d-flex justify-content-center">
+          <span class="text-uppercase d-flex align-items-center">cargando</span>
+          <div class="loading">
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

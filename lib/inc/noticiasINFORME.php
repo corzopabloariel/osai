@@ -77,7 +77,7 @@ if(isset($_POST["vista"])) {
       $ARR_relevo[$relevo["did_noticia"]][] = $relevo["id_cliente"];
     }
   } else if($params["vista"] == "procesada") {//NOTICIAS PROCESADAS
-    $where_condition .= "AND n.estado = 2 AND n.relevado = 1 ";
+    $where_condition .= "AND n.estado IN (2,6) AND n.relevado = 1 ";
     $attr .= ",GROUP_CONCAT(p.id_cliente) AS cliente";
     $attr .= ",u.id AS usuario";
     $group .= "n.id";
@@ -97,7 +97,7 @@ if(isset($_POST["vista"])) {
       $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia AND p.id_usuario = {$_SESSION["user_id"]}) ";
     }
   } else if($params["vista"] == "procesadas") {//NOTICIAS PROCESADAS --> BORRAR
-    $where_condition .= "AND n.estado >= 2 AND n.relevado = 1 ";
+    $where_condition .= "AND n.estado IN (2,6) AND n.relevado = 1 ";
     $attr .= ",GROUP_CONCAT(p.id_cliente) AS cliente";
     $attr .= ",u.id AS usuario";
     $group .= "n.id";
@@ -150,12 +150,12 @@ if(isset($_POST["vista"])) {
   $A_elementos["procesar"] = R::count("noticia","elim = 0 AND titulo != '' AND relevado = 1 AND estado IN (0,1)");//TOTAL relevadas y listas a procesar
 
   if($_SESSION["user_lvl"] <= 2)
-    $total = R::count("noticia","elim = 0 AND titulo != '' AND estado = 2");
+    $total = R::count("noticia","elim = 0 AND titulo != '' AND estado IN (2,6)");
   else if($_SESSION["user_lvl"] == 3) {
     $group = "GROUP BY n.id_noticia";
     $where =	"n.elim = 0 ";
     $where .=	"AND n.titulo != '' ";
-    $where .=	"AND n.estado = 2 ";
+    $where .=	"AND n.estado IN (2,6) ";
     $inner = "LEFT JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia) ";
     $inner .= "INNER JOIN usuario AS u ON (u.elim = 0 AND u.id = p.id_usuario AND u.nivel = 3 AND p.id_usuario = {$_SESSION["user_id"]} OR u.elim = 0 AND u.id = p.id_usuario AND u.nivel = 4) ";
     //$attr .= ",GROUP_CONCAT(p.id_cliente) AS clientes,p.autofecha AS fecha_proceso,u.user AS usuario";
@@ -167,9 +167,9 @@ if(isset($_POST["vista"])) {
     $group = "GROUP BY n.id_noticia";
     $where =	"n.elim = 0 ";
     $where .=	"AND n.titulo != '' ";
-    $where .=	"AND n.estado = 2 ";
+    $where .=	"AND n.estado IN (2,6) ";
     $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia AND p.id_usuario = {$_SESSION["user_id"]}) ";
-    // $inner .= "INNER JOIN usuario AS u ON (u.elim = 0 AND u.id = p.id_usuario AND u.nivel >= 3) ";
+    $inner .= "INNER JOIN usuario AS u ON (u.elim = 0 AND u.id = p.id_usuario AND u.nivel >= 3) ";
     $count = R::getRow("SELECT COUNT(*) AS total FROM noticia AS n {$inner} WHERE {$where}");//AND  AND estado = 2
     $total = $count["total"];
   }

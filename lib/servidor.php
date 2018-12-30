@@ -162,7 +162,7 @@ while (1) {
   $query = "UPDATE noticias SET nueva = 2 WHERE nueva = 1 AND titulo != '' AND elim = 0";
   $mysqli->query($query);
   //NOTICIA RELEVADAS
-  $query = "SELECT * FROM noticia WHERE nueva = 1 AND relevado = 1 AND titulo != '' AND elim = 0";
+  $query = "SELECT * FROM noticia WHERE nueva IN (1) AND relevado = 1 AND titulo != '' AND elim = 0";
   $resultado_NOTICIA = $mysqli->query($query);
   while($row_NOTICIA = $resultado_NOTICIA->fetch_assoc()) {
     sendMsg($row_NOTICIA["id"],"{titulo: '{$row_NOTICIA["titulo"]}'}","noticiaRELEVADA");

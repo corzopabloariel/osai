@@ -15,8 +15,15 @@ ini_set('display_errors', 1);
 
 
 switch ($_POST["accion"]) {
+  case 'usuariosFinales':
+    $data = R::getAll("SELECT ou.id_cliente,ou.user,c.nombre FROM osai_usuario AS ou INNER JOIN cliente AS c ON (c.id = ou.id_cliente AND c.elim = 0 AND c.todos = 0) WHERE ou.elim = 0");
+    $jsondata["data"] = Array();
+    foreach($data AS $k => $v) {
+      $jsondata["data"][$v["id_cliente"]] = "Cliente final: {$v["user"]} || Unidad de análisis: {$v["nombre"]}";
+    }
+    break;
   case 'selectOption':
-    $jsondata["html"] = "";
+    $jsondata["html"] = "<option value=''></option>";
     $entidad = $_POST["entidad"];
     if(empty($entidad)) {
       $data = Array();
@@ -171,33 +178,7 @@ switch ($_POST["accion"]) {
       $aux[$k] = $v;
     $jsondata["id"] = R::store($aux);
     break;
-  case 'cliente_usuario':
-    $data = [];
-    $column = [];
-    $column[] = Array("title" => "ID", "data" => "id");
-    $column[] = Array("title" => "UNIDAD DE ANÁLISIS", "data" => "nombre");
-    $column[] = Array("title" => "CLIENTE FINAL", "data" => "user");
-    $column[] = Array("title" => "ESTADO C. FINAL", "data" => "activo");
-
-    $Arr = [];
-    $Arr[] = "BLOQUEADO";
-    $Arr[] = "ACTIVO";
-    $sql = "SELECT c.id,c.nombre,ou.user,ou.activo FROM cliente AS c ";
-      $sql .= "LEFT JOIN osai_usuario AS ou ON ";
-      $sql .= "(ou.id_cliente = c.id AND ou.elim = 0 AND ou.activo = 1) ";
-    $sql .= "WHERE c.elim = 0 AND c.todos = 0";
-    if($queryRecords = $mysqli->query($sql)) {
-      while($cliente = $queryRecords->fetch_assoc()) {
-        if(is_null($cliente["activo"])) $cliente["activo"] = "";
-        else $cliente["activo"] = $Arr[$cliente["activo"]];
-
-        if(is_null($cliente["user"])) $cliente["user"] = "";
-        $data[] = $cliente;
-      }
-    }
-    $jsondata["column"] = $column;
-    $jsondata["data"] = $data;
-    break;
+  
   case 'change':
     if($_POST["massive"] == 0) {
       $data = R::findOne($_POST["tabla"],"id = ?",[$_POST["id"]]);
@@ -299,6 +280,7 @@ switch ($_POST["accion"]) {
             $log = R::dispense('log');
             $log["id_usuario"] = $_SESSION["user_id"];
             $log["acceso"] = 0;
+            $log["baja"] = 1;
             $log["accion"] = "Baja de registro";
             $log["id_tabla"] = $i;
             $log["tabla"] = "noticia";
@@ -307,6 +289,7 @@ switch ($_POST["accion"]) {
             $log = R::dispense('log');
             $log["id_usuario"] = $_SESSION["user_id"];
             $log["acceso"] = 0;
+            $log["baja"] = 1;
             $log["accion"] = "Baja de registro";
             $log["id_tabla"] = $noticia["id_noticia"];
             $log["tabla"] = "noticias";

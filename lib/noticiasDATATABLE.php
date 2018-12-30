@@ -105,7 +105,7 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
     $ARR_relevo[$relevo["did_noticia"]][] = $relevo["id_cliente"];
   }
 } else if(!isset($params["moderado"]) && isset($params["estado"])) {//NOTICIAS PROCESADAS
-  $where_condition .= "AND n.estado = 2 AND n.relevado = 1 ";
+  $where_condition .= "AND n.estado IN (2,6) AND n.relevado = 1 ";
   $attr .= ",GROUP_CONCAT(p.id_cliente) AS cliente";
   $attr .= ",u.id AS usuario";
   $attr .= ",p.autofecha AS fecha_proceso";
@@ -138,7 +138,7 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
   if(isset($params["unidadFilter"]) && !empty($params["unidadFilter"]))
     $inner .= "INNER JOIN osai_cliente AS oc ON (oc.elim = 0 AND oc.id_noticia = n.id AND oc.id_usuario_osai = {$params["unidadFilter"]} AND oc.tipo_aviso = 1)";
   else
-    $inner .= "INNER JOIN osai_cliente AS oc ON (oc.elim = 0 AND oc.id_noticia = n.id AND oc.tipo_aviso = 1) ";
+    $inner .= "INNER JOIN osai_cliente AS oc ON (oc.elim = 0 AND oc.id_noticia = n.id AND oc.tipo_aviso IN (0,1)) ";
 
 }
 /* </VISTA> */
@@ -163,11 +163,13 @@ if($flag) {
 $Adatos = separarPOR($mysqli,$sqlVISTA,["medio","medio_tipo","seccion","cliente","usuario","cliente_final"]);
 
 $Adatos["estado"] = Array();
-$Adatos["estado"][] = "SIN PROCESAR";
-$Adatos["estado"][] = "ABIERTO";
-$Adatos["estado"][] = "PROCESADA";
-$Adatos["estado"][] = "PRE PUBLICADA";
-$Adatos["estado"][] = "PUBLICADA";
+$Adatos["estado"][] = "SIN PROCESAR";//0
+$Adatos["estado"][] = "ABIERTO";//1
+$Adatos["estado"][] = "PROCESADA";//2
+$Adatos["estado"][] = "PUBLICADA";//3
+$Adatos["estado"][] = "PUBLICADA";//4
+$Adatos["estado"][] = "";//5
+$Adatos["estado"][] = "ABIERTO";//6 -> NOTICIA PROCESADA ABIERTA EN EDICIÓN
 
 $sqlVISTA .= "ORDER BY n.fecha DESC LIMIT {$params['start']},{$params['length']}";
 $data = [];
@@ -249,7 +251,7 @@ function separarPOR($mysqli,$sql,$Aelementos) {
         if(!isset($noticia[$e])) continue;
         $aux = $$e;
         if(!isset($Adatos[$e][$noticia[$e]])) {
-          if($e == "cliente") {
+          if($e == "cliente" || $e == "cliente_final") {
             $clientes = explode(",",$noticia[$e]);
             foreach($clientes AS $a) {
               if($a == "") continue;

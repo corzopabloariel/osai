@@ -14,7 +14,7 @@ aside .nav_ul a i { display: block; font-size: 2rem; margin:0 auto; }
 table thead th { vertical-align: middle !important; }
 /* */
 .cursor-pointer { cursor: pointer; }
-.etiquetas .close { right: 15px; top: 0px; font-size: 3em; line-height: .5em; }
+#pantalla .close { right: 15px; top: 0px; font-size: 3em; line-height: .5em; }
 .has-error,
 .has-error + .select2-container--default .select2-selection--single { border-color: #cc0000 !important; background-color: #f3d8d8 !important; }
 
@@ -62,7 +62,6 @@ select[name='select_tipoAlerta'] option:last-child { background-color: #dc3545; 
 .dataTables_scrollHeadInner { padding-right: 0 !important; width: 100% !important; }
 .dataTables_scrollFootInner th:first-child { padding-left: 0 !important; }
 .dataTables_scrollFootInner th:last-child { padding-right: 0 !important; }
-.table-noticia { padding-top: 20px; }
 .dataTables_filter label { display: flex !important; align-items: center!important; }
 .dataTables_filter label input { margin-left: 10px !important; }
 .dropdown-item.active, .dropdown-item:active { background-color: #ccc !important; }

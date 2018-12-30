@@ -10,13 +10,37 @@ function noF5() {
 }
 
 if(userDATOS.verificar(1)) {
+  const pyrusSeccion = new Pyrus("seccion",false);
+  const pyrusNoticia = new Pyrus("noticia",false);
+  const pyrusNoticias = new Pyrus("noticias",false);
+  const pyrusNoticiasActor = new Pyrus("noticiasactor",false);
+  const pyrusNoticiasCliente = new Pyrus("noticiascliente",false);
+  const pyrusNoticiasInstitucion = new Pyrus("noticiasinstitucion",false);
+  const pyrusNoticiasProceso = new Pyrus("noticiasproceso",false);
+  const pyrusInstitucion = new Pyrus("attr_institucion",false);
+  const pyrusCliente = new Pyrus("cliente",false);
+  const pyrusActor = new Pyrus("actor",false);
+  const pyrusUsuario = new Pyrus("usuario",false);
+  const pyrusUsuarioNivel = new Pyrus("usuario_nivel",false);
+  const pyrusAlarma = new Pyrus("alarma",false);
+  const pyrusMedioDestaque = new Pyrus("medio_destaque",false);
+  const pyrusPeriodista = new Pyrus("periodista",false);
+  const pyrusTemas = new Pyrus("attr_temas",false);
+  const pyrusCalificacion = new Pyrus("calificacion",false);
+  const pyrusMedio = new Pyrus("medio",false);
+  const pyrusAlianza = new Pyrus("attr_alianza",false);
+  const pyrusCampo = new Pyrus("attr_campo",false);
+  const pyrusCargo = new Pyrus("attr_cargo",false);
+  const pyrusNivel = new Pyrus("attr_nivel",false);
+  const pyrusPartido = new Pyrus("attr_partido",false);
+  const pyrusPoder = new Pyrus("attr_poder",false);
+  const pyrusDestaque = new Pyrus("attr_destaque",false);
+
   window.user = userDATOS.user();
   userDATOS.verificarNotificacion();
-  if(window.variables["usuario"] === undefined) window.variables["usuario"] = new Pyrus("usuario",false);
-  if(window.variables["usuario_nivel"] === undefined) window.variables["usuario_nivel"] = new Pyrus("usuario_nivel");
 
   if(window.usuario === undefined) {
-    uu = window.variables.usuario_nivel.busqueda("nivel",window.user["nivel"]);
+    uu = pyrusUsuarioNivel.busqueda("nivel",window.user["nivel"]);
     window.usuario = userDATOS.parseJSON(uu.data);
     window.usuario["nivel"] = window.user["nivel"];
     window.usuario["tipo"] = uu.nombre
@@ -38,11 +62,10 @@ if(userDATOS.verificar(1)) {
 
   app.service('service_simat', function() {
     this.noticias = function($scope) {
-      $scope.noticias = userDATOS.noticiasVALOR();
-    }
-
-    this.listador = function(e,n) {
-      userDATOS.listador("#" + e,window.variables[e],true,n);
+      $scope.noticias = null;
+      userDATOS.noticiasVALOR(function(d) {
+        $scope.noticias = d;
+      });
     }
   })
 
@@ -73,42 +96,43 @@ if(userDATOS.verificar(1)) {
     }
 
     function medio_destaque() {
-      userDATOS.listador("#medio_destaque",window.variables["medio_destaque"],true,2);
+      userDATOS.listador("#medio_destaque",pyrusMedioDestaque,true,2);
     }
     function periodista() {
-      userDATOS.listador("#periodista",window.variables["periodista"],true,4);
+      userDATOS.listador("#periodista",pyrusPeriodista,true,4);
     }
     function seccion() {
-      userDATOS.listador("#seccion",window.variables["seccion"],true,5);
+      userDATOS.listador("#seccion",pyrusSeccion,true,5);
     }
     function attr_temas() {
-      userDATOS.listador("#attr_temas",window.variables["attr_temas"],true,6);
+      userDATOS.listador("#attr_temas",pyrusTemas,true,6);
     }
     function attr_calificacion() {
-      userDATOS.listador("#attr_calificacion",window.variables["calificacion"],true,7);
+      userDATOS.listador("#attr_calificacion",pyrusCalificacion,true,7);
     }
     function medio() {
-      userDATOS.listador("#medio",window.variables["medio"],true,8);
+      userDATOS.listador("#medio",pyrusMedio,true,8);
     }
     function attr_alianza() {
-      userDATOS.listador("#attr_alianza",window.variables["attr_alianza"],true,9);
+      userDATOS.listador("#attr_alianza",pyrusAlianza,true,9);
     }
     function attr_campo() {
-      userDATOS.listador("#attr_campo",window.variables["attr_campo"],true,10);
+      userDATOS.listador("#attr_campo",pyrusCampo,true,10);
     }
     function attr_cargo() {
-      userDATOS.listador("#attr_cargo",window.variables["attr_cargo"],true,11);
+      userDATOS.listador("#attr_cargo",pyrusCargo,true,11);
     }
     function attr_nivel() {
-      userDATOS.listador("#attr_nivel",window.variables["attr_nivel"],true,12);
+      userDATOS.listador("#attr_nivel",pyrusNivel,true,12);
     }
     function attr_partido() {
-      userDATOS.listador("#attr_partido",window.variables["attr_partido"],true,13);
+      userDATOS.listador("#attr_partido",pyrusPartido,true,13);
     }
     function attr_poder() {
-      userDATOS.listador("#attr_poder",window.variables["attr_poder"],true,14);
+      userDATOS.listador("#attr_poder",pyrusPoder,true,14);
     }
   });
+  /** Rutas de la aplicación */
   app.config( function($routeProvider) {
     $routeProvider
     .when('/', {
@@ -173,7 +197,7 @@ if(userDATOS.verificar(1)) {
     })
   });
   /**
-   * Carga principal de entidades
+   * Carga principal de la aplicación
    */
   app.controller('jsonController', ['$scope', '$http', '$timeout', '$location', 'service_simat', 'factory_simat', function($scope, $http, $timeout, $location, service_simat, factory_simat) {
     h = $("#ul_nav_header").prev().outerHeight();
@@ -190,40 +214,26 @@ if(userDATOS.verificar(1)) {
       $scope.isViewLoading = false;
     });
     $scope.$on('$viewContentLoaded', function(){
-      
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      });
     });
     //////
+    /** Búsqueda de última hora de extracción */
     let ext = userDATOS.busquedaExtraccion();
-    $("*[data-vista='extractores'] span").html('<i class="far fa-clock mr-1"></i>' + (ext.fecha).replace("T"," "));
+    $("*[data-vista='extractores'] span").html('<i class="far fa-clock mr-1"></i>' + dates.string(new Date(ext.fecha), 0));
 
     $scope.notificaciones = {}
     $scope.notificacionTOTAL = 0;
 
     $scope.tipo_user = window.usuario["tipo"];
+    $scope.acceso = (window.user.last === null ? "Sin registro" : dates.string(new Date(window.user.last),0));
 
-    $scope.submitUsuario = function(t) {
-      let modal = $("#modalUsuario");
-      if(t.claveActual == "" || t.claveNueva == "") {
-        userDATOS.validar("#modalUsuario");
-        userDATOS.notificacion("Faltan datos","error");
-      } else {
-        let user = userDATOS.user();
-        let u = userDATOS.busqueda(user.id,"usuario");
-        if(u.pass == md5(t.claveActual)) {
-          u.cantidad = t.claveNueva.length
-          u.pass = md5(t.claveNueva);
-          window.variables.usuario.guardar_1(u);
-          modal.find("input").val("");
-          modal.modal("hide");
-          userDATOS.notificacion("Datos cambiados","success");
-        } else userDATOS.notificacion("Datos incorrectos","error");
-      }
-    }
     userDATOS.eliminarNoticiaMODAL = function() {
       $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message   : "¿Está seguro de eliminar la <strong>noticia</strong>?"
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message   : strings.noticia.eliminar[0]
       }).done(function(){
         userDATOS.change(window.noticiaNUEVA.id,"noticia","elim",1);
         userDATOS.change(window.noticiaNUEVA.id_noticia,"noticias","elim",2);//para que lo agarre el EventSource
@@ -237,24 +247,20 @@ if(userDATOS.verificar(1)) {
       });
     }
 
-    /**
-     *
-     */
-    $scope.redireccionar = function(viewName) {
-      console.log($location)
-        $location.path(viewName);
-      
-    }
     $scope.noticiasNUMEROS = function($scope) {
       $scope.$apply(function () {
-         $scope.noticias = userDATOS.noticiasVALOR();
+        $scope.noticias = null;
+        userDATOS.noticiasVALOR(function(d) {
+          $scope.noticias = d;
+        });
       });
     }
+    /** Función para la baja lógica de noticia */
     $scope.eliminarNoticia = function() {
       $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message   : "¿Está seguro de eliminar la <strong>noticia</strong>?"
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message   : strings.noticia.eliminar[0]
       }).done(function(){
         userDATOS.change(window.noticiaNUEVA.id,"noticia","elim",1,0,true);
         userDATOS.change(window.noticiaNUEVA.id_noticia,"noticias","elim",2,0,true);
@@ -275,14 +281,12 @@ if(userDATOS.verificar(1)) {
         window.notificacionNUEVA = undefined;//ID
       })
     }
-    /**
-     *
-     */
+    /** Función para procesar una noticia */
     $scope.procesarNoticia = function() {
       $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message   : "¿Está seguro de pasar a relevar la <strong>noticia</strong>?"
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message   : strings.noticia.relevar
       }).done(function(){
         userDATOS.change(window.noticiaNUEVA.id,"noticia","relevado",1,0,true);
         userDATOS.change(window.noticiaNUEVA.id_noticia,"noticias","moderado",2,0,true);//para que lo agarre el EventSource
@@ -314,21 +318,30 @@ if(userDATOS.verificar(1)) {
      *
      */
     $scope.pasarNoticia = function() {
-      let osai_usuario = userDATOS.busqueda(window.notificacionOBJ.id_cliente,"osai_usuario",false,"id_cliente");
-      let cliente = userDATOS.busqueda(window.notificacionOBJ.id_cliente,"cliente");
+      let osai_usuario = userDATOS.busqueda({"value":window.notificacionOBJ.id_cliente,"tabla":"osai_usuario","column":"id_cliente"}, function(d) {
+        osai_usuario = d;
+      });
+      let cliente = userDATOS.busqueda({"value":window.notificacionOBJ.id_cliente,"tabla":"cliente"}, function(d) {
+        cliente = d;
+      });
 
       if(osai_usuario === null) {
-        userDATOS.notificacion("<p class='m-0'>No hay CLIENTE FINAL asociado a <strong>" + cliente.nombre + "</strong></p><p class='m-0'>Genere usuario en el <i>MÓDULO CLIENTE</i></p>","error",false);
+        userDATOS.notificacion(strings.noClienteFinal(cliente.nombre),"error",false);
         return false;
       }
       
-      clientes_osai = userDATOS.busquedaTabla("osai_usuario");//CLIENTES FINALES
+      clientes_osai = null;
+      userDATOS.busquedaTabla("osai_usuario", function(d) {
+        clientes_osai = d;
+      });//CLIENTES FINALES
       let defaultValue = null;
       let OBJ_clientes_osai = {};//CLIENTES FINALES <-- relacionado con --> UNIDAD DE ANALISIS
       for(var i in clientes_osai) {
         if(OBJ_clientes_osai[i] === undefined) {  
           OBJ_clientes_osai[i] = "";
-          u = userDATOS.busqueda(clientes_osai[i]["id_cliente"],"cliente");
+          u = userDATOS.busqueda({"value":clientes_osai[i]["id_cliente"],"tabla":"cliente"}, function(d) {
+           u = d; 
+          });
           if(clientes_osai[i]["id_cliente"] == cliente.id)
             defaultValue = i;
           OBJ_clientes_osai[i] = clientes_osai[i]["user"] + " (" + u["nombre"] + ")";
@@ -336,9 +349,9 @@ if(userDATOS.verificar(1)) {
       }
       //////////
       $.MessageBox({
-        buttonDone  : "PASAR",
-        buttonFail  : "CANCELAR",
-        message : "<h2 class='m-0'>Pasar noticia</h2><p class='m-0'>Se pasará de forma inmediata al cliente </p>",
+        buttonDone  : strings.btn.pasar,
+        buttonFail  : strings.btn.cancelar,
+        message : strings.messege.pasar,
         // input: select,
         input   : { 
           input_detalle  : {
@@ -364,12 +377,12 @@ if(userDATOS.verificar(1)) {
         top     : "auto",
         filterDone      : function(data){
           if(data.input_detalle == "" || data.select_tipoAlerta === null || data.select_tipo.length == 0) {
-            userDATOS.notificacion("Faltan datos","error")
+            userDATOS.notificacion(strings.faltan.datos,"error")
             return false;
           }
         }
       }).done(function(data){
-        userDATOS.notificacion("Noticia pasada al cliente");
+        userDATOS.notificacion(strings.noticia.pasada);
         $("#modalNoticia .btn-success,#modalNoticia .btn-danger").addClass("d-none");
         for(var x in data.select_tipo) {
           nivel = data.select_tipoAlerta;
@@ -385,22 +398,6 @@ if(userDATOS.verificar(1)) {
         userDATOS.change(window.notificacionNUEVA,"notificacion","id_usuario",window.user_id,0,true);
         userDATOS.change(window.notificacionNUEVA,"notificacion","pasado",1,0,true);
         userDATOS.change(window.notificacionUsuario,"notificacion_usuario","pasado",1,0,true);
-
-        // $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").removeClass("bg-white");
-        // $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").addClass("bg-warning");
-        // $('*[data-vista="notificacion"][data-toggle="dropdown"]').find("*[data-id='" + window.notificacionNUEVA + "']").find("p:last-child").html("<strong class=\"mr-1\">Estado:</strong>PASADO");
-
-        // userDATOS.change(window.noticiaNUEVA.id,"noticia","relevado",11,0,true);
-        // userDATOS.change(window.noticiaNUEVA.id_noticia,"noticias","moderado",11,0,true);
-        // userDATOS.change(window.noticiaNUEVA.id_noticia,"noticias","id_notificacion",window.notificacionNUEVA,0,true);
-        // userDATOS.log(window.user_id,"Notificación abierta y noticia nueva pasada",0,window.notificacionNUEVA,"notificacion");
-        // //userDATOS.change = function(id, tabla, column, value, massive = 0, asy = false) {
-
-        // $scope.noticiasNUMEROS(angular.element("#menu_noticias").scope());
-        
-        // $("#modalNoticia").modal("hide")
-        // window.noticiaNUEVA = undefined;
-        // window.notificacionNUEVA = undefined;
       })
     }
     /**
@@ -409,11 +406,17 @@ if(userDATOS.verificar(1)) {
      */
     $scope.verNoticiaNueva = function(id) {
       try {
-        let o = userDATOS.busquedaAlerta(id);//Retorna NOTICIA/
+        let o = null;
+        userDATOS.busquedaAlerta({"id":id}, function(d) {
+          o = d;
+        });//Retorna NOTICIA/
         window.noticiaNUEVA = o;
         window.notificacionNUEVA = id;
-        window.notificacionOBJ = userDATOS.busqueda(id,"notificacion");
         if($scope.notificaciones[id]["leido"] == undefined) {
+          window.notificacionOBJ = null;
+          userDATOS.busqueda({"value":id,"tabla":"notificacion"}, function(d) {
+            window.notificacionOBJ = d;
+          });
           $scope.notificaciones[id]["leido"] = 1;
           $scope.notificacionTOTAL --;
           // scopeNoticias(angular.element("*[ng-controller=\"jsonController\"]").scope(),id,"leido","estado");
@@ -422,23 +425,22 @@ if(userDATOS.verificar(1)) {
         var SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
         while (SCRIPT_REGEX.test(html))
             html = html.replace(SCRIPT_REGEX, "");
-            console.log(window.notificacionOBJ);
         $("#modalNoticia").find(".modal-notificacion").html("<p class='m-0'>" + window.notificacionOBJ.mensaje + "<span class='badge badge-warning mx-2'>alerta</span><span onclick='userDATOS.mostrarAtributos(this)' class='text-uppercase cursor-pointer'>[ver atributos]</span></p>");
         $("#modalNoticia").find(".modal-title").html(o.titulo);
         $("#modalNoticia").find(".modal-body").html(html);
         $("#modalNoticia").modal("show");
       }
       catch (e) {
-        userDATOS.notificacion("Ocurrió un error de parseo. Reintente","warning",false);
+        userDATOS.notificacion(strings.error.parseo,"warning",false);
       }
     }
     // REVISAR
     $scope.eliminar = function() {
       let noticia = tabla_noticia.rows( { selected: true } ).data()[0]
       $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message   : "¿Está seguro de desechar la noticia?<br/><small>Será visible para el relevo</small>"
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message   : strings.noticia.eliminar[1]
       }).done(function(){
         userDATOS.change(noticia.id,"noticia","elim",1,);
         userDATOS.change(noticia.id_noticia,"noticias","elim",1);
@@ -447,7 +449,7 @@ if(userDATOS.verificar(1)) {
 
         tabla_noticia.row(".selected").remove().draw();
         userDATOS.pantalla_cerrarSIMPLE();
-        userDATOS.notificacion("Noticia desechada","success");
+        userDATOS.notificacion(strings.noticia.desechada,"success");
       });
     }
     /**
@@ -494,12 +496,6 @@ if(userDATOS.verificar(1)) {
           msj_err += "Fecha";
           flag_variables = false;
         }
-        // if($("#select_periodista").val() == "") {
-        //   $("#select_periodista").addClass("has-error");
-        //   if(msj_err != "") msj_err += " / ";
-        //   msj_err += "Autor";
-        //   flag_variables = false;
-        // }
         if($("#select_medio").val() == "") {
           $("#select_medio").addClass("has-error")
           $("#select_medio").select2();
@@ -526,10 +522,6 @@ if(userDATOS.verificar(1)) {
           flag_variables = false;
         }
       }
-      // if(window.ARR_actor !== undefined) {
-      //   if(Object.keys(window.ARR_actor).length == 0) flag_variables = false;
-      // } else flag_variables = false;
-
       if(window.noticiaSELECCIONADA === undefined) {//NUEVA noticia
         if(flag_variables) {
           $.MessageBox({
@@ -549,7 +541,8 @@ if(userDATOS.verificar(1)) {
             OBJ_noticia["titulo"] = $("#frm_titulo").text();
             OBJ_noticia["url"] = $("*[name='frm_url']").val();
             fecha = $("*[name='frm_fecha']").val();
-            fecha = fecha.replace("T"," ");
+            if(fecha == "") fecha = dates.string(new Date(), 1, "aaaammdd");
+            else fecha = fecha.replace("T"," ");
             OBJ_noticia["fecha"] = fecha;
             OBJ_noticia["data"] = {};
             OBJ_noticia["data"]["titulo"] = $("#frm_titulo").text();
@@ -557,8 +550,8 @@ if(userDATOS.verificar(1)) {
             OBJ_noticia["data"]["fecha"] = fecha
             OBJ_noticia["data"]["autor"] = $("#select_periodista option[value='" + select_periodista.value + "']").text();
             OBJ_noticia["data"]["cuerpo"] = (window.cuerpoPEGADO === undefined ? $(".note-editable").html() : window.cuerpoPEGADO);
-            OBJ_noticia["data"]["categoria"] = window.variables.seccion.mostrar_1(select_seccion.value);
-            accion = window.variables.noticias.guardar_1(OBJ_noticia);
+            OBJ_noticia["data"]["categoria"] = pyrusSeccion.mostrar_1(select_seccion.value);
+            accion = pyrusNoticias.guardar_1(OBJ_noticia);
             userDATOS.log(window.user_id,"Alta base de registro",0,accion.id,"noticias");
             // GUARDO en tabla noticia
             cuerpo = $(".note-editable").html();
@@ -576,15 +569,12 @@ if(userDATOS.verificar(1)) {
             OBJ_noticia["video"] = $("#video_noticia input").val();
             OBJ_noticia["titulo"] = $("#frm_titulo").text();
             OBJ_noticia["cuerpo"] = cuerpo;
-            accion_not = window.variables.noticia.guardar_1(OBJ_noticia);
+            accion_not = pyrusNoticia.guardar_1(OBJ_noticia);
             userDATOS.log(window.user_id,"Alta de registro y proceso",0,accion.id,"noticia");
             //
 
             OBJ_data["select_medioTipo"] = select_medioTipo.value;
             OBJ_data["select_destaque"] = select_destaque.value;
-
-            // let periodista = userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia);
-
             np = new Pyrus("noticiaperiodista",false);
             o = np.objetoLimpio();
             o["id_periodista"] = select_periodista.value;
@@ -598,9 +588,9 @@ if(userDATOS.verificar(1)) {
             }
 
             for(var i in window.ARR_actor)//ACTORES mencionados en la noticia
-              window.variables.noticiasactor.guardar_1({"id":"nulo","id_noticia": accion.id,"id_actor": i,"data": window.ARR_actor[i]})
+              pyrusNoticiasActor.guardar_1({"id":"nulo","id_noticia": accion.id,"id_actor": i,"data": window.ARR_actor[i]})
             for(var i in window.ARR_cliente) {//
-              window.variables.noticiascliente.guardar_1({"id":"nulo","id_noticia": accion.id,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+              pyrusNoticiasCliente.guardar_1({"id":"nulo","id_noticia": accion.id,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
               //proceso
               obj_proceso["id_noticia"] = accion.id;
               obj_proceso["did_noticia"] = accion_not.id;
@@ -611,9 +601,9 @@ if(userDATOS.verificar(1)) {
               userDATOS.log(window.user_id,"Alta de proceso",0,accion_pro.id,"proceso");
             }
             for(var i in window.ARR_institucion)//INSTITUCIONES mencionados en la noticia
-              window.variables.noticiasinstitucion.guardar_1({"id":"nulo","id_noticia": accion.id,"id_institucion": i,"data": window.ARR_institucion[i]})
+              pyrusNoticiasInstitucion.guardar_1({"id":"nulo","id_noticia": accion.id,"id_institucion": i,"data": window.ARR_institucion[i]})
 
-            window.variables.noticiasproceso.guardar_1({"id":"nulo","id_noticia": accion.id,"id_usuario":window.user_id,"data": OBJ_data});
+            pyrusNoticiasProceso.guardar_1({"id":"nulo","id_noticia": accion.id,"id_usuario":window.user_id,"data": OBJ_data});
             // LIMPIO VARIABLES
             window.cuerpoPEGADO = undefined;
             userDATOS.pantalla_OFF();
@@ -623,24 +613,37 @@ if(userDATOS.verificar(1)) {
           }).fail(function(){});
         } else userDATOS.notificacion("<p class='m-0'><strong>Faltan datos</strong></p><p class='m-0'>" + msj_err+ "</p>","error");
       } else {
-        let periodista = userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia);
+        let periodista = null;
+        userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia, function(d) {
+          periodista = d;
+        });
         if(flag_variables) {
-          mssg = (reprocesar ? "¿Está seguro de reprocesar la <strong>noticia</strong>?<br/>Se desechará toda la información previa" : "¿Está seguro de aplicar el proceso a la noticia?");
           $.MessageBox({
-            buttonDone  : "Si",
-            buttonFail  : "No",
-            message   : mssg
-          }).done(function(){
+            buttonDone  : strings.btn.si,
+            buttonFail  : strings.btn.no,
+            message   : strings.noticia.procesar[2]((reprocesar ? strings.noticia.procesar[0] : strings.noticia.procesar[1]))
+          }).done(function(){//
             let n_proceso = new Pyrus("proceso",false);
             let obj_proceso = n_proceso.objetoLimpio();
             let OBJ_data = {}
+            userDATOS.change(noticiaSELECCIONADA.id,"noticia","estado",2);//CAMBIO estado
             let cuerpo = $(".note-editable").html();//guardo cuerpo de noticias con ETIQUETAS
             if(reprocesar) {
-              let noticiaproceso = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia");
-              let ARR_proceso = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"proceso",false,"id_noticia",0);
-              let ARR_actores = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasactor",false,"id_noticia",0);
-              let ARR_clientes = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiascliente",false,"id_noticia",0);
-              let ARR_instituciones = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasinstitucion",false,"id_noticia",0);
+              let noticiaproceso = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia"}, function(d) {
+                noticiaproceso = d;
+              });
+              let ARR_proceso = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia","retorno":0}, function(d) {
+                ARR_proceso = d;
+              });
+              let ARR_actores = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasactor","column":"id_noticia","retorno":0}, function(d) {
+                ARR_actores = d;
+              });
+              let ARR_clientes = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiascliente","column":"id_noticia","retorno":0}, function(d) {
+                ARR_clientes = d;
+              });
+              let ARR_instituciones = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasinstitucion","column":"id_noticia","retorno":0}, function(d) {
+                ARR_instituciones = d;
+              });
               let procesoDATA = userDATOS.parseJSON(noticiaproceso.data);
               let did = parseInt(window.noticiaSELECCIONADA.did) + 1;//Identificador de elementos en tablas con registros múltiples
               userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","did",did);
@@ -677,11 +680,11 @@ if(userDATOS.verificar(1)) {
               if($("#select_seccion").is(":visible"))
                 userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","id_seccion",select_seccion.value);
 
-              window.variables.noticiasproceso.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": procesoDATA});
+              pyrusNoticiasProceso.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": procesoDATA});
               for(var i in window.ARR_actor)//ACTORES mencionados en la noticia
-                window.variables.noticiasactor.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]})
+                pyrusNoticiasActor.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]})
               for(var i in window.ARR_cliente) {
-                window.variables.noticiascliente.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+                pyrusNoticiasCliente.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
                 //proceso
                 obj_proceso["did"] = did;
                 obj_proceso["id_noticia"] = window.noticiaSELECCIONADA.id_noticia;
@@ -693,7 +696,7 @@ if(userDATOS.verificar(1)) {
                 userDATOS.log(window.user_id,"Alta de proceso",0,accion.id,"proceso");
               }
               for(var i in window.ARR_institucion)//INSTITUCIONES mencionados en la noticia
-                window.variables.noticiasinstitucion.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]})
+                pyrusNoticiasInstitucion.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]})
               //
               if($("#video_noticia input").val() != "") userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","video",$("#video_noticia input").val());
               userDATOS.pantalla_OFF();
@@ -718,12 +721,12 @@ if(userDATOS.verificar(1)) {
                 if(OBJ_data["noticiaATTR"].indexOf(i) < 0)
                   OBJ_data["noticiaATTR"].push(i);//ATRIBUTOS asociados a la noticia
               }
-              window.variables.noticiasproceso.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": OBJ_data});
+              pyrusNoticiasProceso.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": OBJ_data});
               for(var i in window.ARR_actor)//ACTORES mencionados en la noticia
-                window.variables.noticiasactor.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]})
+                pyrusNoticiasActor.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]})
               id_cliente = 0;
               for(var i in window.ARR_cliente) {
-                window.variables.noticiascliente.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+                pyrusNoticiasCliente.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
                 //proceso
                 obj_proceso["id_noticia"] = window.noticiaSELECCIONADA.id_noticia;
                 obj_proceso["did_noticia"] = window.noticiaSELECCIONADA.id;
@@ -734,7 +737,7 @@ if(userDATOS.verificar(1)) {
                 userDATOS.log(window.user_id,"Alta de proceso",0,accion.id,"proceso");
               }
               for(var i in window.ARR_institucion)//INSTITUCIONES mencionados en la noticia
-                window.variables.noticiasinstitucion.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]})
+                pyrusNoticiasInstitucion.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]})
               //
               if($("#video_noticia input").val() != "") userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","video",$("#video_noticia input").val());
               userDATOS.log(window.user_id,"Cambio de estado",0,window.noticiaSELECCIONADA.id,"noticia");
@@ -748,7 +751,7 @@ if(userDATOS.verificar(1)) {
               scopeNoticias(angular.element($("#menu_noticias")).scope(),"procesadas",1);
             }
           }).fail(function(){});
-        } else userDATOS.notificacion("<p class='m-0'><strong>Faltan datos</strong></p><p class='m-0'>" + msj_err+ "</p>","error");
+        } else userDATOS.notificacion(strings.faltan.datosMssg(msj_err),"error");
       }
     }
 
@@ -789,7 +792,6 @@ if(userDATOS.verificar(1)) {
   app.controller("institucion", function ($scope,service_simat,factory_simat) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     $(".nav_ul a[data-url='institucion']").addClass("active");
-    let pyrusInstitucion = new Pyrus("attr_institucion",false)
 
     userDATOS.listador("#t_institucion",pyrusInstitucion,true);
     userDATOS.submit = function(t) {
@@ -816,21 +818,21 @@ if(userDATOS.verificar(1)) {
 
         accion = pyrusInstitucion.guardar_1(OBJ);//
         if(accion.id !== null && accion.flag) {//
-          let elemento = userDATOS.busqueda(accion.id,e);//traigo el nuevo registro
+          let elemento = null;
+          userDATOS.busqueda({"value":accion.id,"tabla":e}, function(d) {
+            elemento = d;
+          });//traigo el nuevo registro
 
-          let row = pyrusInstitucion.getContenidoDATATABLEsimple(elemento);
+          window["tabla_0"].draw();//agrego sin recargar sitio
           if(OBJ.id == "nulo") {
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"attr_institucion");
-            window["tabla_0"].row.add(row).draw().node();//agrego sin recargar sitio
           } else {
             userDATOS.log(window.user_id,"Edición de registro",0,accion.id,"attr_institucion");
-            window["tabla_0"].row('.selected').data(row).draw();//reemplazo
           }
-          //userDATOS.listador("#" + e,window.variables[e],false,dataT[e]);
           $("#modal").modal("hide");
 
-        } else userDATOS.notificacion("Datos repetidos","error");
-      } else userDATOS.notificacion("Faltan datos","error");
+        } else userDATOS.notificacion(strings.repetidoDatos,"error");
+      } else userDATOS.notificacion(strings.faltan.datos,"error");
     }
   });
   /**
@@ -868,7 +870,7 @@ if(userDATOS.verificar(1)) {
         setTimeout(function() {
           userDATOS.dataTableNOTICIAS3("#t_data",data)
         },500)
-      } else userDATOS.notificacion("Faltan datos de búsqueda","error");
+      } else userDATOS.notificacion(strings.faltan.datosBuqueda,"error");
     })
 
     $("#btn_limpiar").on("click",function() {
@@ -955,12 +957,14 @@ if(userDATOS.verificar(1)) {
         userDATOS.notificacion("Noticia publicada");
         return false;
       }
-      let osai_cliente = userDATOS.busqueda(row.id,"osai_cliente",false,"id_noticia",0)//<-- OJO / uso id de -->--> NOTICIA <--<--
-      let mssg = "<p class='text-uppercase m-0 text-center'>¿Está seguro de publicar la <strong>noticia</strong> seleccionada?</p>";
+      let osai_cliente = null;
+      userDATOS.busqueda({"value":row.id,"tabla":"osai_cliente","column":"id_noticia","retorno":0}, function(d) {
+        osai_cliente = d;
+      })//<-- OJO / uso id de -->--> NOTICIA <--<--
       $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message     : mssg
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message     : strings.noticia.publicar
       }).done(function(){
         userDATOS.change(row.id,"noticia","estado",4);
 
@@ -971,6 +975,113 @@ if(userDATOS.verificar(1)) {
         }
         tabla_noticia.draw();
       });
+    }
+
+    
+    userDATOS.clippingNOTICIA = function() {
+      let row = tabla_noticia.rows(".selected").data()[0];
+      let noticia = null;
+      let clientes = null;
+      let idAgendaNacional = 12//
+      let proceso = [];
+      let procesos = null;
+      let msg = "";
+      userDATOS.busqueda({"value":row.id,"tabla":"noticia"}, function(d) {
+        noticia = d;
+      });
+      userDATOS.busqueda({"value":row.id,"tabla":"proceso","column":"did_noticia","retorno":0}, function(d) {
+        procesos = d;
+      });
+      for(var i in procesos) {
+        console.log(procesos[i])
+        if(parseInt(procesos[i]["id_cliente"]) == idAgendaNacional) {
+          userDATOS.busqueda({"value":idAgendaNacional,"tabla":"cliente"},function(cliente) {
+            msg = "<p class='m-0 text-center'>Noticia procesada en <strong>" + cliente.nombre + "</strong></p>";
+          });
+          continue;
+        }
+        proceso.push(d.id_cliente);
+      }
+      /**
+       * ESTADOS DE UNA NOTICIA <-- OJO, no confundir con TIPO DE NOTICIA (NUEVA/VIEJA)
+       * - 0: Default
+       * - 1: Relevado
+       * - 2: Procesada
+       * - 3: Publicada
+       * - 4: Publicada
+       */
+      if(parseInt(noticia.estado_num) == 3) {
+        userDATOS.notificacion("Noticia pre publicada en CLIENTE/S");
+        return false;
+      }
+      if(parseInt(noticia.estado_num) == 4) {
+        userDATOS.notificacion("Noticia publicada en CLIENTE/S");
+        return false;
+      }
+      
+      userDATOS.busquedaUsuariosFinales(function(clientes) {
+        for(var i in proceso) {
+          if(clientes[proceso[i]] !== undefined) {
+            msg += "<p class='m-0'>" + clientes[proceso[i]] + "</p>";
+            delete clientes[proceso[i]];
+          }
+        }
+        $.MessageBox({
+          buttonDone  : strings.btn.si,
+          buttonFail  : strings.btn.no,
+          message     : strings.noticia.prePublicar(msg),
+          input   : { 
+            input_detalle  : {
+              type         : "texts",
+              label        : "Descripción (máx. 200 caracteres):",
+              title        : "Descripción de la noticia",
+              maxlength    : 200
+            },
+            select_tipo : {
+              type         : "selects",
+              label        : "Seleccione Cliente final para publicar",
+              title        : "cliente final",
+              options      : clientes.data,
+              default      : proceso
+            },
+          },
+          filterDone  : function(data) {
+            if(data.input_detalle == "")
+              return "Descripción necesaria"
+          }
+        }).done(function(data){
+          userDATOS.notificacion((data.select_tipo.length == 0 ? strings.noticia.publicar[1] : strings.noticia.publicar[2]),"info",false);
+          userDATOS.notificacion(strings.tablaReseteo,"warning",false);
+          userDATOS.change(noticia.id,"noticia","estado",3);
+          id_usuario = window.user_id;//USUARIO de OSAI que generó esto
+          setTimeout(function() {
+            clientesFinales = proceso.concat(data.select_tipo);
+            for(var i in clientesFinales) {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
+              aux = {};
+              aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
+              aux["id_usuario_osai"] = clientesFinales[i];
+              x = null;
+              userDATOS.insertDatos("osai_cliente",aux,function(x) {
+                userDATOS.log(window.user_id,"NOTICIA publicada",0,x,"osai_cliente");
+              },true);
+              userDATOS.insertDatos("osai_notificacion",
+                {"id_usuario":id_usuario,
+                "id_noticia":noticia.id,
+                "id_usuario_osai":clientesFinales[i],
+                "mensaje": data.input_detalle,
+                "nivel": 0,
+                "estado": 1});
+            }
+
+            selectMEDIOS = userDATOS.noticiasSELECT("clipping");
+            tabla_noticia.draw();
+            angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
+            angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
+            angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
+            angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
+          },500);
+        });
+      },true);
     }
   });
   /**
@@ -1020,11 +1131,12 @@ if(userDATOS.verificar(1)) {
     factory_simat.load("attr_nivel")
     factory_simat.load("attr_partido")
     factory_simat.load("attr_poder")
-
+      
     userDATOS.submit = function(t) {
       let e = $("#" + t.id).data("tipo");
       if(userDATOS.validar("#" + t.id)) {
-        let a = window.variables[e].objeto["GUARDADO_ATTR"];
+        let pyrusObjeto = new Pyrus(e,false);
+        let a = pyrusObjeto.objeto["GUARDADO_ATTR"];
         let OBJ = {}
         for(var j in a) {
           OBJ[j] = null;
@@ -1043,36 +1155,23 @@ if(userDATOS.verificar(1)) {
         }
         $("#" + t.id).find("input","button","select").attr("disabled")
 
-        accion = window.variables[e].guardar_1(OBJ);//
+        accion = pyrusObjeto.guardar_1(OBJ);//
         if(accion.id !== null && accion.flag) {//
-          window.variables[e].reload(false);//recargo contenido asy, por si se necesita
-          let elemento = userDATOS.busqueda(accion.id,e);//traigo el nuevo registro
-
-          let row = window.variables[e].getContenidoDATATABLEsimple(elemento);
-          if(OBJ.id == "nulo") {
+          let elemento = null;
+          userDATOS.busqueda({"value":accion.id,"tabla":e},function(d) {
+            elemento = d
+          });//traigo el nuevo registro
+          window["tabla_" + dataT[e]].draw();//agrego sin recargar sitio
+          if(OBJ.id == "nulo")
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,e);
-            window["tabla_" + dataT[e]].row.add(row).draw().node();//agrego sin recargar sitio
-          } else {
+          else
             userDATOS.log(window.user_id,"Edición de registro",0,accion.id,e);
-            window["tabla_" + dataT[e]].row('.selected').data(row).draw();//reemplazo
-          }
-          //userDATOS.listador("#" + e,window.variables[e],false,dataT[e]);
+          
           $("#modal").modal("hide");
 
-        } else userDATOS.notificacion("Datos repetidos","error");
-      } else userDATOS.notificacion("Faltan datos","error");
+        } else userDATOS.notificacion(strings.repetidoDatos,"error");
+      } else userDATOS.notificacion(strings.faltan.datos,"error");
     }
-  });
-  /**
-   * Acciones de vista EXTRACTORES
-   * Solo accedido por usuarios nivel 1 y 2
-   */
-  app.controller("extractores", function ($scope) {
-    $(".nav_ul a").closest("ul").find(".active").removeClass("active");
-    $(".nav_ul a[data-url='extractores']").addClass("active");
-    //$("#div").addClass("d-none");
-    let ext = userDATOS.busquedaExtraccion();
-    $scope.extraccion = (ext.fecha).replace("T"," ");
   });
   /**
    * Acciones de vista ELIMINADO
@@ -1111,7 +1210,8 @@ if(userDATOS.verificar(1)) {
         max = $("#fecha_max").val();
         uni = $("#select_unidad").val();
         if($(this).data("tipo") == "fecha_unidad") {
-          if(min == "" || max == "" || uni == "") userDATOS.notificacion("Faltan datos. <strong>Fechas</strong> y <strong>Unidad de análisis</strong><br/>no pueden quedar vacio","error");
+          if(min == "" || max == "" || uni == "")
+            userDATOS.notificacion(strings.faltan.especifico[0],"error");
           else {
               window.localStorage.setItem("fecha_min", min);
               window.localStorage.setItem("fecha_max", max);
@@ -1121,7 +1221,8 @@ if(userDATOS.verificar(1)) {
               win.focus();
           }
         } else {
-          if(min == "" || max == "") userDATOS.notificacion("Faltan datos. Las <strong>Fechas</strong> no pueden quedar vacias","error");
+          if(min == "" || max == "")
+            userDATOS.notificacion(strings.faltan.especifico[1],"error");
           else {
               window.localStorage.setItem("fecha_min", min);
               window.localStorage.setItem("fecha_max", max);
@@ -1149,11 +1250,12 @@ if(userDATOS.verificar(1)) {
   app.controller("clientes", function ($scope) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     $(".nav_ul a[data-url='clientes']").addClass("active");
-    //$("#div").addClass("d-none");
 
-    let agendas = userDATOS.busqueda(1,"cliente",false,"todos",0);
+    let agendas = null;
+    userDATOS.busqueda({"value":1,"tabla":"cliente","column":"todos","retorno":0}, function(d) {
+      agendas = d;
+    });
     let htmlAgendaContenedor = "";
-    let pyrusCliente = new Pyrus("cliente",false);
     for(var i in agendas) {
       htmlAgendaContenedor += "<p class='text-left m-0'>" + agendas[i]["nombre"] + "<i class='text-success ml-2 fas fa-check-circle'></i></p>";
     }
@@ -1185,29 +1287,33 @@ if(userDATOS.verificar(1)) {
         $("#" + t.id).find("input","button","select").attr("disabled")
         accion = pyrusCliente.guardar_1(OBJ);//
         if(accion.id !== null && accion.flag) {//
-          let elemento = userDATOS.busqueda(accion.id,"cliente");//traigo el nuevo registro
-
-          let row = pyrusCliente.getContenidoDATATABLEsimple(elemento);
-          if(OBJ.id == "nulo")
-            window["tabla_0"].row.add(row).draw().node();//agrego sin recargar sitio
-          else
-            window["tabla_0"].row('.selected').data(row).draw();//reemplazo
+          let elemento = null;
+          userDATOS.busqueda({"value":accion.id,"tabla":"cliente"},function(d) {
+            elemento = d;
+          });//traigo el nuevo registro
+          window["tabla_0"].destroy();
+          $("#t_clientes").remove();
+          $(".container fieldset:last-child .card-body").append('<table class="table table-hover w-100" id="t_clientes"></table>');
+          userDATOS.listador("#t_clientes",pyrusCliente,false);
           $("#modal").modal("hide");
           //service_simat.option($scope);
-        } else userDATOS.notificacion("Datos repetidos","error");
-      } else userDATOS.notificacion("Faltan datos","error");
+        } else userDATOS.notificacion(strings.repetidoDatos,"error");
+      } else userDATOS.notificacion(strings.faltan.datos,"error");
     }
 
     userDATOS.usuarioOSAI = function() {
       let row = tabla_0.rows(".selected").data()[0];
 
-      let osai_usuario = userDATOS.busqueda(row.id,"osai_usuario",false,"id_cliente");
+      let osai_usuario = null;
+      userDATOS.busqueda({"value":row.id,"tabla":"osai_usuario","column":"id_cliente"}, function(d) {
+        osai_usuario = d;
+      });
       if(osai_usuario == false) return false;
       if(osai_usuario !== null) {
         $.MessageBox({
-          buttonDone  : "CAMBIAR",
-          buttonFail  : "Cancelar",
-          message : "<h3 class='m-0'>Usuario: " + osai_usuario.user + "</h3><button onclick='userDATOS.estadoClienteFinal(" + osai_usuario.activo + ");' class='btn btn-block my-2 text-uppercase " + (osai_usuario.activo ? "btn-danger" : "btn-success") + "'>" + (osai_usuario.activo ? "desactivar" : "activar") + "</button><p class='m-0'>Resetear contraseña del <strong>CLIENTE</strong></p>",
+          buttonDone  : strings.btn.cambiar,
+          buttonFail  : strings.btn.cancelar,
+          message : strings.usuario.existente(osai_usuario.user,osai_usuario.activo),
           input   : {
               password1 : {
                   type         : "password",
@@ -1223,21 +1329,21 @@ if(userDATOS.verificar(1)) {
           top     : "auto",
           filterDone      : function(data){
             if(data.password1 != data.password2) {
-              userDATOS.notificacion("Las contraseñas no coinciden","error")
+              userDATOS.notificacion(strings.contrasela.noCoinciden,"error")
               return false;
             }
           }
         }).done(function(data, button){
           userDATOS.change(osai_usuario.id,"osai_usuario","pass",md5(data.password1));
-          userDATOS.notificacion("Contraseña cambiada");
+          userDATOS.notificacion(strings.contrasela.cambiada);
           userDATOS.log(window.user_id,"Alta de registro / [USER] " + data.user + " / [PASS] " + data.password1,0,osai_usuario.id,"osai_usuario");
         });
         return false;
       }
       $.MessageBox({
-        buttonDone  : "CREAR",
-        buttonFail  : "Cancelar",
-        message : "<h2 class='m-0'>Creación de usuario</h2><p class='m-0'>Usuario para el sector <strong>CLIENTE</strong></p>",
+        buttonDone  : strings.btn.crear,
+        buttonFail  : strings.btn.cancelar,
+        message : strings.usuario.nuevo,
         input   : {
             user    : {
                 type         : "text",
@@ -1259,17 +1365,20 @@ if(userDATOS.verificar(1)) {
         top     : "auto",
         filterDone      : function(data){
           if(data.user === "" || data.password1 === "") {
-            userDATOS.notificacion("Faltan datos","error");
+            userDATOS.notificacion(strings.faltan.datos,"error");
             return false;
           }
           if(data.password1 != data.password2) {
-            userDATOS.notificacion("Las contraseñas no coinciden","error")
+            userDATOS.notificacion(strings.contrasela.noCoinciden,"error")
             return false;
           }
 
-          aux = userDATOS.busqueda(data.user,"osai_usuario",false,"user");
+          aux = null;
+          userDATOS.busqueda({"value":data.user,"tabla":"osai_usuario","column":"user"}, function(d) {
+            aux = d;
+          });
           if(aux !== null) {
-            userDATOS.notificacion("Usuario en uso","error")
+            userDATOS.notificacion(strings.usuario.ocupado,"error")
             return false;
           }
         }
@@ -1278,11 +1387,14 @@ if(userDATOS.verificar(1)) {
         aux["id_cliente"] = row.id;
         aux["user"] = data.user;
         aux["pass"] = md5(data.password1);
-        i = userDATOS.insertDatos("osai_usuario",aux)
-        userDATOS.notificacion("Usuario creado");
+        userDATOS.insertDatos("osai_usuario",aux)
+        userDATOS.notificacion(strings.usuario.creado);
         userDATOS.log(window.user_id,"Alta de registro / [USER] " + data.user + " / [PASS] " + data.password1,0,i,"osai_usuario");
-        window.variables.cliente.reload();
-        userDATOS.listador("#t_clientes",window.variables["cliente"],false);
+
+        window["tabla_0"].destroy();
+        $("#t_clientes").remove();
+        $(".container fieldset:last-child .card-body").append('<table class="table table-hover w-100" id="t_clientes"></table>');
+        userDATOS.listador("#t_clientes",pyrusCliente,false);
       });
     }
   });
@@ -1291,7 +1403,6 @@ if(userDATOS.verificar(1)) {
    * Solo accedido por usuarios nivel 1 y 2
    */
   app.controller("actores", function ($scope) {
-    let pyrusActor = new Pyrus("actor");
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     $(".nav_ul a[data-url='actores']").addClass("active");
 
@@ -1316,25 +1427,24 @@ if(userDATOS.verificar(1)) {
           }
         }
         $("#" + t.id).find("input","button","select").attr("disabled")
-        accion = window.variables.actor.guardar_1(OBJ);//
+        accion = pyrusActor.guardar_1(OBJ);//
         if(accion.id !== null && accion.flag) {//
-          window.variables.actor.reload();//vuelvo a trear todos los datos
-          let elemento = userDATOS.busqueda(accion.id,"actor");//traigo el nuevo registro
+          let elemento = null;
+          userDATOS.busqueda({"value":accion.id,"tabla":"actor"}, function(d) {
+            elemento = d;
+          });//traigo el nuevo registro
 
-          let row = window.variables.actor.getContenidoDATATABLEsimple(elemento);
+          window["tabla_0"].draw();//agrego sin recargar sitio
           if(OBJ.id == "nulo") {
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"actor");
-            window["tabla_0"].row.add(row).draw().node();//agrego sin recargar sitio
           } else {
             userDATOS.log(window.user_id,"Edición de registro",0,accion.id,"actor");
-            window["tabla_0"].row('.selected').data(row).draw();//reemplazo
           }
           $("#modal").modal("hide");
           window.ATTR = undefined;
-        } else userDATOS.notificacion("Datos repetidos","error");
-      } else userDATOS.notificacion("Faltan datos","error");
+        } else userDATOS.notificacion(strings.repetidoDatos,"error");
+      } else userDATOS.notificacion(strings.faltan.datos,"error");
     }
-    //$("#div").addClass("d-none");
   });
   /**
    * Acciones de vista USUARIOS
@@ -1343,41 +1453,39 @@ if(userDATOS.verificar(1)) {
   app.controller("usuarios", function ($scope) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     let ua = userDATOS.user();
-    let pyrusUsuario = new Pyrus("usuario",false);
-    let usuarios = userDATOS.busquedaTabla("usuario");
-    delete usuarios[ua.id];
-    for(var i in usuarios) {
-      if(parseInt(usuarios[i]["nivel"]) < parseInt(window.usuario.nivel))
-        delete usuarios[i];//saco de la vista los usuarios con nivel superior
-    }
+    
     let ARR_btn = [];
-    ARR_btn.push({
-				text: '<i class="fas fa-plus"></i>',
-				className: 'btn-primary',
-				action: function ( e, dt, node, config ) {
-					window["tabla_0"].rows('.selected').deselect();
-					userDATOS.addUsuario(window["tabla_0"],pyrusUsuario);
-				}
-		});
-    ARR_btn.push({
-				extend: 'selected',
-				text: '<i class="fas fa-eye"></i>',
-				className: 'btn-dark',
-				action: function ( e, dt, node, config ) {
-					let rows = dt.rows( { selected: true } ).count();
-					userDATOS.showUsuario(window["tabla_0"],window.variables.usuario);
-				}
-			});
-    ARR_btn.push({
-				extend: 'selected',
-				text: '<i class="fas fa-ban"></i>',
-				className: 'btn-warning',
-				action: function ( e, dt, node, config ) {
-					let rows = dt.rows( { selected: true } ).count();
-					userDATOS.bloquearUsuario(window["tabla_0"],window.variables.usuario);
-				}
-			});
-    userDATOS.listador("#t_usuarios",pyrusUsuario,true,0,ARR_btn,["delete"]);//target / VAR Pyrus / busqueda / id tabla / btn adicional / ARR btn default
+    let btn = [];
+    if(parseInt(window.user.nivel) <= 2) btn.push("delete");
+    if(parseInt(window.user.nivel) <= 3) {
+      ARR_btn.push({
+          text: '<i class="fas fa-plus"></i>',
+          className: 'btn-primary',
+          action: function ( e, dt, node, config ) {
+            window["tabla_0"].rows('.selected').deselect();
+            userDATOS.addUsuario(window["tabla_0"],pyrusUsuario);
+          }
+      });
+      ARR_btn.push({
+          extend: 'selected',
+          text: '<i class="fas fa-eye"></i>',
+          className: 'btn-dark',
+          action: function ( e, dt, node, config ) {
+            let rows = dt.rows( { selected: true } ).count();
+            userDATOS.showUsuario(window["tabla_0"],pyrusUsuario);
+          }
+        });
+      ARR_btn.push({
+          extend: 'selected',
+          text: '<i class="fas fa-ban"></i>',
+          className: 'btn-warning',
+          action: function ( e, dt, node, config ) {
+            let rows = dt.rows( { selected: true } ).count();
+            userDATOS.bloquearUsuario(window["tabla_0"],pyrusUsuario);
+          }
+        });
+    }
+    userDATOS.listador("#t_usuarios",pyrusUsuario,true,0,ARR_btn,btn);//target / VAR Pyrus / busqueda / id tabla / btn adicional / ARR btn default
     userDATOS.submit = function(t) {
       if(userDATOS.validar("#" + t.id)) {
         let a = pyrusUsuario.objeto["GUARDADO_ATTR"]
@@ -1398,14 +1506,13 @@ if(userDATOS.verificar(1)) {
         accion = pyrusUsuario.guardar_1(OBJ);
         if(accion.id !== null && accion.flag) {//
           let row = [];
-          let e = userDATOS.busqueda(accion.id,"usuario");//el dato nuevo
-          let usuario_nivel = new Pyrus("usuario_nivel",false);
+          let e = null;
+          userDATOS.busqueda({"value":accion.id,"tabla":"usuario"},function(d) {
+            e = d;
+          });//el dato nuevo
           userDATOS.log(window.user_id,"Alta de registro",0,e.id,"usuario");
-          row.push(e.id);
-          row.push(e.user);
-          row.push(usuario_nivel.mostrar_1(e.nivel));
-          row.push("Activo");
-          window["tabla_0"].row.add(row).draw().node();//agrego sin recargar sitio
+          
+          window["tabla_0"].draw();//agrego sin recargar sitio
           $("#modal").modal("hide");
         } else userDATOS.notificacion("Datos repetidos","error");
       } else userDATOS.notificacion("Faltan datos","error");
@@ -1420,23 +1527,35 @@ if(userDATOS.verificar(1)) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     let atributos = {};
     let OBJ_alarmas = {};
-    let clientes = userDATOS.busquedaTabla("cliente");
+    let clientes = null;
+    userDATOS.busquedaTabla("cliente",function(d) {
+      clientes = d;
+    });
     let CLIENTES_alarmas = {};
-    let ARR_alarmas = userDATOS.busqueda(0,"alarma",false,"id_cliente",0);
+    let ARR_alarmas = null;
+    userDATOS.busqueda({"value":0,"tabla":"alarma","column":"id_cliente","retorno":0}, function(d) {
+      ARR_alarmas = d;
+    });
     // la alarma busca por clientes activos, si no se encuentran seteados los agrega
     for(var i in clientes) {
       if(parseInt(clientes[i]["todos"])) continue;
-      let o = userDATOS.busqueda(clientes[i]["id"],"alarma",false,"id_cliente");
+      let o = null;
+      userDATOS.busqueda({"value":clientes[i]["id"],"tabla":"alarma","column":"id_cliente"}, function(d) {
+        o = d;
+      });
       CLIENTES_alarmas[clientes[i]["id"]] = {};
       CLIENTES_alarmas[clientes[i]["id"]]["id"] = clientes[i]["id"];
       CLIENTES_alarmas[clientes[i]["id"]]["nombre"] = clientes[i]["nombre"];
       if(o === null) {
-        o = window.variables.alarma.objetoLimpio();
+        o = pyrusAlarma.objetoLimpio();
         o.estado = "0";
         o.id_cliente = clientes[i]["id"];
         delete o["atributos"];
-        accion = window.variables.alarma.guardar_1(o);
-        aux = userDATOS.busqueda(accion.id,"alarma");//Agrego en el array precargado
+        accion = pyrusAlarma.guardar_1(o);
+        aux = null;
+        userDATOS.busqueda({"value":accion.id,"tabla":"alarma"}, function(d) {
+          aux = d;
+        });//Agrego en el array precargado
 
         CLIENTES_alarmas[clientes[i]["id"]]["atributos"] = [];
         CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"] = {};
@@ -1450,9 +1569,13 @@ if(userDATOS.verificar(1)) {
           for(var x in arr)
             CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][arr[x]] = []
         } else {
-          CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"] = userDATOS.parseJSON(o.atributos_negativos);
-          for(var x in CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"])
-            CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][x] = userDATOS.parseJSON(CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][x])
+          if(o.atributos_negativos == "" || o.atributos_negativos === null)
+            CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"] = ""
+          else {
+            CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"] = userDATOS.parseJSON(o.atributos_negativos);
+            for(var x in CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"])
+              CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][x] = userDATOS.parseJSON(CLIENTES_alarmas[clientes[i]["id"]]["atributos_negativos"][x])
+          }
         }
         CLIENTES_alarmas[clientes[i]["id"]]["estado"] = o.estado;
         CLIENTES_alarmas[clientes[i]["id"]]["id_alarma"] = o.id;
@@ -1478,7 +1601,6 @@ if(userDATOS.verificar(1)) {
 
     userDATOS.submit = function(t) {
       if(userDATOS.validar("#" + t.id)) {
-        let pyrusAlarma = new Pyrus("alarma",false);
         let a = pyrusAlarma.objeto["GUARDADO_ATTR"];
         let modal = $("#modal");
         let OBJ = {};
@@ -1497,22 +1619,24 @@ if(userDATOS.verificar(1)) {
         }
         accion = pyrusAlarma.guardar_1(OBJ);
         if(accion.id !== null && accion.flag) {
-          on = userDATOS.busqueda(accion.id,"alarma");
+          on = null;
+          userDATOS.busqueda({"value":accion.id,"tabla":"alarma"}, function(d) {
+            on = d;
+          });
           userDATOS.log(window.user_id,"Se agregó alarma (" + on.nombre + ")",0,accion.id,"alarma");
           angular.element($("#alarmasF")).scope().alarmas[on.id] = on;
           modal.modal("hide");
-        } else userDATOS.notificacion("Datos repetidos","error");
-      } else userDATOS.notificacion("Faltan datos","error");
+        } else userDATOS.notificacion(strings.repetidoDatos,"error");
+      } else userDATOS.notificacion(strings.faltan.datos,"error");
     }
     $scope.alarmas = OBJ_alarmas;
     $scope.deleteAlarma = function(o) {
       $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message   : "¿Está seguro de eliminar <strong>alarma</strong>?"
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message   : strings.eliminar.alarma
       }).done(function(){
         delete angular.element($("#alarmasF")).scope().alarmas[o.id];
-        let pyrusAlarma = new Pyrus("alarma",false);
         $("div[data-id='" + o.id + "']").remove();
         o.elim = 1;
         delete o["atributos"];
@@ -1523,16 +1647,14 @@ if(userDATOS.verificar(1)) {
     $scope.submitAlarma = function(t,o) {
       if(angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"].indexOf(t.text) < 0) {
         angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"].push(t.text);
-        let pyrusAlarma = new Pyrus("alarma",false);
 
         accion = pyrusAlarma.guardar_1(angular.element($("#alarmasF")).scope().alarmas[o.id]);
         angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"] = userDATOS.parseJSON(angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"]);
         userDATOS.log(window.user_id,"Se agregó atributo a la alarma " + o.nombre + " (" + t.text + ")",0,accion.id,"alarma");
         t.text = "";
-      } else userDATOS.notificacion("Dato duplicado","error");
+      } else userDATOS.notificacion(strings.repetidoDatos,"error");
     }
     $scope.deleteATTRalarma = function(i,o) {
-      let pyrusAlarma = new Pyrus("alarma",false);
       text = angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"][i];
       angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"].splice(i,1);
       accion = pyrusAlarma.guardar_1(angular.element($("#alarmasF")).scope().alarmas[o.id]);
@@ -1560,7 +1682,6 @@ if(userDATOS.verificar(1)) {
 
     $scope.alarmasCLIENTE = CLIENTES_alarmas;
     $scope.estadoAlarma = function(o) {
-      let pyrusAlarma = new Pyrus("alarma",false);
       o.estado = (o.estado == 0 ? 1 : 0);
 
       accion = pyrusAlarma.guardar_1(o);
@@ -1569,35 +1690,40 @@ if(userDATOS.verificar(1)) {
       angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"] = userDATOS.parseJSON(angular.element($("#alarmasF")).scope().alarmas[o.id]["atributos"]);
     }
     $scope.submit = function(t, cliente) {
-      let pyrusAlarma = new Pyrus("alarma",false);
       if(angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id].atributos.indexOf(t.text) < 0) {
         angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id].atributos.push(t.text);
-        let o = userDATOS.busqueda(cliente.id_alarma,"alarma");
+        let o = null;
+        userDATOS.busqueda({"value":cliente.id_alarma,"tabla":"alarma"}, function(d) {
+          o = d;
+        });
         o.atributos = angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id].atributos;
-        accion = window.variables.alarma.guardar_1(o);
-
-        pyrusAlarma.resultado[accion["id"]] = o;
+        accion = pyrusAlarma.guardar_1(o);
 
         userDATOS.log(window.user_id,"Se agregó atributo a " + cliente.nombre + "(" + t.text + ")",0,accion.id,"alarma");
         t.text = "";
-      } else userDATOS.notificacion("Dato duplicado","error");
+      } else userDATOS.notificacion(strings.repetidoDatos,"error");
     }
     $scope.alarma = function(cliente) {
-      let pyrusAlarma = new Pyrus("alarma",false);
       cliente.estado = (cliente.estado == 0 ? 1 : 0);
       angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id]
-      o = userDATOS.busqueda(cliente.id_alarma,"alarma");
+      o = null;
+      userDATOS.busqueda({"value":cliente.id_alarma,"tabla":"alarma"}, function(d) {
+        o = d;
+      });
       o.estado = cliente.estado
       accion = pyrusAlarma.guardar_1(o);
       userDATOS.log(window.user_id,"Alarma de " + cliente.nombre + " (" +(cliente.estado == "0" ? "APAGADA" : "ENCENDIDA")+ ")",0,accion.id,"alarma");
-      window.variables.alarma.resultado[o.id] = o;
+      
     }
     $scope.delete = function(i, cliente) {
       let text = angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id]["atributos"][i];
       angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id]["atributos"].splice(i,1);
-      let o = window.variables.alarma.busqueda("id",cliente.id_alarma);
+      let o = null;
+      userDATOS.busqueda({"value":cliente.id_alarma,"tabla":"alarma"}, function(d) {
+        o = d;
+      });
       o.atributos = angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id]["atributos"];
-      accion = window.variables.alarma.guardar_1(o);
+      accion = pyrusAlarma.guardar_1(o);
       userDATOS.log(window.user_id,"Se quito atributo a " + cliente.nombre + " (" + text + ")",0,accion.id,"alarma",1);
     }
     userDATOS.removeATTRnegativo = function(e,tipo) {
@@ -1608,7 +1734,12 @@ if(userDATOS.verificar(1)) {
 
       elem.$parent[tipo]["atributos_negativos"][elem.attr].splice(i,1);
       li.remove();
-
+      let o = null;
+      userDATOS.busqueda({"value":elem.$parent[tipo].id_alarma,"tabla":"alarma"}, function(d) {
+        o = d;
+      });
+      o.atributos_negativos = elem.$parent[tipo]["atributos_negativos"];
+      accion = pyrusAlarma.guardar_1(o);
     }
     userDATOS.addATTRnegativo = function(e,tipo) {
       let li = $(e).closest("li");
@@ -1620,16 +1751,21 @@ if(userDATOS.verificar(1)) {
         let span = '<span class="float-right"><i onclick="userDATOS.removeATTRnegativo(this,\'' + tipo + '\')" class="fas fa-trash-alt text-danger cursor-pointer"></i></span>';
         li.parent().append("<li class='list-group-item bg-light'>" + data + span + "</li>");
         elem.$parent[tipo]["atributos_negativos"][elem.attr].push(data);
-
+        
+        let o = null;
+        userDATOS.busqueda({"value":elem.$parent[tipo].id_alarma,"tabla":"alarma"}, function(d) {
+          o = d;
+        });
+        o.atributos_negativos = elem.$parent[tipo]["atributos_negativos"];
+        accion = pyrusAlarma.guardar_1(o);
         $(e).val("");
-      } else userDATOS.notificacion("Elemento existente","error");
+      } else userDATOS.notificacion(strings.elementoExistente,"error");
 
     }
     userDATOS.atributoNegativo = function(e,tipo) {
       let li = $(e).closest("li");
       let elem = angular.element(li).scope();
       let data = null;
-      let pyrusAlarma = new Pyrus("alarma",false);
       data = elem.$parent[tipo]["atributos_negativos"][elem.attr];
       let html = "";
       if(parseInt($(e).data("estado"))) {
@@ -1638,10 +1774,15 @@ if(userDATOS.verificar(1)) {
         $(e).data("estado","0");
 
         let o = null;
-        if(tipo == "cliente")
-          o = userDATOS.busqueda(elem.$parent.cliente.id_alarma,"alarma");
-        else
-          o = userDATOS(elem.$parent.id,"alarma");
+        if(tipo == "cliente") {
+          userDATOS.busqueda({"value":elem.$parent.cliente.id_alarma,"tabla":"alarma"}, function(d) {
+            o = d
+          });
+        } else {
+          userDATOS.busqueda({"value":elem.$parent.id,"tabla":"alarma"}, function(d) {
+            o = d
+          });
+        }
         o.atributos_negativos = elem.$parent[tipo]["atributos_negativos"];
         accion = pyrusAlarma.guardar_1(o);
         if(tipo == "alarmaF") {
@@ -1686,12 +1827,18 @@ if(userDATOS.verificar(1)) {
     $scope.mediosSELECT = selectMEDIOS.medio;
     $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
     $scope.seccionSELECT = selectMEDIOS.seccion;
-    $scope.unidadSELECT = userDATOS.busquedaTabla("cliente");
+    $scope.unidadSELECT = null;
+    userDATOS.busquedaTabla("cliente", function(d) {
+      $scope.unidadSELECT = d;
+    });
     $(".select__2").select2();
 
     scopeNoticias = function($scope) {
       $scope.$apply(function () {
-          $scope.noticias = userDATOS.noticiasVALOR();
+          $scope.noticias = null;
+          userDATOS.noticiasVALOR(function(d) {
+            $scope.noticias = d;
+          });
       });
     }
 
@@ -1703,50 +1850,40 @@ if(userDATOS.verificar(1)) {
       let tituloFilter = $('#titulo').val();
       let seccionFilter = $('#select_seccion').val();
       data = {"moderado":1,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+        userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
+        return false;
       }
-      if(flag) {
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS2("#t_data",data)
-        },500);
-      } else userDATOS.notificacion("Faltan datos de búsqueda","error");
+      if(minDateFilter != "" && maxDateFilter != "") {
+        if(dates.compare(dates.convert(maxDateFilter),dates.convert(minDateFilter)) < 0) {
+          userDATOS.notificacion(strings.error.fechas,"error");
+          return false;
+        }
+      }
+      tabla_noticia.destroy();
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS2("#t_data",data)
+      },500);
       //tabla_noticia.draw();
     });
     $("#btn_limpiar").on("click",function() {
-      let minDateFilter = $('#fecha_min').val();
-      let maxDateFilter = $('#fecha_max').val();
-      let medioFilter = $('#select_medioNOTICIA').val();
-      let medioTipoFilter = $('#select_medioTipoNOTICIA').val();
-      let tituloFilter = $('#titulo').val();
-      let seccionFilter = $('#select_seccion').val();
-      data = {"moderado":1,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
-      }
-      if(flag) {
-        $("#fecha_min").val("");
-        $("#fecha_max").val("");
-        $("#titulo").val("");
-        if($("#select_medioTipoNOTICIA").val() != "")
-          $("#select_medioTipoNOTICIA").val("").trigger("change");
-        if($("#select_medioNOTICIA").val() != "")
-          $("#select_medioNOTICIA").val("").trigger("change");
+      $("#fecha_min").val("");
+      $("#fecha_max").val("");
+      $("#titulo").val("");
+      if($("#select_seccion").val().length == 0)
+        $("#select_seccion").empty().trigger("change");
+      if($("#select_medioTipoNOTICIA").val() != "")
+        $("#select_medioTipoNOTICIA").val("").trigger("change");
+      if($("#select_medioNOTICIA").val() != "")
+        $("#select_medioNOTICIA").val("").trigger("change");
 
-        if($("#select_seccion").length != 0)
-          $("#select_seccion").empty().trigger("change")
-
-        $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccion").select2();
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS2("#t_data",{"moderado":1})
-        },500);
-      }
+      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccion").select2();
+      tabla_noticia.destroy();
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS2("#t_data",{"moderado":1})
+      },50);
     })
     $("#select_medioNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
@@ -1811,16 +1948,14 @@ if(userDATOS.verificar(1)) {
     })
 
     userDATOS.eliminarNOTICIA = function() {
-      if(window.noticiasCHECKED == null) userDATOS.notificacion("No se seleccionó ninguna noticia","error");
-      else if(Object.keys(window.noticiasCHECKED).length == 0) userDATOS.notificacion("No se seleccionó ninguna noticia","error");
+      if(window.noticiasCHECKED == null) userDATOS.notificacion(strings.noticia.sinSeleccion,"error");
+      else if(Object.keys(window.noticiasCHECKED).length == 0) userDATOS.notificacion(strings.noticia.sinSeleccion,"error");
       else {
-        if(Object.keys(window.noticiasCHECKED).length == 1) mssg = "¿Está seguro de eliminar la <strong>noticia</strong> seleccionada?";
-        else mssg = "¿Está seguro de eliminar las <strong>noticias</strong> seleccionadas?<br/>Total: " + Object.keys(window.noticiasCHECKED).length
         $.MessageBox({
-          buttonDone  : "Si",
-          buttonFail  : "No",
-          message   : mssg
-        }).done(function(){
+          buttonDone  : strings.btn.si,
+          buttonFail  : strings.btn.no,
+          message   : (Object.keys(window.noticiasCHECKED).length == 1 ? strings.noticia.seleccion[0] : strings.noticia.seleccion[1](Object.keys(window.noticiasCHECKED).length))
+        }).done(function(data){
           changeM = {"ids":Object.keys(window.noticiasCHECKED),"data":data,"tipo":"eliminar"}
           userDATOS.change(changeM,"noticia","elim",1,1);
           scopeNoticias(angular.element($("#menu_noticias")).scope());
@@ -1832,8 +1967,12 @@ if(userDATOS.verificar(1)) {
     }
 
     userDATOS.relevarNOTICIA = function() {
-      if(window.noticiasCHECKED == null) userDATOS.notificacion("No se seleccionó ninguna noticia","error");
-      else if(Object.keys(window.noticiasCHECKED).length == 0) userDATOS.notificacion("No se seleccionó ninguna noticia","error");
+      let clientes = null;
+      userDATOS.busquedaTabla("cliente", function(d) {
+        clientes = d;
+      });
+      if(window.noticiasCHECKED == null) userDATOS.notificacion(strings.noticia.sinSeleccion,"error");
+      else if(Object.keys(window.noticiasCHECKED).length == 0) userDATOS.notificacion(strings.noticia.sinSeleccion,"error");
       else {
         let select = $("<select multiple>", {
             css : {
@@ -1842,22 +1981,23 @@ if(userDATOS.verificar(1)) {
             }
         });
         let arr = {};
-        for(var i in window.variables.cliente.resultado)
-        	if(arr[window.variables.cliente.resultado[i]["id"]] === undefined) arr[window.variables.cliente.resultado[i]["id"]] = window.variables.cliente.resultado[i]["nombre"]
+        for(var i in clientes)
+        	if(arr[clientes[i]["id"]] === undefined) arr[clientes[i]["id"]] = clientes[i]["nombre"];
         for(var i in arr)
           select.append("<option value='" + i + "'>" + arr[i] + "</option>");
 
-        if(Object.keys(window.noticiasCHECKED).length == 1) mssg = "¿Está seguro de relevar la <strong>noticia</strong> seleccionada?";
-        else mssg = "¿Está seguro de relevar las <strong>noticias</strong> seleccionadas?<br/>Total: " + Object.keys(window.noticiasCHECKED).length
         $.MessageBox({
-          buttonDone  : "Si",
-          buttonFail  : "No",
-          message   : mssg,
+          buttonDone  : strings.btn.si,
+          buttonFail  : strings.btn.no,
+          message   : (Object.keys(window.noticiasCHECKED).length == 1 ? mssg = strings.noticia.relevo[0] : strings.noticia.relevo[1](Object.keys(window.noticiasCHECKED).length)),
           input   : select
         }).done(function(data){
           if($('tbody input[type="checkbox"]:checked').length == 1) {
             $('tbody input[type="checkbox"]:checked').each(function(){
-                let o = userDATOS.busqueda($(this).val(),"noticia");
+                let o = null;
+                userDATOS.busqueda({"value":$(this).val(),"tabla":"noticia"}, function(d) {
+                  o = d;
+                });
                 let new_r = new Pyrus("noticiarelevo",false);
                 for(var i in data) {
                   let nr = new_r.objetoLimpio();
@@ -1892,6 +2032,7 @@ if(userDATOS.verificar(1)) {
    * Solo accedido por usuarios nivel 1 y 2
    */
   app.controller("procesadas", function ($scope,$timeout,service_simat,factory_simat) {
+    window.vista = "procesadas";
     $(".body > aside .nav_ul a[data-url='noticias']").closest("ul").find(".active").removeClass("active");
     $(".body > aside .nav_ul a[data-url='noticias']").addClass("active");
 
@@ -1923,60 +2064,41 @@ if(userDATOS.verificar(1)) {
       let seccionFilter = $('#select_seccionBUSCADOR').val();
       let unidadFilter = $("#select_unidadNOTICIA").val();
       data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter),"unidadFilter":unidadFilter}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+        userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
+        return false;
       }
-      if(flag) {
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS3("#t_data",data)
-        },500)
-      } else userDATOS.notificacion("Faltan datos de búsqueda","error");
+      if(minDateFilter != "" && maxDateFilter != "") {
+        if(dates.compare(dates.convert(maxDateFilter),dates.convert(minDateFilter)) < 0) {
+          userDATOS.notificacion(strings.error.fechas,"error");
+          return false;
+        }
+      }
+      tabla_noticia.destroy();
+      $("#t_data").html("");
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS3("#t_data",data)
+      },500)
     })
 
     $("#btn_limpiar").on("click",function() {
-      let minDateFilter = $('#fecha_min').val();
-      let maxDateFilter = $('#fecha_max').val();
-      let medioFilter = $('#select_medioNOTICIA').val();
-      let medioTipoFilter = $('#select_medioTipoNOTICIA').val();
-      let tituloFilter = $('#titulo').val();
-      let seccionFilter = $('#select_seccionBUSCADOR').val();
-      data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
-      }
-      if(flag) {
-        $("#fecha_min").val("");
-        $("#fecha_max").val("");
-        $("#titulo").val("");
-        selectMEDIOS = userDATOS.noticiasSELECT("procesar");
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
+      $("#fecha_min").val("");
+      $("#fecha_max").val("");
+      $("#titulo").val("");
+      if($("#select_seccionBUSCADOR").val().length == 0)
+        $("#select_seccionBUSCADOR").empty().trigger("change");
+      if($("#select_medioTipoNOTICIA").val() != "")
+        $("#select_medioTipoNOTICIA").val("").trigger("change");
+      if($("#select_medioNOTICIA").val() != "")
+        $("#select_medioNOTICIA").val("").trigger("change");
 
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-
-        $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccionBUSCADOR,#select_unidadNOTICIA").select2();
-
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS3("#t_data",{"estado":2})
-        },500);
-      }
+      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccionBUSCADOR").select2();
+      tabla_noticia.destroy();
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS3("#t_data",{"estado":2})
+      },50);
     })
 
     $("#select_medioNOTICIA").on("change",function() {
@@ -2095,36 +2217,34 @@ if(userDATOS.verificar(1)) {
      */
     userDATOS.clippingNOTICIA = function() {
       let row = tabla_noticia.rows(".selected").data()[0];
-      let clientes = userDATOS.busqueda(row.id,"proceso",false,"did_noticia",0);
-      let clientes_osai = userDATOS.busquedaTabla("osai_usuario");//CLIENTES FINALES
-
-      let noticia = tabla_noticia.rows(".selected").data()[0];
-      let OBJ_clientes = {};
-      for(var x in clientes) {
-      	if(OBJ_clientes[clientes[x]["id_cliente"]] === undefined)
-      		OBJ_clientes[clientes[x]["id_cliente"]] = 1;
-      }
-      let OBJ_clientes_osai = {};//CLIENTES FINALES <-- relacionado con --> UNIDAD DE ANALISIS
-      for(var i in clientes_osai) {
-        if(OBJ_clientes_osai[i] === undefined) {
-          OBJ_clientes_osai[i] = {};
-          OBJ_clientes_osai[i]["cliente_final"] = clientes_osai[i]["user"];
-          OBJ_clientes_osai[i]["unidad_analisis"] = {};
-          OBJ_clientes_osai[i]["estado"] = 0;
+      let noticia = null;
+      let clientes = null;
+      let idAgendaNacional = 12//
+      let proceso = [];
+      let procesos = null;
+      let msg = "";
+      userDATOS.busqueda({"value":row.id,"tabla":"noticia"}, function(d) {
+        noticia = d;
+      });
+      userDATOS.busqueda({"value":row.id,"tabla":"proceso","column":"did_noticia","retorno":0}, function(d) {
+        procesos = d;
+      });
+      for(var i in procesos) {
+        console.log(procesos[i])
+        if(parseInt(procesos[i]["id_cliente"]) == idAgendaNacional) {
+          userDATOS.busqueda({"value":idAgendaNacional,"tabla":"cliente"},function(cliente) {
+            msg = "<p class='m-0 text-center'>Noticia procesada en <strong>" + cliente.nombre + "</strong></p>";
+          });
+          continue;
         }
-        aux = userDATOS.busqueda(i,"osai_usuariounidad",false,"id_usuario_osai",0);
-        for(var j in aux) {
-          if(OBJ_clientes[aux[j]["id_cliente_osai"]] !== undefined) OBJ_clientes_osai[i]["estado"] = 1;
-          u = window.variables.cliente.resultado[aux[j]["id_cliente_osai"]];
-          OBJ_clientes_osai[i]["unidad_analisis"][aux[j]["id_cliente_osai"]] = u["nombre"];
-        }
+        proceso.push(procesos[i]["id_cliente"]);
       }
       /**
        * ESTADOS DE UNA NOTICIA <-- OJO, no confundir con TIPO DE NOTICIA (NUEVA/VIEJA)
        * - 0: Default
        * - 1: Relevado
        * - 2: Procesada
-       * - 3: Pre Publicación
+       * - 3: Publicada
        * - 4: Publicada
        */
       if(parseInt(noticia.estado_num) == 3) {
@@ -2135,69 +2255,75 @@ if(userDATOS.verificar(1)) {
         userDATOS.notificacion("Noticia publicada en CLIENTE/S");
         return false;
       }
-      let mssg = "<p class='text-uppercase text-center'>¿Está seguro de pre publicar la <strong>noticia</strong> seleccionada?</p>";
-      mssg += "<p class='text-uppercase mt-2 mb-0 text-center'><strong>clientes finales</strong></p>";
-      let opt = []
-      let select = $("<select multiple required>", {
-          css : {
-              "width"         : "100%",
-              "margin-top"    : "1rem"
+      
+      userDATOS.busquedaUsuariosFinales(function(clientes) {
+        for(var i in proceso) {
+          if(clientes[proceso[i]] !== undefined) {
+            msg += "<p class='m-0'>" + clientes[proceso[i]] + "</p>";
+            delete clientes[proceso[i]];
           }
-      });
-      let arr = {};
-      for(var i in OBJ_clientes_osai) {
-        if(OBJ_clientes_osai[i]["estado"]) {
-          opt.push(i);
-          mssg += "<p class='mb-0 ml-2'>" + OBJ_clientes_osai[i]["cliente_final"] + "</p>";
-          select.append("<option value='" + i + "' hidden>" + OBJ_clientes_osai[i]["cliente_final"] + "</option>");
-        } else {
-          select.append("<option value='" + i + "'>" + OBJ_clientes_osai[i]["cliente_final"] + "</option>");
         }
-      }
-
-      $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message     : mssg,
-        input       : select,
-        filterDone  : function(data) {
-        }
-      }).done(function(data){
-        mssg = "";
-        if(data.length == 0) mssg = "Noticia lista para publicar en el CLIENTE FINAL.<br/>Para terminar, dirijase a <strong>CLIPPING</strong>";
-        else mssg = "Noticia lista para publicar en los CLIENTES FINALES seleccionados.<br/>Para terminar, dirijase a <strong>CLIPPING</strong>";
-        userDATOS.notificacion(mssg,"info",false);
-        userDATOS.notificacion("La tabla y filtros se resetearan","warning",false);
-
-        setTimeout(function() {
-          for(var i in data) {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
-            aux = {};
-            aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
-            aux["id_usuario_osai"] = data[i];
-            x = userDATOS.insertDatos("osai_cliente",aux);
-            userDATOS.log(window.user_id,"NOTICIA pre publicada",0,x,"osai_cliente");
+        $.MessageBox({
+          buttonDone  : strings.btn.si,
+          buttonFail  : strings.btn.no,
+          message     : strings.noticia.prePublicar(msg),
+          input   : { 
+            input_detalle  : {
+              type         : "texts",
+              label        : "Descripción (máx. 200 caracteres):",
+              title        : "Descripción de la noticia",
+              maxlength    : 200
+            },
+            select_tipo : {
+              type         : "selects",
+              label        : "Seleccione Cliente final para publicar",
+              title        : "cliente final",
+              options      : clientes.data,
+              default      : proceso
+            },
+          },
+          filterDone  : function(data) {
+            if(data.input_detalle == "")
+              return "Descripción necesaria"
           }
-          for(var i in opt) {//<-- CLIENTES valorados en la noticia / Publicado en el INDEX y MURO
-            aux = {};
-            aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
-            aux["id_usuario_osai"] = opt[i];
-            aux["tipo_aviso"] = 1;
-            x = userDATOS.insertDatos("osai_cliente",aux);
-            userDATOS.log(window.user_id,"NOTICIA pre publicada",0,x,"osai_cliente");
-          }
+        }).done(function(data){
+          userDATOS.notificacion((data.select_tipo.length == 0 ? strings.noticia.publicar[1] : strings.noticia.publicar[2]),"info",false);
+          userDATOS.notificacion(strings.tablaReseteo,"warning",false);
           userDATOS.change(noticia.id,"noticia","estado",3);
-          tabla_noticia.draw();
+          id_usuario = window.user_id;//USUARIO de OSAI que generó esto
+          setTimeout(function() {
+            clientesFinales = proceso.concat(data.select_tipo);///VERIFICAR ESTO
+            for(var i in clientesFinales) {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
+              aux = {};
+              aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
+              aux["id_usuario_osai"] = clientesFinales[i];
+              if(proceso.indexOf(clientesFinales[i]) >= 0)
+                aux["tipo_aviso"] = 1;
+              x = null;
+              userDATOS.insertDatos("osai_cliente",aux,function(x) {
+                userDATOS.log(window.user_id,"NOTICIA publicada",0,x,"osai_cliente");
+              },true);
+              userDATOS.insertDatos("osai_notificacion",
+                {"id_usuario":id_usuario,
+                "id_noticia":noticia.id,
+                "id_usuario_osai":clientesFinales[i],
+                "mensaje": data.input_detalle,
+                "nivel": 0,
+                "estado": 1});
+            }
 
-          selectMEDIOS = userDATOS.noticiasSELECT("procesada");
-
-          angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
-          angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
-          angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
-          angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
-          scopeNoticias(angular.element($(".submenu")).scope(),"procesadas",-1);
-        },500);
-      });
+            selectMEDIOS = userDATOS.noticiasSELECT("procesada");
+            tabla_noticia.draw();
+            angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
+            angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
+            angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
+            angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
+            scopeNoticias(angular.element($(".submenu")).scope(),"procesadas",-1);
+          },500);
+        });
+      },true);
     }
+
     userDATOS.submit = function(t) {
       let OBJ_data = {};
       let aux = $( t ).serializeArray();
@@ -2267,7 +2393,7 @@ if(userDATOS.verificar(1)) {
             else delete window.ARR_institucion[i];
           }
         } else if($("#" + t.id).data("tipo") == "institucionCREATE") {
-          let a = window.variables.attr_institucion.objeto["GUARDADO_ATTR"];
+          let a = pyrusInstitucion.objeto["GUARDADO_ATTR"];
           let OBJ = {}
           for(var j in a) {
             OBJ[j] = null;
@@ -2286,19 +2412,19 @@ if(userDATOS.verificar(1)) {
           }
           $("#" + t.id).find("input","button","select").attr("disabled")
 
-          accion = window.variables.attr_institucion.guardar_1(OBJ);//
+          accion = pyrusInstitucion.guardar_1(OBJ);//
           if(accion.id !== null && accion.flag) {//
-            // window.variables[e].reload(false);//recargo contenido asy, por si se necesita
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"attr_institucion");
-            let elemento = userDATOS.busqueda(accion.id,"attr_institucion");//traigo el nuevo registro
-            if(window.variables.attr_institucion.resultado[elemento.id] === undefined) {
-              window.variables.attr_institucion.resultado[elemento.id] = elemento;
+            let elemento = null;
+            userDATOS.busqueda({"value":accion.id,"tabla":"attr_institucion"},function(d) {
+              elemento = d;
+            });//traigo el nuevo registro
+            if(elemento === null) {
               $("#modal").modal("hide");
               return_ = "institucion"
             }
-          } else userDATOS.notificacion("Datos repetidos","error");
+          } else userDATOS.notificacion(strings.repetidoDatos,"error");
         } else if($("#" + t.id).data("tipo") == "actorCREATE") {
-          let pyrusActor = new Pyrus("actor");
           let a = pyrusActor.objeto["GUARDADO_ATTR"]
           let OBJ = {}
           for(var j in a) {
@@ -2317,16 +2443,19 @@ if(userDATOS.verificar(1)) {
             }
           }
           $("#" + t.id).find("input","button","select").attr("disabled")
-          accion = window.variables.actor.guardar_1(OBJ);//
+          accion = pyrusActor.guardar_1(OBJ);//
           if(accion.id !== null && accion.flag) {//
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"actor");
-            let elemento = userDATOS.busqueda(accion.id,"actor");//traigo el nuevo registro
+            let elemento = null;
+            userDATOS.busqueda({"value":accion.id,"tabla":"actor"},function(d) {
+              elemento = d;
+            });//traigo el nuevo registro
             if(elemento === null) {
               $("#modal").modal("hide");
               return_ = "actor"
             }
             window.ATTR = undefined;
-          } else userDATOS.notificacion("Datos repetidos","error");
+          } else userDATOS.notificacion(strings.repetidoDatos,"error");
         }
         if(return_ === null) {
           if(flag) $("#modal").modal("hide");
@@ -2345,17 +2474,35 @@ if(userDATOS.verificar(1)) {
     }
     userDATOS.eliminarNOTICIAproceso = function() {
       $.MessageBox({
-        buttonDone  : "Si",
-        buttonFail  : "No",
-        message   : "¿Está seguro de eliminar el <strong>proceso de la noticia</strong>?<br/>La noticia volverá al apartado <strong>A procesar</strong>"
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message   : strings.noticia.eliminar[2]
       }).done(function(){
         let noticia = tabla_noticia.row('.selected').data();
-        let noticiaSELECCIONADA = userDATOS.busqueda(noticia.id,"noticia");
-        let noticiaproceso = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia");
-        let proceso = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"proceso",false,"id_noticia");
-        let actores = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiasactor",false,"id_noticia",0);
-        let clientes = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiascliente",false,"id_noticia",0);
-        let instituciones = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiasinstitucion",false,"id_noticia",0);
+        let noticiaSELECCIONADA = null;
+        userDATOS.busqueda({"value":noticia.id,"tabla":"noticia"},function(d) {
+          noticiaSELECCIONADA = d;
+        });
+        let noticiaproceso = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia"},function() {
+          noticiaproceso = d;
+        });
+        let proceso = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia"},function() {
+          proceso = d;
+        });
+        let actores = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiasactor","column":"id_noticia","retorno":0}, function(d) {
+          actores = d;
+        });
+        let clientes = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiascliente","column":"id_noticia","retorno":0}, function(d) {
+          clientes = d;
+        });
+        let instituciones = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiasinstitucion","column":"id_noticia","retorno":0}, function(d) {
+          instituciones = d;
+        });
         let procesoDATA = userDATOS.parseJSON(noticiaproceso.data);
         userDATOS.change(noticiaSELECCIONADA.id,"noticia","estado",0);
         userDATOS.change(noticiaSELECCIONADA.id_noticia,"noticias","estado",0);
@@ -2397,18 +2544,40 @@ if(userDATOS.verificar(1)) {
       $.MessageBox({
         buttonDone  : "Si",
         buttonFail  : "No",
-        message   : "¿Está seguro de eliminar la <strong>noticia</strong>?<br/>Al confirmar, se eliminará todo proceso relacionado"
+        message   : strings.noticia.eliminar[3]
       }).done(function(){
         let noticia = tabla_noticia.row('.selected').data();
-        let noticiaSELECCIONADA = userDATOS.busqueda(noticia.id,"noticia");
-        let noticiaproceso = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia");
-        let proceso = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"proceso",false,"id_noticia");
-        let actores = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiasactor",false,"id_noticia",0);
-        let clientes = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiascliente",false,"id_noticia",0);
-        let instituciones = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiasinstitucion",false,"id_noticia",0);
         let procesoDATA = userDATOS.parseJSON(noticiaproceso.data);
 
-        let periodista = userDATOS.busqueda(noticiaSELECCIONADA.id_noticia,"noticiaperiodista",false,"id_noticia");
+        let noticiaSELECCIONADA = null;
+        userDATOS.busqueda({"value":noticia.id,"tabla":"noticia"},function(d) {
+          noticiaSELECCIONADA = d;
+        });
+        let noticiaproceso = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia"},function() {
+          noticiaproceso = d;
+        });
+        let proceso = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia"},function() {
+          proceso = d;
+        });
+        let actores = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiasactor","column":"id_noticia","retorno":0}, function(d) {
+          actores = d;
+        });
+        let clientes = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiascliente","column":"id_noticia","retorno":0}, function(d) {
+          clientes = d;
+        });
+        let instituciones = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiasinstitucion","column":"id_noticia","retorno":0}, function(d) {
+          instituciones = d;
+        });
+
+        let periodista = null;
+        userDATOS.busqueda({"value":noticiaSELECCIONADA.id_noticia,"tabla":"noticiaperiodista","column":"id_noticia"}, function(d) {
+          periodista = d;
+        });
 
         userDATOS.change(noticiaSELECCIONADA.id,"noticia","elim",1);
         userDATOS.change(noticiaSELECCIONADA.id_noticia,"noticias","elim",1);
@@ -2449,13 +2618,22 @@ if(userDATOS.verificar(1)) {
       angular.element("*[ng-controller=\"jsonController\"]").scope().procesar(1);
     }
     userDATOS.permitirEditar = function(b) {
+      let aux = null;
+      userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id,"tabla":"noticia"}, function(d) {
+        aux = d;
+      });
+      if(parseInt(aux.estado) == 6) {
+        userDATOS.notificacion(strings.noticia.abierta[0],"warning",false);
+        return false;
+      }
       $.MessageBox({
         buttonDone  : "Si",
         buttonFail  : "No",
-        message   : "¿Está seguro de editar el proceso de la noticia?"
+        message   : strings.noticia.editar[0]
       }).done(function(){
         $(b).parent().append('<button onclick="userDATOS.guardarEdicion(this)" class="btn btn-sm btn-success position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-check"></i></button>');
         $(b).remove();
+        userDATOS.change(noticiaSELECCIONADA.id,"noticia","estado",6);//CAMBIO estado
         window.noticiaSELECCIONADAeditar = true;
         $("#form_ATTR,.attr_noticias").removeClass("d-none");
         $(".select__2").removeAttr("disabled");
@@ -2473,10 +2651,10 @@ if(userDATOS.verificar(1)) {
     }
 
     userDATOS.createInstitucion = function() {
-      userDATOS.modal(null,window.variables.attr_institucion,"institucionCREATE");
+      userDATOS.modal(null,pyrusInstitucion,"institucionCREATE");
     }
     userDATOS.createActor = function() {
-      userDATOS.modal(null,window.variables.actor,"actorCREATE");
+      userDATOS.modal(null,pyrusActor,"actorCREATE");
     }
     // V. PROCESADAS
     /**
@@ -2487,67 +2665,73 @@ if(userDATOS.verificar(1)) {
     $scope.unidadAnalisis = function() {
       window.valoracionARR = undefined;
       let modal = $("#modal");
-      let clientes = userDATOS.busquedaTabla("cliente");
-      let selectCliente = "";
-      selectCliente += "<option value=''></option>";
-      let optionCliente = "";
-      modal.find(".modal-title").text("UNIDAD DE ANÁLISIS");
-      modal.find(".modal-dialog").addClass("modal-lg")
-      modal.find(".modal-body").addClass("py-0");
-      modal.find(".modal-body").append("<div class='modal-container'></div>");
+      userDATOS.busquedaTabla("cliente", function(clientes) {
+        let selectCliente = "";
+        selectCliente += "<option value=''></option>";
+        let optionCliente = "";
+        modal.find(".modal-title").text("UNIDAD DE ANÁLISIS");
+        modal.find(".modal-dialog").addClass("modal-lg")
+        modal.find(".modal-body").addClass("py-0");
+        modal.find(".modal-body").append("<div class='modal-container'></div>");
 
-      for(var i in clientes) {
-        if(parseInt(clientes[i]["todos"])) selectCliente += "<optgroup label='AGENDA'><option value='" + i + "'>" + clientes[i]["nombre"] + "</option></optgroup>";
-        else optionCliente += "<option value='" + i + "'>" + clientes[i]["nombre"] + "</option>";
-      }
-      selectCliente += "<optgroup label='UNIDAD DE ANÁLISIS'>" + optionCliente + "</optgroup>";
-      selectCliente += "</select>";
-      flag = true;
-      if(window.noticiaSELECCIONADA !== undefined) {
-        if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
-      }
-      html = "";btn = "";
-      html += '<div class="row">';
-        html += "<div class='col-7 py-2'>";
-          if(flag) {
-            html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn mx-auto d-block mb-2 btn-primary text-uppercase'>nueva unidad</button>";
-          }
-          html += '<div class="row">';
-            html += "<div class='col'>";
-              html += "<table class='table m-0' id='modal-table-unidad'>";
-                html += "<tbody>";
-                  html += "<tr class='d-none'>" +
-                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
-                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-0' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
-                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
-                  html += "</tr>";
-                  html += "<tr>" +
-                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
-                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
-                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
-                  html += "</tr>";
-                
-                html += "</tbody>";
-              html += "</table>";
+        for(var i in clientes) {
+          if(parseInt(clientes[i]["todos"])) selectCliente += "<optgroup label='AGENDA'><option value='" + i + "'>" + clientes[i]["nombre"] + "</option></optgroup>";
+          else optionCliente += "<option value='" + i + "'>" + clientes[i]["nombre"] + "</option>";
+        }
+        selectCliente += "<optgroup label='UNIDAD DE ANÁLISIS'>" + optionCliente + "</optgroup>";
+        selectCliente += "</select>";
+        flag = true;
+        if(window.noticiaSELECCIONADA !== undefined) {
+          if(parseInt(window.noticiaSELECCIONADA.estado) == 2 && window.noticiaSELECCIONADAeditar === undefined) flag = false;
+        }
+        html = "";btn = "";
+        html += '<div class="row">';
+          html += "<div class='col-7 py-2'>";
+            if(flag) {
+              html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn mx-auto d-block mb-2 btn-primary text-uppercase'>nueva unidad</button>";
+            }
+            html += '<div class="row">';
+              html += "<div class='col'>";
+                html += "<table class='table m-0' id='modal-table-unidad'>";
+                  html += "<tbody>";
+                    html += "<tr class='d-none'>" +
+                        '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
+                        '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-0' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
+                        '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
+                    html += "</tr>";
+                    html += "<tr>";
+                        html += '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>';
+                      html += '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>';
+                      html += '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
+                    html += "</tr>";
+                  
+                  html += "</tbody>";
+                html += "</table>";
+              html += "</div>";
             html += "</div>";
           html += "</div>";
+          html += "<div class='col-5 p-2 bg-light border-left d-flex'>";
+            html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
+          html += "</div>";
         html += "</div>";
-        html += "<div class='col-5 p-2 bg-light border-left d-flex'>";
-          html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
-        html += "</div>";
-      html += "</div>";
-      
-      modal.find(".modal-container").html(html);
-      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
-      modal.modal("show");
-      
-      if(window.ARR_cliente !== undefined) {
-        for(var i in window.ARR_cliente) {
-          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
-          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
-          userDATOS.addUnidad();
+        
+        modal.find(".modal-container").html(html);
+        if(window.noticiaSELECCIONADAeditar !== undefined)
+          modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+        modal.modal("show");
+        
+        if(window.ARR_cliente !== undefined) {
+          for(var i in window.ARR_cliente) {
+            $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+            $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+            if(window.noticiaSELECCIONADAeditar === undefined)
+              $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select").attr("disabled",true);
+            userDATOS.addUnidad();
+          }
+          if(window.noticiaSELECCIONADAeditar === undefined)
+            $("#modal-table-unidad tr:last-child()").remove();
         }
-      }
+      });
     }
     /**
      * Función que maneja a instituciones dentro de una noticia
@@ -2557,7 +2741,10 @@ if(userDATOS.verificar(1)) {
       let modal = $("#modal");
       let selectInstitucion = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Institución' required='true' name='frm_institucion-1' onchange='userDATOS.institucionUnico(this);'>";
       let optionInstitucion = "<option value=''></option>";
-      let instituciones = userDATOS.busquedaTabla("attr_institucion");
+      let instituciones = null;
+      userDATOS.busquedaTabla("attr_institucion", function(d) {
+        instituciones = d;
+      });
       modal.find(".modal-title").text("INSTITUCIONES");
       for(var i in instituciones) 
         optionInstitucion += "<option value='" + i + "'>" + instituciones[i]["nombre"] + "</option>";
@@ -2578,9 +2765,9 @@ if(userDATOS.verificar(1)) {
         html += "</div>";
       }
       option = '<div class="btn-group" role="group" aria-label="Valoración">'
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
       option += '</div>';
       html += '<div class="row">';
         html += "<div class='col'>";
@@ -2588,7 +2775,7 @@ if(userDATOS.verificar(1)) {
             html += "<tbody>";
 
             html += "<tr class='d-none'>";
-              html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
+              html += '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
               html += '<td class="w-50">';
                 html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Institución' required='true' name='frm_institucion-0' onchange='userDATOS.institucionUnico(this);'>" + optionInstitucion + "</select>";
               html += '</td>';
@@ -2598,16 +2785,16 @@ if(userDATOS.verificar(1)) {
                     html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionInstitucion(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
                   html += '</div>';
                   html += '<div class="btn-group" role="group" aria-label="Valoración">'
-                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
-                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
-                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                    html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                    html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                    html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
                   html += '</div>';
                 html += '</div>';
               html += '</td>';
             html += "</tr>";
 
             html += "<tr>";
-              html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
+              html += '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeInstitucion(this);"><i class="fas fa-times"></i></button></td>';
               html += '<td class="w-50">';
                 html += selectInstitucion;
               html += '</td>';
@@ -2627,7 +2814,8 @@ if(userDATOS.verificar(1)) {
       html += "</div>";
       
       modal.find(".modal-body").html(html);
-      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      if(window.noticiaSELECCIONADAeditar !== undefined)
+        modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
       modal.modal("show");
 
       
@@ -2642,8 +2830,16 @@ if(userDATOS.verificar(1)) {
 
           valoracionTR = $("#modal-table-institucion tr:last-child()").find("td:last-child() > div > div:last-child");
           $(valoracionTR).find("input[value='" + window.ARR_institucion[i]["frm_valor"] + "']").attr("checked",true);
+          
+          if(window.noticiaSELECCIONADAeditar === undefined) {
+            $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select").attr("disabled",true);
+            $("#modal-table-institucion tr:last-child()").find("input").attr("disabled",true);
+            $("#modal-table-institucion tr:last-child()").find("label.btn").addClass("disabled");
+          }
           userDATOS.addInstitucion();
         }
+        if(window.noticiaSELECCIONADAeditar === undefined)
+          $("#modal-table-institucion tr:last-child()").remove();
       }
     }
     /**
@@ -2652,7 +2848,10 @@ if(userDATOS.verificar(1)) {
      */
     $scope.actor = function() {
       let modal = $("#modal");
-      let actores = userDATOS.busquedaTabla("actor");
+      let actores = null;
+      userDATOS.busquedaTabla("actor", function(d) {
+        actores = d;
+      });
       let selectActor = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-1' onchange='userDATOS.actorUnico(this);'>";
       let optionActor = "<option value=''></option>";
       modal.find(".modal-title").text("ACTORES");
@@ -2676,9 +2875,9 @@ if(userDATOS.verificar(1)) {
         html += "</div>";
       }
       option = '<div class="btn-group" role="group" aria-label="Valoración">'
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
       option += '</div>';
       //////
       html += '<div class="row">';
@@ -2686,7 +2885,7 @@ if(userDATOS.verificar(1)) {
           html += "<table class='table m-0' id='modal-table-actor'>";
             html += "<tbody>";
               html += "<tr class='d-none'>";
-                html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
+                html += '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
                 html += '<td class="w-50">';
                   html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-0' onchange='userDATOS.actorUnico(this);'>" + optionActor + "</select>"; 
                 html += '</td>';
@@ -2697,16 +2896,16 @@ if(userDATOS.verificar(1)) {
                       html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-0" />Emisor</label>';
                     html += '</div>';
                     html += '<div class="btn-group" role="group" aria-label="Valoración">';
-                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
-                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
-                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
                     html += '</div>';
                   html += '</div>';
                 html += '</td>';
               html += "</tr>";
               ////////
               html += "<tr>";
-                html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
+                html += '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
                 html += '<td class="w-50">';
                   html += selectActor; 
                 html += '</td>';
@@ -2726,7 +2925,8 @@ if(userDATOS.verificar(1)) {
       html += "</div>";
 
       modal.find(".modal-body").html(html);
-      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+      if(window.noticiaSELECCIONADAeditar !== undefined)
+        modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
       modal.modal("show");
 
       if(window.ARR_actor !== undefined) {
@@ -2744,8 +2944,15 @@ if(userDATOS.verificar(1)) {
 
           valoracionTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:last-child");
           $(valoracionTR).find("input[value='" + window.ARR_actor[i]["frm_valor"] + "']").attr("checked",true);
+          
+          if(window.noticiaSELECCIONADAeditar === undefined) {
+            $("#modal-table-actor tr:last-child()").find("input").attr("disabled",true);
+            $("#modal-table-actor tr:last-child()").find("label.btn").addClass("disabled");
+          }
           userDATOS.addActor();
         }
+        if(window.noticiaSELECCIONADAeditar === undefined)
+          $("#modal-table-actor tr:last-child()").remove()
       }
     }
   });
@@ -2754,6 +2961,7 @@ if(userDATOS.verificar(1)) {
    * Solo accedido por usuarios nivel 1 y 2
    */
   app.controller("procesar", function ($scope,$timeout,service_simat,factory_simat) {
+    window.vista = "procesar";
     $(".body > aside .nav_ul a[data-url='noticias']").closest("ul").find(".active").removeClass("active");
     $(".body > aside .nav_ul a[data-url='noticias']").addClass("active");
     service_simat.noticias($scope);
@@ -2791,59 +2999,46 @@ if(userDATOS.verificar(1)) {
       let seccionFilter = $('#select_seccionBUSCADOR').val();
       let unidadFilter = $("#select_unidadNOTICIA").val();
       data = {"moderado":1,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter),"unidadFilter":unidadFilter}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+        userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
+        return false;
       }
-      if(flag) {
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS("#t_data",data)
-        },500)
-      } else userDATOS.notificacion("Faltan datos de búsqueda","error");
+      if(minDateFilter != "" && maxDateFilter != "") {
+        if(dates.compare(dates.convert(maxDateFilter),dates.convert(minDateFilter)) < 0) {
+          userDATOS.notificacion(strings.error.fechas,"error");
+          return false;
+        }
+      }
+      tabla_noticia.destroy();
+      $("#t_data").html("");
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS("#t_data",data)
+      },500);
       //tabla_noticia.draw();
     })
     $("#btn_limpiar").on("click",function() {
-      let minDateFilter = $('#fecha_min').val();
-      let maxDateFilter = $('#fecha_max').val();
-      let medioFilter = $('#select_medioNOTICIA').val();
-      let medioTipoFilter = $('#select_medioTipoNOTICIA').val();
-      let tituloFilter = $('#titulo').val();
-      let seccionFilter = $('#select_seccionBUSCADOR').val();
-      data = {"moderado":1,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
-      }
-      if(flag) {
-        $("#fecha_min").val("");
-        $("#fecha_max").val("");
-        $("#titulo").val("");
-        selectMEDIOS = userDATOS.noticiasSELECT("procesar");
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
+      $("#fecha_min").val("");
+      $("#fecha_max").val("");
+      $("#titulo").val("");
 
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
+      
+      if($("#select_seccionBUSCADOR").val().length == 0)
+        $("#select_seccionBUSCADOR").empty().trigger("change");
+      if($("#select_unidadNOTICIA").val().length == 0)
+        $("#select_unidadNOTICIA").empty().trigger("change");
+        
+      if($("#select_medioTipoNOTICIA").val() != "")
+        $("#select_medioTipoNOTICIA").val("").trigger("change");
+      if($("#select_medioNOTICIA").val() != "")
+        $("#select_medioNOTICIA").val("").trigger("change");
 
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-
-        $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccionBUSCADOR,#select_unidadNOTICIA").select2();
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS("#t_data",{"moderado":1});
-        },500);
-      }
+      tabla_noticia.destroy();
+      $("#t_data").html("");
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS("#t_data",{"moderado":1});
+      },50);
     })
     $("#select_medioNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
@@ -2959,7 +3154,7 @@ if(userDATOS.verificar(1)) {
       let return_ = null;
       if(userDATOS.validar("#" + t.id)) {
         if($("#" + t.id).data("tipo") == "institucionCREATE") {
-          let a = window.variables.attr_institucion.objeto["GUARDADO_ATTR"];
+          let a = pyrusInstitucion.objeto["GUARDADO_ATTR"];
           let OBJ = {}
           for(var j in a) {
             OBJ[j] = null;
@@ -2978,18 +3173,19 @@ if(userDATOS.verificar(1)) {
           }
           $("#" + t.id).find("input","button","select").attr("disabled")
 
-          accion = window.variables.attr_institucion.guardar_1(OBJ);//
+          accion = pyrusInstitucion.guardar_1(OBJ);//
           if(accion.id !== null && accion.flag) {//
-            // window.variables[e].reload(false);//recargo contenido asy, por si se necesita
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"attr_institucion");
-            let elemento = userDATOS.busqueda(accion.id,"attr_institucion");//traigo el nuevo registro
+            let elemento = null;
+            userDATOS.busqueda({"value":accion.id,"tabla":"attr_institucion"},function(d) {
+              elemento = d;
+            });//traigo el nuevo registro
             if(elemento === null) {
               $("#modal").modal("hide");
               return_ = "institucion"
             }
-          } else userDATOS.notificacion("Datos repetidos","error");
+          } else userDATOS.notificacion(strings.repetidoDatos,"error");
         } else if($("#" + t.id).data("tipo") == "actorCREATE") {
-          let pyrusActor = new Pyrus("actor");
           let a = pyrusActor.objeto["GUARDADO_ATTR"]
           let OBJ = {}
           for(var j in a) {
@@ -3008,16 +3204,19 @@ if(userDATOS.verificar(1)) {
             }
           }
           $("#" + t.id).find("input","button","select").attr("disabled")
-          accion = window.variables.actor.guardar_1(OBJ);//
+          accion = pyrusActor.guardar_1(OBJ);//
           if(accion.id !== null && accion.flag) {//
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,"actor");
-            let elemento = userDATOS.busqueda(accion.id,"actor");//traigo el nuevo registro
+            let elemento = null;
+            userDATOS.busqueda({"value":accion.id,"tabla":"actor"}, function(d) {
+              elemento = d;
+            });//traigo el nuevo registro
             if(elemento === null) {
               $("#modal").modal("hide");
               return_ = "actor"
             }
             window.ATTR = undefined;
-          } else userDATOS.notificacion("Datos repetidos","error");
+          } else userDATOS.notificacion(strings.repetidoDatos,"error");
         }
         if(return_ === null) {
           if(flag) $("#modal").modal("hide");
@@ -3041,26 +3240,26 @@ if(userDATOS.verificar(1)) {
       $scope.actor(i)
     }
     userDATOS.createInstitucion = function() {
-      userDATOS.modal(null,window.variables.attr_institucion,"institucionCREATE");
+      userDATOS.modal(null,pyrusInstitucion,"institucionCREATE");
     }
     userDATOS.createActor = function() {
-      userDATOS.modal(null,window.variables.actor,"actorCREATE");
+      userDATOS.modal(null,pyrusActor,"actorCREATE");
     }
 
     $scope.buscar = function() {
-      userDATOS.notificacion("Buscando <strong>ACTORES</strong>","info",false);
-      userDATOS.notificacion("Buscando <strong>INSTITUCIONES</strong>","info",false);
+      userDATOS.notificacion(strings.buscando.actores,"info",false);
+      userDATOS.notificacion(strings.buscando.instituciones,"info",false);
       userDATOS.procesar_noticia(function(resultado) {
         setTimeout(function() {
-          if(resultado["actores"] === undefined) userDATOS.notificacion("<strong>ACTORES</strong> no detectados","warning");
+          if(resultado["actores"] === undefined) userDATOS.notificacion(strings.busquedaSinResultado.actores,"warning");
           else {
-            if(Object.keys(resultado["actores"]).length == 0) userDATOS.notificacion("<strong>ACTORES</strong> no detectados","warning");
-            else userDATOS.notificacion("<strong>ACTORES</strong> encontrados","success");
+            if(Object.keys(resultado["actores"]).length == 0) userDATOS.notificacion(strings.busquedaSinResultado.actores,"warning");
+            else userDATOS.notificacion(strings.busquedaConResultado.actores,"success");
           }
-          if(resultado["instituciones"] === undefined) userDATOS.notificacion("<strong>INSTITUCIONES</strong> no detectadas","warning");
+          if(resultado["instituciones"] === undefined) userDATOS.notificacion(strings.busquedaSinResultado.instituciones,"warning");
           else {
-            if(Object.keys(resultado["instituciones"]).length == 0) userDATOS.notificacion("<strong>INSTITUCIONES</strong> no detectadas","warning");
-            else userDATOS.notificacion("<strong>INSTITUCIONES</strong> encontradas","success");
+            if(Object.keys(resultado["instituciones"]).length == 0) userDATOS.notificacion(strings.busquedaSinResultado.instituciones,"warning");
+            else userDATOS.notificacion(strings.busquedaConResultado.instituciones,"success");
           }
         },1000);
       });
@@ -3074,67 +3273,68 @@ if(userDATOS.verificar(1)) {
     $scope.unidadAnalisis = function() {
       window.valoracionARR = undefined;
       let modal = $("#modal");
-      let clientes = userDATOS.busquedaTabla("cliente");
-      let selectCliente = "";
-      selectCliente += "<option value=''></option>";
-      let optionCliente = "";
-      modal.find(".modal-title").text("UNIDAD DE ANÁLISIS");
-      modal.find(".modal-dialog").addClass("modal-lg")
-      modal.find(".modal-body").addClass("py-0");
-      modal.find(".modal-body").append("<div class='modal-container'></div>");
+      userDATOS.busquedaTabla("cliente", function(clientes) {
+        let selectCliente = "";
+        selectCliente += "<option value=''></option>";
+        let optionCliente = "";
+        modal.find(".modal-title").text("UNIDAD DE ANÁLISIS");
+        modal.find(".modal-dialog").addClass("modal-lg")
+        modal.find(".modal-body").addClass("py-0");
+        modal.find(".modal-body").append("<div class='modal-container'></div>");
 
-      for(var i in clientes) {
-        if(parseInt(clientes[i]["todos"])) selectCliente += "<optgroup label='AGENDA'><option value='" + i + "'>" + clientes[i]["nombre"] + "</option></optgroup>";
-        else optionCliente += "<option value='" + i + "'>" + clientes[i]["nombre"] + "</option>";
-      }
-      selectCliente += "<optgroup label='UNIDAD DE ANÁLISIS'>" + optionCliente + "</optgroup>";
-      selectCliente += "</select>";
-      flag = true;
-      if(window.noticiaSELECCIONADA !== undefined) {
-        if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
-      }
-      html = "";btn = "";
-      html += '<div class="row">';
-        html += "<div class='col-7 py-2'>";
-          if(flag) {
-            html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn mx-auto d-block mb-2 btn-primary text-uppercase'>nueva unidad</button>";
-          }
-          html += '<div class="row">';
-            html += "<div class='col'>";
-              html += "<table class='table m-0' id='modal-table-unidad'>";
-                html += "<tbody>";
-                  html += "<tr class='d-none'>" +
-                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
-                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-0' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
-                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
-                  html += "</tr>";
-                  html += "<tr>" +
-                      '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
-                      '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
-                      '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
-                  html += "</tr>";
-                
-                html += "</tbody>";
-              html += "</table>";
+        for(var i in clientes) {
+          if(parseInt(clientes[i]["todos"])) selectCliente += "<optgroup label='AGENDA'><option value='" + i + "'>" + clientes[i]["nombre"] + "</option></optgroup>";
+          else optionCliente += "<option value='" + i + "'>" + clientes[i]["nombre"] + "</option>";
+        }
+        selectCliente += "<optgroup label='UNIDAD DE ANÁLISIS'>" + optionCliente + "</optgroup>";
+        selectCliente += "</select>";
+        flag = true;
+        if(window.noticiaSELECCIONADA !== undefined) {
+          if(parseInt(window.noticiaSELECCIONADA.estado) == 2) flag = false;
+        }
+        html = "";btn = "";
+        html += '<div class="row">';
+          html += "<div class='col-7 py-2'>";
+            if(flag) {
+              html += "<button type='button' onclick='userDATOS.addUnidad();' class='btn mx-auto d-block mb-2 btn-primary text-uppercase'>nueva unidad</button>";
+            }
+            html += '<div class="row">';
+              html += "<div class='col'>";
+                html += "<table class='table m-0' id='modal-table-unidad'>";
+                  html += "<tbody>";
+                    html += "<tr class='d-none'>" +
+                        '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
+                        '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-0' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
+                        '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
+                    html += "</tr>";
+                    html += "<tr>" +
+                        '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeUnidad(this);"><i class="fas fa-times"></i></button></td>' +
+                        '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
+                        '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
+                    html += "</tr>";
+                  
+                  html += "</tbody>";
+                html += "</table>";
+              html += "</div>";
             html += "</div>";
           html += "</div>";
+          html += "<div class='col-5 p-2 bg-light border-left d-flex'>";
+            html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
+          html += "</div>";
         html += "</div>";
-        html += "<div class='col-5 p-2 bg-light border-left d-flex'>";
-          html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
-        html += "</div>";
-      html += "</div>";
-      
-      modal.find(".modal-container").html(html);
-      modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
-      modal.modal("show");
-      
-      if(window.ARR_cliente !== undefined) {
-        for(var i in window.ARR_cliente) {
-          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
-          $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
-          userDATOS.addUnidad();
+        
+        modal.find(".modal-container").html(html);
+        modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
+        modal.modal("show");
+        
+        if(window.ARR_cliente !== undefined) {
+          for(var i in window.ARR_cliente) {
+            $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
+            $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select").val(i).trigger("change");
+            userDATOS.addUnidad();
+          }
         }
-      }
+      });
     }
     /**
      * Función que maneja a instituciones dentro de una noticia
@@ -3144,7 +3344,10 @@ if(userDATOS.verificar(1)) {
       let modal = $("#modal");
       let selectInstitucion = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Institución' required='true' name='frm_institucion-1' onchange='userDATOS.institucionUnico(this);'>";
       let optionInstitucion = "<option value=''></option>";
-      let instituciones = userDATOS.busquedaTabla("attr_institucion");
+      let instituciones = null;
+      userDATOS.busquedaTabla("attr_institucion", function(d) {
+        instituciones = d;
+      });
       modal.find(".modal-title").text("INSTITUCIONES");
       for(var i in instituciones) 
         optionInstitucion += "<option value='" + i + "'>" + instituciones[i]["nombre"] + "</option>";
@@ -3165,9 +3368,9 @@ if(userDATOS.verificar(1)) {
         html += "</div>";
       }
       option = '<div class="btn-group" role="group" aria-label="Valoración">'
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
       option += '</div>';
       html += '<div class="row">';
         html += "<div class='col'>";
@@ -3185,9 +3388,9 @@ if(userDATOS.verificar(1)) {
                     html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionInstitucion(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-1" />Emisor</label>';
                   html += '</div>';
                   html += '<div class="btn-group" role="group" aria-label="Valoración">'
-                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
-                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
-                    html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                    html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                    html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                    html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionInstitucion(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
                   html += '</div>';
                 html += '</div>';
               html += '</td>';
@@ -3239,7 +3442,10 @@ if(userDATOS.verificar(1)) {
      */
     $scope.actor = function() {
       let modal = $("#modal");
-      let actores = userDATOS.busquedaTabla("actor");
+      let actores = null;
+      userDATOS.busquedaTabla("actor",function(d) {
+        actores = d;
+      });
       let selectActor = "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-1' onchange='userDATOS.actorUnico(this);'>";
       let optionActor = "<option value=''></option>";
       modal.find(".modal-title").text("ACTORES");
@@ -3263,9 +3469,9 @@ if(userDATOS.verificar(1)) {
         html += "</div>";
       }
       option = '<div class="btn-group" role="group" aria-label="Valoración">'
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
-        option += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="1" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="0" /></label>';
+        option += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-1" value="-1" /></label>';
       option += '</div>';
       //////
       html += '<div class="row">';
@@ -3284,9 +3490,9 @@ if(userDATOS.verificar(1)) {
                       html += '<label class="m-0 d-block w-100 text-uppercase position-relative"><input onchange="userDATOS.optionActor(this,0);" disabled="true" class="position-absolute" style="bottom:2px; left: -15px;" type="checkbox" data-check="emisor" value="1" name="frm_emisor-0" />Emisor</label>';
                     html += '</div>';
                     html += '<div class="btn-group" role="group" aria-label="Valoración">';
-                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
-                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
-                      html += '<label class="mb-0 btn bg-light"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="1" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="0" /></label>';
+                      html += '<label class="mb-0 btn bg-light disabled"><input disabled="true" onchange="userDATOS.optionActor(this,1);" type="radio" name="frm_valor-0" value="-1" /></label>';
                     html += '</div>';
                   html += '</div>';
                 html += '</td>';
@@ -3366,50 +3572,43 @@ if(userDATOS.verificar(1)) {
       let tituloFilter = $('#titulo').val();
       let seccionFilter = $('#select_seccion').val();
       data = {"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+        userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
+        return false;
       }
-      if(flag) {
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS("#t_data",data)
-        },500)
-      } else userDATOS.notificacion("Faltan datos de búsqueda","error");
-      //tabla_noticia.draw();
+      if(minDateFilter != "" && maxDateFilter != "") {
+        if(dates.compare(dates.convert(maxDateFilter),dates.convert(minDateFilter)) < 0) {
+          userDATOS.notificacion(strings.error.fechas,"error");
+          return false;
+        }
+      }
+      
+      tabla_noticia.destroy();
+      $("#t_data").html("");
+      $("#t_data").addClass("animate-flicker");
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS("#t_data",data);
+      },500);
     });
     $("#btn_limpiar").on("click",function() {
-      let minDateFilter = $('#fecha_min').val();
-      let maxDateFilter = $('#fecha_max').val();
-      let medioFilter = $('#select_medioNOTICIA').val();
-      let medioTipoFilter = $('#select_medioTipoNOTICIA').val();
-      let tituloFilter = $('#titulo').val();
-      let seccionFilter = $('#select_seccion').val();
-      data = {"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
-      }
-      if(flag) {
-        $("#fecha_min").val("");
-        $("#fecha_max").val("");
-        $("#titulo").val("");
-        if($("#select_medioTipoNOTICIA").val() != "")
-          $("#select_medioTipoNOTICIA").val("").trigger("change");
-        if($("#select_medioNOTICIA").val() != "")
-          $("#select_medioNOTICIA").val("").trigger("change");
+      $("#fecha_min").val("");
+      $("#fecha_max").val("");
+      $("#titulo").val("");
+      if($("#select_seccion").val().length == 0)
+        $("#select_seccion").empty().trigger("change");
+      if($("#select_medioTipoNOTICIA").val() != "")
+        $("#select_medioTipoNOTICIA").val("").trigger("change");
+      if($("#select_medioNOTICIA").val() != "")
+        $("#select_medioNOTICIA").val("").trigger("change");
 
-        if($("#select_seccion").length != 0)
-          $("#select_seccion").empty().trigger("change")
-
-        $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccion").select2();
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS("#t_data");
-        },500);
-      }
+      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccion").select2();
+      
+      tabla_noticia.destroy();
+      $("#t_data").html("");
+      $("#t_data").addClass("animate-flicker");
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS("#t_data");
+      },50);
     })
     $("#select_medioNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
@@ -3525,19 +3724,19 @@ $(document).ready(function() {
   $.ajaxSetup({
     error: function( jqXHR, textStatus, errorThrown ) {
       if (jqXHR.status === 0) {
-        userDATOS.notificacion("Sin conectividad.<br/>Verifique conexión","warning",false);
+        // userDATOS.notificacion(strings.error.conexion,"warning",false);
       } else if (jqXHR.status == 404) {
-        userDATOS.notificacion("Error 404<br/>Página no encontrada","warning",false);
+        userDATOS.notificacion(strings.error[404],"warning",false);
       } else if (jqXHR.status == 500) {
-        userDATOS.notificacion("Error 500<br/>Error interno del servidor","warning",false);
+        userDATOS.notificacion(strings.error[500],"warning",false);
       } else if (textStatus === 'parsererror') {
-        userDATOS.notificacion("Error de parseo","warning",false);
+        userDATOS.notificacion(strings.error.parseo,"warning",false);
       } else if (textStatus === 'timeout') {
-        userDATOS.notificacion("Error","warning",false);
+        userDATOS.notificacion(strings.error.tiempo,"warning",false);
       } else if (textStatus === 'abort') {
-        userDATOS.notificacion("Operación abortada","error",false);
+        userDATOS.notificacion(strings.error.cancelada,"error",false);
       } else {
-        userDATOS.notificacion("Error","error",false);
+        userDATOS.notificacion(strings.error.comun,"error",false);
       }
     }
   });
@@ -3549,28 +3748,10 @@ $(document).ready(function() {
     $(this).removeClass("has-error");
   }).on("focus",".has-error + *", function() {
     $(this).prev().removeClass("has-error");
-  }).on('dblclick', '#t_data tbody tr', function () {
+  }).on('dblclick', '#t_data tbody tr,#t_data2 tbody tr,#t_data3 tbody tr', function () {
       $("div").removeClass("d-none");
       tabla_noticia.row( this ).select();
-
-      relevado = $("#t_data").data("tipo")
-      console.log("ACCESO A DISTRIBUIDOR");
-      userDATOS.distribuidorNOTICIA(relevado);
-      //},0)
-  }).on('dblclick', '#t_data2 tbody tr', function () {
-      $("div").removeClass("d-none");
-      tabla_noticia.row( this ).select();
-      //setTimeout(function(){
-        userDATOS.distribuidorNOTICIA();
-  }).on('dblclick', '#t_data3 tbody tr', function () {
-      $("div").removeClass("d-none");
-      tabla_noticia.row( this ).select();
-        userDATOS.distribuidorNOTICIA("1");
-  }).on("mouseover","*[data-toggle=\"tooltip\"]",function() {
-    $(this).append("<div class=\"position-absolute shadow text-dark w-100 p-2 bg-light border\" style=\"left:0; top:" + $(this).outerHeight() + "px;\"></div>");
-    $(this).find("div").html("<h2 class=\"text-center text-uppercase font-weight-light\">valoración</h2>" + $(this).data("title"));
-  }).on("mouseout","*[data-toggle=\"tooltip\"]",function() {
-    $(this).find("div").remove();
+      $(".dt-buttons .btn-dark").click();
   }).on("keypress",".texto-numero", function(e) { //----->SOLO NUMEROS
     userDATOS.permite(e,'0123456789.,');
   }).on("keypress",".texto-password", function(e) { //----->SOLO NUMEROS
@@ -3583,45 +3764,48 @@ $(document).ready(function() {
     var rows = tabla_noticia.rows({ 'search': 'applied' }).nodes();
     $('input[type="checkbox"]', rows).prop('checked', this.checked);
   }).on('change', '#select_medio', function() {
-    let medio = userDATOS.busqueda($(this).val(),"medio");
-    let destaques = userDATOS.busqueda($(this).val(),"medio_destaque",false,"id_medio",0);
-    let secciones = userDATOS.busqueda($(this).val(),"seccion",false,"id_medio",0)
-    let selectDestaque = $("#select_destaque");
-    let selectSeccion = $("#select_seccion");
-    selectDestaque.html("");
-    if(Object.keys(destaques).length == 0)
-      selectDestaque.append("<option value=''>SIN ESPECIFICAR</option>");
-    else {
-      selectDestaque.append("<option value=''></option>");
-      for(var i in destaques)
-        selectDestaque.append("<option value='" + destaques[i].id + "'>" + destaques[i].lugar + " - " + destaques[i].destaque + " (" + destaques[i].referencia + ")</option>");
-    }
-    selectDestaque.select2();
-
-    if(medio !== null) {
-      if(medio.id_medio_tipo != "0") {
-        $("#select_medioAlcance").val(medio.id_medio_tipo).trigger("change");
-        $("#select_medioAlcance").attr("disabled",true);
+    userDATOS.busqueda({"value":$(this).val(),"tabla":"medio"},function(medio) {
+      if(medio !== null) {
+        if(medio.id_medio_tipo != "0") {
+          $("#select_medioAlcance").val(medio.id_medio_tipo).trigger("change");
+          $("#select_medioAlcance").attr("disabled",true);
+          $("#select_medioAlcance").select2();
+        }
+      } else {
+        $("#select_medioAlcance").removeAttr("disabled");
+        $("#select_medioAlcance").val("").trigger("change");
         $("#select_medioAlcance").select2();
       }
-    } else {
-      $("#select_medioAlcance").removeAttr("disabled");
-      $("#select_medioAlcance").select2();
-    }
-    /////////// SECCIONES
-    selectSeccion.html("<option value=''></option>");
-    selectSeccion.append("<option value='1'>SIN SECCIÓN</option>");
-    for(var i in secciones) selectSeccion.append("<option value='" + i + "'>" + secciones[i]["nombre"] + "</option>")
-    if(window.noticiaSELECCIONADA !== undefined)
-      selectSeccion.val(window.noticiaSELECCIONADA.id_seccion).trigger("change");
+    },true);
+    userDATOS.busqueda({"value":$(this).val(),"tabla":"medio_destaque","column":"id_medio","retorno":0}, function(destaques) {
+      let selectDestaque = $("#select_destaque");
+      selectDestaque.html("");
+      if(Object.keys(destaques).length == 0)
+        selectDestaque.append("<option value=''>SIN ESPECIFICAR</option>");
+      else {
+        selectDestaque.append("<option value=''></option>");
+        for(var i in destaques)
+          selectDestaque.append("<option value='" + destaques[i].id + "'>" + destaques[i].lugar + " - " + destaques[i].destaque + " (" + destaques[i].referencia + ")</option>");
+      }
+      selectDestaque.select2();
+    },true);
+    userDATOS.busqueda({"value":$(this).val(),"tabla":"seccion","column":"id_medio","retorno":0}, function(secciones) {
+      let selectSeccion = $("#select_seccion");
+      selectSeccion.html("<option value=''></option>");
+      selectSeccion.append("<option value='1'>SIN SECCIÓN</option>");
+      for(var i in secciones) selectSeccion.append("<option value='" + i + "'>" + secciones[i]["nombre"] + "</option>")
+      if(window.noticiaSELECCIONADA !== undefined)
+        selectSeccion.val(window.noticiaSELECCIONADA.id_seccion).trigger("change");
+      selectSeccion.select2();
+    },true);
+    
   }).on('change','section thead input[type="checkbox"]', function(){
     if(window.noticiasCHECKED === null) window.noticiasCHECKED = {}
     if($(this).is(":checked")) {
       $('section tbody input[type="checkbox"]:checked').each(function(){
         if(window.noticiasCHECKED[$(this).val()] === undefined)
           window.noticiasCHECKED[$(this).val()] = "";
-      })
-      // userDATOS.notificacion("<strong>ATENCIÓN</strong> se marcarán solo las noticias en la vista")
+      });
       var el = $('#noticias-select-all').get(0);
       if(el && el.checked && ('indeterminate' in el)){
         el.indeterminate = true;
@@ -3633,6 +3817,11 @@ $(document).ready(function() {
         }
       })
     }
+    
+    if(Object.keys(window.noticiasCHECKED).length == 0)
+      $(".dt-buttons .btn-success, .dt-buttons .btn-danger").addClass("buttons-selected disabled");
+    else
+      $(".dt-buttons .btn-success, .dt-buttons .btn-danger").removeClass("buttons-selected disabled");
   }).on('change','#t_data tbody input[type="checkbox"]', function(){
     if(window.noticiasCHECKED === null) window.noticiasCHECKED = {}
     if($(this).is(":checked")) {
@@ -3642,6 +3831,11 @@ $(document).ready(function() {
       if(window.noticiasCHECKED[$(this).val()] !== undefined)
         delete window.noticiasCHECKED[$(this).val()];
     }
+
+    if(Object.keys(window.noticiasCHECKED).length == 0)
+      $(".dt-buttons .btn-success, .dt-buttons .btn-danger").addClass("buttons-selected disabled");
+    else
+      $(".dt-buttons .btn-success, .dt-buttons .btn-danger").removeClass("buttons-selected disabled");
   }).on("click", ".dropdown-menu", function (e) {
     $(this).parent().is(".open") && e.stopPropagation();
   }).on("change", "*[name='select_tipoAlerta']",function() {
@@ -3727,17 +3921,15 @@ $(document).ready(function() {
     $('*[data-notificacion="numero"]').text(intNotificacion);
   }
   function noticiaRELEVADA(e) {
-    console.log(e)
     aux = userDATOS.parseJSON(e.data);
-    date = new Date();
-    fecha = (date.getDate() < 10 ? "0" + date.getDate() : date.getDate()) + "/" + (date.getMonth() < 10 ? "0" + date.getMonth() : date.getMonth()) + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes();
+    
     n = $('*[data-notificacion="numero"]').text();
     html = "";
     html += "<div class='row'>";
       html += "<div class='col-12'>";
         html += "<p class='m-0 text-truncate'>Noticia Relevada</p>";
         html += "<p class='m-0 text-truncate' title='" + aux.titulo + "'><strong class='mr-1'>Título:</strong>" + aux.titulo + "</p>";
-        html += "<p class='m-0 text-right'>" + fecha + "</p>";
+        html += "<p class='m-0 text-right'>" + dates.string(new Date(), 0) + "</p>";
       html += "</div>";
     html += "</div>";
     // $.get("/lib/servidorCAMBIO.php?tipo=noticiaRELEVADA&id_noticia=" + e.lastEventId,function(m){});

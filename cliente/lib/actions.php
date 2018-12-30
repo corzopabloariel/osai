@@ -18,105 +18,109 @@
 
 class PYRUS_ACTION{
 
-  /**
-   *
-   */
-  public static function createData($d) {
-    $tables = R::inspect();
-    $entidad = $d["entidad"];
-    $ARR_attr = $d["objeto"];
-    //response(200, 'ok', "TABLA '{$entidad}' creada");
-    if(in_array($entidad, $tables)) response(200, 'ok', "TABLA '{$entidad}' existente en " . CONFIG_BD);
-    else {
-      $aux = R::xdispense($entidad);
-      foreach ($ARR_attr as $attr => $tipo) {
-        switch ($tipo) {
-            case 'TP_PK':
-                $valor = NULL;
-                break;
-            case 'TP_BOLEANO':
-                $valor = true;
-                break;
-            case 'TP_DOUBLE':
-            case 'TP_FLOAT':
-                $valor = 0.0;
-                break;
-            case 'TP_FECHA_LARGA':
-                $valor = date('Y-m-d H:i:s');
-                break;
-            case 'TP_ENTERO':
-            case 'TP_FECHA_CORTA':
-            case 'TP_RELACION':
-            case 'TP_MASCARA':
-            case 'TP_ENUM':
-                $valor = 0;
-                break;
-            default:
-                $valor = "";
-                break;
+    public static function createData($d) {
+        $tables = R::inspect();
+        $entidad = $d["entidad"];
+        $ARR_attr = $d["objeto"];
+        //response(200, 'ok', "TABLA '{$entidad}' creada");
+        if(in_array($entidad, $tables))
+            response(200, 'ok', "TABLA '{$entidad}' existente en " . CONFIG_BD);
+        else {
+            $aux = R::xdispense($entidad);
+            foreach ($ARR_attr as $attr => $tipo) {
+                switch ($tipo) {
+                    case 'TP_PK':
+                        $valor = NULL;
+                        break;
+                    case 'TP_BOLEANO':
+                        $valor = true;
+                        break;
+                    case 'TP_DOUBLE':
+                    case 'TP_FLOAT':
+                        $valor = 0.0;
+                        break;
+                    case 'TP_FECHA_LARGA':
+                        $valor = date('Y-m-d H:i:s');
+                        break;
+                    case 'TP_ENTERO':
+                    case 'TP_FECHA_CORTA':
+                    case 'TP_RELACION':
+                    case 'TP_MASCARA':
+                    case 'TP_ENUM':
+                        $valor = 0;
+                        break;
+                    default:
+                        $valor = "";
+                        break;
+                }
+                if($attr != "id")
+                    $aux->$attr = $valor;
+            }
+            //print_r($aux);die();
+            R::store($aux);
+            R::wipe($entidad);
+            response(200, 'ok', $ARR_attr);
         }
-        if($attr != "id")
-        $aux->$attr = $valor;
-  		}
-      //print_r($aux);die();
-      R::store($aux);
-      R::wipe($entidad);
-      response(200, 'ok', $ARR_attr);
     }
-  }
+    /**
+     * Dado una entidad, devuelve cantidad de registros
+     *
+     * @param array $d array de datos generico
+     */
+    public static function registros($d) {
+        $entidad = $d['entidad'];
+        response(200,'ok ' . $entidad, PYRUS_DB::get_registros($entidad));
+    }
+    /**
+     *
+     */
+    public static function search($d) {
+        $entidad = $d['entidad'];
+        $column = $d['column'];
+        $value = $d['value'];
+        $return = $d['retorno'];
+        response(200,'ok ' . $entidad, PYRUS_DB::get_value($entidad,$column,$value,$return));
+    }
+    /**
+     *
+     */
+    public static function search_paginado($d) {
+        $entidad = $d['entidad'];
+        $values = $d['values'];
+        $paginado = $d['paginado'];
+        response(200,'ok ' . $entidad, PYRUS_DB::get_value_paginado($entidad,$values,$paginado));
+    }
+    /**
+     * 
+     */
+    public static function agenda($d) {
+        $paginado = $d['paginado'];
+        response(200,'ok agenda nacional', PYRUS_DB::get_agenda($paginado));
+    }
+    /**
+     *
+     */
+    public static function unique($d) {
+        $entidad = $d['entidad'];
+        unset($d['entidad']);
 
-  /**
-   * Dado una entidad, devuelve cantidad de registros
-   *
-   * @param array $d array de datos generico
-   */
-  public static function registros($d) {
-      $entidad = $d['entidad'];
-      response(200,'ok ' . $entidad, PYRUS_DB::get_registros($entidad));
-  }
-  /**
-   *
-   */
-  public static function search($d) {
-    $entidad = $d['entidad'];
-    $column = $d['column'];
-    $value = $d['value'];
-    $return = $d['retorno'];
-    response(200,'ok ' . $entidad, PYRUS_DB::get_value($entidad,$column,$value,$return));
-  }
-  /**
-   *
-   */
-  public static function search_paginado($d) {
-    $entidad = $d['entidad'];
-    $values = $d['values'];
-    $paginado = $d['paginado'];
-    response(200,'ok ' . $entidad, PYRUS_DB::get_value_paginado($entidad,$values,$paginado));
-  }
-  /**
-   *
-   */
-  public static function unique($d) {
-    $entidad = $d['entidad'];
-    unset($d['entidad']);
-
-    response(200,'ok ' . $entidad, PYRUS_DB::unique($entidad,$d));
-  }
-  /**
-   *
-   */
-	public static function baja_generica($d){
-		$entidad = $d['entidad'];
-		$id = $d['id'];
-		response(200,'ok ' . $entidad,PYRUS_DB::remove_uno($entidad,$id));
-	}
-  /**
-   *
-   */
-  public static function resultados($d) {
-    $entidad = $d['entidad'];
-    response(200,'ok ' . $entidad, PYRUS_DB::resultados($entidad));
-  }
+        response(200,'ok ' . $entidad, PYRUS_DB::unique($entidad,$d));
+    }
+    /**
+     *
+     */
+    public static function baja_generica($d){
+        $entidad = $d['entidad'];
+        $id = $d['id'];
+        response(200,'ok ' . $entidad,PYRUS_DB::remove_uno($entidad,$id));
+    }
+    /**
+     *
+     */
+    public static function resultados($d) {
+        $entidad = $d['entidad'];
+        response(200,'ok ' . $entidad, PYRUS_DB::resultados($entidad));
+    }
 
     /**
      * Guarda genericamente un objeto dado, recibe por
@@ -171,8 +175,7 @@ class PYRUS_ACTION{
             response(200,'no login, no autorizado',['estado' => 0,'s_id' => session_id()]);
         }
     }
-   public static function sesion($d){
-       response(200,'ok usuario',['estado' => 1,'session' => $_SESSION]);
-   }
-
+    public static function sesion($d){
+        response(200,'ok usuario',['estado' => 1,'session' => $_SESSION]);
+    }
 }

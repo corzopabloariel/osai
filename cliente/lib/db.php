@@ -47,7 +47,17 @@ class PYRUS_DB {
 			$Arr[] = $v;
 		}
 		return R::findAll($e,"{$sql} AND elim = 0 ORDER BY id DESC LIMIT {$start},{$length}",$Arr);
-	}
+  }
+  /**
+   * 
+   */
+  static function get_agenda($paginado) {
+    $start = $paginado * 10;
+    $length = 10;
+    $idAgendaNacional = 12;
+
+    return R::getAll("SELECT n.* FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND n.estado >= 2) where p.id_cliente = {$idAgendaNacional} ORDER BY p.id DESC LIMIT {$start},{$length}");
+  }
   /**
    * Trae la cantidad de elementos que con un cierto patron
    * @param string $e entidad

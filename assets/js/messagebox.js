@@ -171,6 +171,10 @@ MessageBox - A jQuery Plugin to replace Javascript's window.alert(), window.conf
         })
         .hide()
         .appendTo(content);
+
+        setTimeout(() => {
+            $(".messagebox_content_error").hide();
+        }, 2000);
         
         // Buttons
         var buttonsWrapper = $("<div>", {

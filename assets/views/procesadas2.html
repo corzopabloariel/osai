@@ -34,7 +34,7 @@
     <span onclick="userDATOS.pantalla_cerrar()" class="close position-absolute" aria-hidden="true">&times;</span>
     <div class="scroll">
       <div class="p-3">
-        <button ng-click="buscar()" id="btn_procesar" data-noticia="existente" type="button" class="btn btn-block btn-info text-uppercase rounded-0 mb-3">procesar</button>
+        <button data-toggle="tooltip" data-placement="top" title="Buscar elementos en el cuerpo de la noticia" ng-click="buscar()" id="btn_procesar" data-noticia="existente" type="button" class="btn btn-block btn-info text-uppercase rounded-0 mb-3">procesar</button>
         <button ng-click="unidadAnalisis()" id="btn_cliente" data-noticia type="button" ng-class="{'btn-success': window.ARR_cliente !== undefined}"
           class="btn btn-block text-uppercase rounded-0 mb-3">unidad de análisis</button>
         <button ng-click="actor()" id="btn_actor" data-noticia type="button" class="btn btn-block text-uppercase rounded-0 mb-3">actor</button>
@@ -101,7 +101,7 @@
           <input placeholder="Ingrese Etiqueta" type="text" class="form-control shadow-none border border-dark rounded-0"
             style="margin-top:-1px">
         </form>
-        <button ng-click="procesar()" id="btn_guardar" type="button" class="btn btn-block btn-success text-uppercase rounded-0 mt-5"><big>guardar
+        <button data-toggle="tooltip" data-placement="bottom" title="Procesar y guardar la noticia" ng-click="procesar()" id="btn_guardar" type="button" class="btn btn-block btn-success text-uppercase rounded-0 mt-5"><big>guardar
             <i class="far fa-save"></i></big></button>
         <button ng-click="eliminar()" id="btn_eliminar" type="button" class="btn btn-block btn-danger text-uppercase rounded-0"><big>desechar
             <i class="fas fa-trash-alt"></i></big></button>
@@ -128,103 +128,101 @@
         </ul>
       </aside>
     </div>
-  </div>
-  <div class="card shadow-sm bg-white rounded-0">
+  </div><div class="card mb-3 shadow-sm bg-white rounded-0">
+    <div class="card-header" style="font-size: 1.6em;">
+      Buscador y filtro de noticias
+    </div>
     <div class="card-body">
-
       <!-- BUSCADOR -->
-      <div class="pb-4 d-none" id="date_filter">
-
-        <div class="row justify-content-center">
-          <div class="col-8 d-flex flex-column align-items-center">
-
-            <div class="row w-100">
-              <div class="col-6 pl-0">
-                <div class="w-100">
-                  <h3 class="text-center">Desde</h3>
-                  <input type="date" class="form-control rounded-0" id="fecha_min" value="">
-                </div>
+      <div class="" id="date_filter">
+        <div class="row">
+          <div class="col-9">
+            <!-- <PRIMERA LINEA> -->
+            <div class="row justify-content-center">
+              <div class="col-4">
+                <fieldset class="p-2" style="border: 2px groove;">
+                  <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;"><i class="fas fa-calendar"></i></legend>
+                  <input data-toggle="tooltip" data-placement="top" title="Fecha desde" disabled="true" type="date" class="form-control text-uppercase rounded-0 mb-2"
+                    id="fecha_min" value="">
+                  <input data-toggle="tooltip" data-placement="bottom" title="Fecha hasta" disabled="true" type="date"
+                    class="form-control text-uppercase rounded-0" id="fecha_max" value="">
+                </fieldset>
               </div>
-              <div class="col-6 pr-0">
+              <div class="col-4">
+                <fieldset class="p-2" style="border: 2px groove;">
+                  <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;"><i class="fas fa-newspaper"></i></legend>
+  
+                  <div class="input-group mb-2" data-toggle="tooltip" data-placement="top" title="Nombre del medio">
+                    <select disabled="true" class="custom-select w-100 select__2" name="select_medioNOTICIA" id="select_medioNOTICIA"
+                      data-allow-clear="true" data-placeholder="MEDIO">
+                      <option value=""></option>
+                      <option ng-repeat="(id,medio) in mediosSELECT" value="{{id}}">{{medio}}</option>
+                    </select>
+                  </div>
+  
+                  <div class="input-group" data-toggle="tooltip" data-placement="bottom" title="Tipo de medio">
+                    <select disabled="true" class="custom-select w-100 select__2" name="select_medioTipoNOTICIA" id="select_medioTipoNOTICIA"
+                      data-allow-clear="true" data-placeholder="TIPO DE MEDIO">
+                      <option value=""></option>
+                      <option ng-repeat="(id,medio) in mediostipoSELECT" value="{{id}}">{{medio}}</option>
+                    </select>
+                  </div>
+                </fieldset>
+              </div>
+              <div class="col-4 d-flex flex-column align-items-center">
                 <div class="w-100">
-                  <h3 class="text-center">Hasta</h3>
-                  <input type="date" class="form-control rounded-0" id="fecha_max" value="">
+                  <fieldset class="p-2" style="border: 2px groove;">
+                    <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;"><i class="fas fa-tags"></i>
+                      / <i class="fas fa-user-tag"></i></legend>
+                    <div class="input-group w-100 mb-2" data-toggle="tooltip" data-placement="top" title="Sección / Secciones">
+                      <select disabled="true" class="custom-select w-100 select__2" name="select_seccionBUSCADOR[]" id="select_seccionBUSCADOR"
+                        data-placeholder="SELECCIONE" multiple>
+                        <option value=""></option>
+                        <option ng-repeat="(id,seccion) in seccionSELECT" value="{{id}}">{{seccion}}</option>
+                      </select>
+                    </div>
+                    <div class="input-group" data-toggle="tooltip" data-placement="bottom" title="Únidades de análisis">
+                      <select class="custom-select w-100 select__2" name="select_unidadNOTICIA" id="select_unidadNOTICIA"
+                        data-allow-clear="true" data-placeholder="UNIDAD DE ANÁLISIS">
+                        <option value=""></option>
+                        <option ng-repeat="(id,unidad) in unidadSELECT" value="{{id}}">{{unidad}}</option>
+                      </select>
+                    </div>
+                  </fieldset>
                 </div>
               </div>
             </div>
+            <div class="row">
+              <div class="col-12">
+                <fieldset class="p-2" style="border: 2px groove;">
+                  <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;"><i class="fas fa-terminal"></i></legend>
+                  <input data-toggle="tooltip" data-placement="bottom" title="Título / Cuerpo de la noticia" disabled="true"
+                    type="text" class="form-control rounded-0" id="titulo" placeholder="TÍTULO / CUERPO" value="">
+                </fieldset>
+              </div>
+            </div>
+            <!-- </PRIMERA LINEA> -->
           </div>
-          <div class="col-4 d-flex flex-column align-items-center">
+          <div class="col-3 d-flex align-items-center">
             <div class="w-100">
-              <h3 class="text-center">Sección / Secciones</h3>
-              <div class="input-group w-100">
-                <select class="custom-select w-100 select__2" name="select_seccionBUSCADOR[]" id="select_seccionBUSCADOR" style="" data-placeholder="Seleccione" multiple>
-                  <option value=""></option>
-                  <option ng-repeat="(id,seccion) in seccionSELECT" value="{{id}}">{{seccion}}</option>
-                </select>
-              </div>
+              <button disabled="true" type="button" class="btn mb-3 btn-block text-uppercase" id="btn_filtro">filtrar <i
+                  class="fas fa-filter"></i></button>
+              <button disabled="true" type="button" class="btn btn-block text-uppercase" id="btn_limpiar">limpiar <i
+                  class="fas fa-sync-alt"></i></button>
             </div>
           </div>
         </div>
-
-        <div class="row justify-content-center pt-3">
-          <div class="col-4">
-            <div class="input-group">
-              <select class="custom-select w-100 select__2" name="select_medioNOTICIA" id="select_medioNOTICIA" style="" data-allow-clear="true" data-placeholder="MEDIO">
-                <option value=""></option>
-                <option ng-repeat="(id,medio) in mediosSELECT" value="{{id}}">{{medio}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="col-4">
-            <div class="input-group">
-              <select class="custom-select w-100 select__2" name="select_medioTipoNOTICIA" id="select_medioTipoNOTICIA" style="" data-allow-clear="true" data-placeholder="TIPO DE MEDIO">
-                <option value=""></option>
-                <option ng-repeat="(id,medio) in mediostipoSELECT" value="{{id}}">{{medio}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="col-4">
-            <input type="text" class="form-control rounded-0" id="titulo" placeholder="TÍTULO / CUERPO" value="">
-          </div>
-        </div>
-
-        <div class="row justify-content-center pt-3">
-          <div class="col-4">
-            <div class="input-group">
-              <select class="custom-select w-100 select__2" name="select_unidadNOTICIA" id="select_unidadNOTICIA" style="" data-allow-clear="true" data-placeholder="UNIDAD DE ANÁLISIS">
-                <option value=""></option>
-                <option ng-repeat="(id,unidad) in unidadSELECT" value="{{id}}">{{unidad}}</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="row pt-3">
-          <div class="col-6">
-            <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_filtro">filtrar <i class="fas fa-filter"></i></button>
-          </div>
-          <div class="col-6">
-            <button type="button" class="btn w-100 btn-block text-uppercase" id="btn_limpiar">limpiar <i class="fas fa-sync-alt"></i></button>
-          </div>
-        </div>
-
+  
       </div>
       <!-- /BUSCADOR -->
-
-      <table class="animate-flicker table mb-0 table-hover w-100" id="t_data" datatable="ng">
-        <thead class="thead-light text-uppercase">
-          <th>id</th>
-          <th>Fecha</th>
-          <th>Fecha Proc.</th>
-          <th>Usuario</th>
-          <th>U. Análisis</th>
-          <th>Tipo</th>
-          <th>Medio</th>
-          <th>Sección</th>
-          <th style="width:250px;">Título</th>
-        </thead>
-        <tbody>
-        </tbody>
+    </div>
+  </div>
+  <!-- <TABLA> -->
+  <div class="card shadow-sm bg-white rounded-0">
+    <div class="card-body">
+      <table class="animate-flicker table mb-0 table-hover table-sm table-striped w-100" id="t_data" data-tipo="1"
+        datatable="ng">
+        
       </table>
       <div><div class="h"></div><div class="b"></div><div class="f"></div></div>
     </div>

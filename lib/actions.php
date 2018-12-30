@@ -75,7 +75,6 @@ class PYRUS_ACTION{
     }
 
 	public static function baja_generica($d){
-		if(!verificar_estructura($d,['entidad','id'])) return false;
 		$entidad = $d['entidad'];
 		$id = $d['id'];
 		response(200,'ok ' . $entidad,PYRUS_DB::remove_uno($entidad,$id));
@@ -93,6 +92,11 @@ class PYRUS_ACTION{
         $column = $d["column"];
         $value = $d["value"];
         response(200,'ok ' . $entidad, PYRUS_DB::get_all($entidad,$column,$value));
+    }
+
+    public static function get_todos($d) {
+        $entidad = $d['entidad'];
+        response(200,'ok ' . $entidad, PYRUS_DB::get_all($entidad));
     }
 
     /**

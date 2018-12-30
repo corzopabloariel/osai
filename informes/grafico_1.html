@@ -49,6 +49,203 @@
             .node--leaf { pointer-events: none; }
             .node--root { fill: white !important; stroke: #000; stroke-width: 1px; }
         </style>
+
+        <script>
+            getRandomColor = function () {
+                var letters = '0123456789ABCDEF';
+                var color = '#';
+                for (var i = 0; i < 6; i++)
+                    color += letters[Math.floor(Math.random() * 16)];
+                return color;
+            }
+            u = userDATOS.user();
+            $("#user-log").text(u.user);
+            // const version = 1;
+            // const min = "2018-11-01";
+            // const max = "2018-12-05";
+            var dates = {
+                convert: function (d) {
+                    return (
+                        d.constructor === Date ? d :
+                            d.constructor === Array ? new Date(d[0], d[1], d[2]) :
+                                d.constructor === Number ? new Date(d) :
+                                    d.constructor === String ? new Date(d) :
+                                        typeof d === "object" ? new Date(d.year, d.month, d.date) :
+                                            NaN
+                    );
+                },
+                compare: function (a, b) {
+                    return ((a.getTime() === b.getTime()) ? 0 : ((a.getTime() > b.getTime()) ? 1 : - 1));
+                }
+            }
+            /* <Funciones & Variables básicas> */
+            const version = window.localStorage.getItem("version");
+            const min = window.localStorage.getItem("fecha_min");
+            const max = window.localStorage.getItem("fecha_max");
+            const partidos = userDATOS.busquedaTabla("attr_partido");
+            const temas = userDATOS.busquedaTabla("attr_temas");
+            const alianzas = userDATOS.busquedaTabla("attr_alianza");
+            let dataBD = userDATOS.dataBD("grafico_1", { "f_min": min, "f_max": max }, "#loader");
+            let actores = {};
+            let dataAUX = dataAUX_2 = dataAUX_3 = undefined;
+
+            if (dataBD.estado) {
+                let data = dataBD.data;
+                for (var i in data) {
+                    data[i]["data_actor"] = userDATOS.parseJSON(data[i]["data_actor"]);
+                    data[i]["tema"] = userDATOS.parseJSON(data[i]["tema"]);
+                    data[i]["valoracion"] = userDATOS.parseJSON(data[i]["valoracion"]);
+
+                    //////
+                    actores[data[i]["id_actor"]] = {}
+                    actores[data[i]["id_actor"]]["id"] = data[i]["id_actor"];
+                    actores[data[i]["id_actor"]]["cantidad"] = 0;
+                    actores[data[i]["id_actor"]]["nombre"] = data[i]["actor"];
+                    actores[data[i]["id_actor"]]["emisor"] = 0;
+                    actores[data[i]["id_actor"]]["imagen"] = 0;
+                    actores[data[i]["id_actor"]]["valor"] = {};
+                    actores[data[i]["id_actor"]]["valor"]["positivo"] = 0;
+                    actores[data[i]["id_actor"]]["valor"]["neutro"] = 0;
+                    actores[data[i]["id_actor"]]["valor"]["negativo"] = 0;
+                    actores[data[i]["id_actor"]]["campo"] = userDATOS.parseJSON(data[i]["campo"]);//oficialismo
+                    actores[data[i]["id_actor"]]["partido"] = userDATOS.parseJSON(data[i]["partido"]);//partido
+                    actores[data[i]["id_actor"]]["alianza"] = userDATOS.parseJSON(data[i]["alianza"]);//alianza
+
+                    if (actores[data[i]["id_actor"]]["cliente"] === undefined) {
+                        actores[data[i]["id_actor"]]["cliente"] = data[i]["cliente"];
+                        actores[data[i]["id_actor"]]["cliente_noticias"] = [];
+                    }
+                    actores[data[i]["id_actor"]]["cliente_noticias"].push({ "data": data[i]["data_actor"], "tema": data[i]["tema"], "valoracion": data[i]["valoracion"] });
+                }
+                actores[data[i]["id_actor"]]["cantidad"]++;
+                actores[data[i]["id_actor"]]["emisor"] += parseInt(data[i]["data_actor"]["frm_emisor"]);
+                actores[data[i]["id_actor"]]["imagen"] += parseInt(data[i]["data_actor"]["frm_img"]);
+                if (data[i]["data_actor"]["frm_valor"] !== undefined) {
+                    switch (parseInt(data["frm_valor"])) {
+                        case 1:
+                            actores[data[i]["id_actor"]]["valor"]["positivo"]++;
+                            break;
+                        case 0:
+                            actores[data[i]["id_actor"]]["valor"]["neutro"]++;
+                            break;
+                        case -1:
+                            actores[data[i]["id_actor"]]["valor"]["negativo"]++;
+                            break;
+                    }
+                }
+                console.log(actores);
+            }
+            if (version == 1) {
+                dataAUX = {};
+                dataAUX["name"] = "Unidades de Análisis";
+                dataAUX["children"] = [];
+                ARR_background = {}
+                colorAUX = [];
+                for (var x in actores) {
+                    aux = {}
+                    aux["name"] = actores[x]["nombre"];
+                    aux["children"] = [];
+
+                    if (actores[x]["partido"].length != 0) {
+                        for (var p in actores[x]["partido"]) {
+                            partido = actores[x]["partido"][p];
+                            aux["color"] = partidos[partido]["color"];//
+                        }
+                    }
+
+                    for (var y in actores[x]["cliente_noticias"]) {
+                        data = actores[x]["cliente_noticias"][y]["tema"];
+                        if (data !== undefined) {
+                            for (var i in data) {
+                                auxTemas = {}
+                                id_tema = i.substring(9);
+                                if (id_tema == "") continue;
+                                if (temas[id_tema] === undefined) continue;
+                                tema = temas[id_tema];
+                                if (ARR_background[id_tema] === undefined) {
+                                    do {
+                                        color = getRandomColor();
+                                    } while (colorAUX.indexOf(color) > 0);
+                                    ARR_background[id_tema] = {}
+                                    ARR_background[id_tema]["color"] = color;
+                                    ARR_background[id_tema]["nombre"] = tema.nombre;
+                                }
+                                d = aux["children"].find(x => x["name"] === tema.nombre);
+                                if (d === undefined) {
+                                    auxTemas["name"] = tema.nombre
+                                    auxTemas["size"] = 1;
+                                    auxTemas["color"] = ARR_background[id_tema]["color"];
+                                    aux["children"].push(auxTemas)
+                                } else d["size"]++;
+                            }
+                        }
+                    }
+
+                    dataAUX["children"].push(aux)
+                }
+            }
+            if (version == 2) {
+                dataAUX_2 = {};
+                dataAUX_2["name"] = "Oposición / Oficialismo";
+                dataAUX_2["children"] = [];
+                ARR_background = {}
+                colorAUX = [];
+                for (var x in actores) {
+                    if (actores[x]["alianza"].length != 0) {
+                        for (var a in actores[x]["alianza"]) {
+                            alianza = alianzas[actores[x]["alianza"][a]];
+                            d = dataAUX_2["children"].find(x => x["name"] === alianza.nombre);
+                            if (d === undefined) {
+                                aux_2 = {}
+                                aux_2["name"] = alianza.nombre;
+                                aux_2["size"] = 1;
+                                dataAUX_2["children"].push(aux_2);
+                            } else d["size"]++;
+                        }
+                    } else {
+                        d = dataAUX_2["children"].find(x => x["name"] === "Sin alianza");
+                        if (d === undefined) {
+                            aux_2 = {}
+                            aux_2["name"] = "Sin alianza";
+                            aux_2["size"] = 1;
+                            dataAUX_2["children"].push(aux_2);
+                        } else d["size"]++;
+                    }
+                }
+            }
+            if (version == 4) {
+                dataAUX_3 = {};
+                dataAUX_3["name"] = "Partido político";
+                dataAUX_3["children"] = [];
+                ARR_background = {}
+                colorAUX = [];
+                for (var x in actores) {
+                    if (actores[x]["partido"].length != 0) {
+                        for (var p in actores[x]["partido"]) {
+                            partido = partidos[actores[x]["partido"][p]];
+                            d = dataAUX_3["children"].find(x => x["name"] === partido.nombre);
+                            if (d === undefined) {
+                                if (partido.color === null) partido["color"] = "#DEDEDE";
+                                if (colorAUX.indexOf(partido.color) < 0) colorAUX.push(partido.color)
+                                aux_3 = {}
+                                aux_3["name"] = partido.nombre;
+                                aux_3["color"] = partido.color;
+                                aux_3["size"] = 1;
+                                dataAUX_3["children"].push(aux_3);
+                            } else d["size"]++;
+                        }
+                    } else {
+                        d = dataAUX_3["children"].find(x => x["name"] === "Sin partido");
+                        if (d === undefined) {
+                            aux_3 = {}
+                            aux_3["name"] = "Sin partido";
+                            aux_3["size"] = 1;
+                            dataAUX_3["children"].push(aux_3);
+                        } else d["size"]++;
+                    }
+                }
+            }
+        </script>
     </head>
     <body class="scroll-osai text-dark">
         <!-- LOADER -->
@@ -98,204 +295,9 @@
             </aside>
             <!-- </MENU> -->
             <section class="pb-3" style="padding-top:60px; ">
-            <script>
-            getRandomColor = function() {
-                var letters = '0123456789ABCDEF';
-                var color = '#';
-                for (var i = 0; i < 6; i++)
-                    color += letters[Math.floor(Math.random() * 16)];
-                return color;
-            }
-            u = userDATOS.user();
-            $("#user-log").text(u.user);
-            // const version = 1;
-            // const min = "2018-11-01";
-            // const max = "2018-12-05";
-            var dates = {
-                convert:function(d) {
-                    return (
-                        d.constructor === Date ? d :
-                        d.constructor === Array ? new Date(d[0],d[1],d[2]) :
-                        d.constructor === Number ? new Date(d) :
-                        d.constructor === String ? new Date(d) :
-                        typeof d === "object" ? new Date(d.year,d.month,d.date) :
-                        NaN
-                    );
-                },
-                compare:function(a,b) {
-                    return ((a.getTime() === b.getTime()) ? 0 : ((a.getTime() > b.getTime()) ? 1 : - 1));
-                }
-            }
-            /* <Funciones & Variables básicas> */
-            const version = window.localStorage.getItem("version");
-            const min = window.localStorage.getItem("fecha_min");
-            const max = window.localStorage.getItem("fecha_max");
-            const partidos = userDATOS.busquedaTabla("attr_partido");
-            const temas = userDATOS.busquedaTabla("attr_temas");
-            const alianzas = userDATOS.busquedaTabla("attr_alianza");
-            let dataBD = userDATOS.dataBD("grafico_1", { "f_min": min, "f_max": max }, "#loader");
-            let actores = {};
-            let dataAUX = dataAUX_2 = dataAUX_3 = undefined;
-
-            if(dataBD.estado) {
-                let data = dataBD.data;
-                for (var i in data) {
-                    data[i]["data_actor"] = userDATOS.parseJSON(data[i]["data_actor"]);
-                    data[i]["tema"] = userDATOS.parseJSON(data[i]["tema"]);
-                    data[i]["valoracion"] = userDATOS.parseJSON(data[i]["valoracion"]);
-
-                    //////
-                    actores[data[i]["id_actor"]] = {}
-                    actores[data[i]["id_actor"]]["id"] = data[i]["id_actor"];
-                    actores[data[i]["id_actor"]]["cantidad"] = 0;
-                    actores[data[i]["id_actor"]]["nombre"] = data[i]["actor"];
-                    actores[data[i]["id_actor"]]["emisor"] = 0;
-                    actores[data[i]["id_actor"]]["imagen"] = 0;
-                    actores[data[i]["id_actor"]]["valor"] = {};
-                    actores[data[i]["id_actor"]]["valor"]["positivo"] = 0;
-                    actores[data[i]["id_actor"]]["valor"]["neutro"] = 0;
-                    actores[data[i]["id_actor"]]["valor"]["negativo"] = 0;
-                    actores[data[i]["id_actor"]]["campo"] = userDATOS.parseJSON(data[i]["campo"]);//oficialismo
-                    actores[data[i]["id_actor"]]["partido"] = userDATOS.parseJSON(data[i]["partido"]);//partido
-                    actores[data[i]["id_actor"]]["alianza"] = userDATOS.parseJSON(data[i]["alianza"]);//alianza
-
-                    if (actores[data[i]["id_actor"]]["cliente"] === undefined) {
-                        actores[data[i]["id_actor"]]["cliente"] = data[i]["cliente"];
-                        actores[data[i]["id_actor"]]["cliente_noticias"] = [];
-                    }
-                    actores[data[i]["id_actor"]]["cliente_noticias"].push({"data": data[i]["data_actor"],"tema": data[i]["tema"], "valoracion": data[i]["valoracion"]});
-                }
-                actores[data[i]["id_actor"]]["cantidad"] ++;
-                actores[data[i]["id_actor"]]["emisor"] += parseInt(data[i]["data_actor"]["frm_emisor"]);
-                actores[data[i]["id_actor"]]["imagen"] += parseInt(data[i]["data_actor"]["frm_img"]);
-                if (data[i]["data_actor"]["frm_valor"] !== undefined) {
-                    switch (parseInt(data["frm_valor"])) {
-                        case 1:
-                            actores[data[i]["id_actor"]]["valor"]["positivo"] ++;
-                            break;
-                        case 0:
-                            actores[data[i]["id_actor"]]["valor"]["neutro"] ++;
-                            break;
-                        case -1:
-                            actores[data[i]["id_actor"]]["valor"]["negativo"] ++;
-                            break;
-                    }
-                }
-                console.log(actores);
-            }
-            if (version == 1) {
-                dataAUX = {};
-                dataAUX["name"] = "Unidades de Análisis";
-                dataAUX["children"] = [];
-                ARR_background = {}
-                colorAUX = [];
-                for (var x in actores) {
-                    aux = {}
-                    aux["name"] = actores[x]["nombre"];
-                    aux["children"] = [];
-
-                    if (actores[x]["partido"].length != 0) {
-                        for (var p in actores[x]["partido"]) {
-                            partido = actores[x]["partido"][p];
-                            aux["color"] = partidos[partido]["color"];//
-                        }
-                    }
-
-                    for (var y in actores[x]["cliente_noticias"]) {
-                        data = actores[x]["cliente_noticias"][y]["tema"];
-                        if (data !== undefined) {
-                            for (var i in data) {
-                                auxTemas = {}
-                                id_tema = i.substring(9);
-                                if (id_tema == "") continue;
-                                if(temas[id_tema] === undefined) continue;
-                                tema = temas[id_tema];
-                                if (ARR_background[id_tema] === undefined) {
-                                    do {
-                                        color = getRandomColor();
-                                    } while (colorAUX.indexOf(color) > 0);
-                                    ARR_background[id_tema] = {}
-                                    ARR_background[id_tema]["color"] = color;
-                                    ARR_background[id_tema]["nombre"] = tema.nombre;
-                                }
-                                d = aux["children"].find(x => x["name"] === tema.nombre);
-                                if (d === undefined) {
-                                    auxTemas["name"] = tema.nombre
-                                    auxTemas["size"] = 1;
-                                    auxTemas["color"] = ARR_background[id_tema]["color"];
-                                    aux["children"].push(auxTemas)
-                                } else d["size"]++;
-                            }
-                        }
-                    }
-
-                    dataAUX["children"].push(aux)
-                }
-            }
-            if (version == 2) {
-                dataAUX_2 = {};
-                dataAUX_2["name"] = "Oposición / Oficialismo";
-                dataAUX_2["children"] = [];
-                ARR_background = {}
-                colorAUX = [];
-                for (var x in actores) {
-                    if (actores[x]["alianza"].length != 0) {
-                        for (var a in actores[x]["alianza"]) {
-                            alianza = alianzas[actores[x]["alianza"][a]];
-                            d = dataAUX_2["children"].find(x => x["name"] === alianza.nombre);
-                            if (d === undefined) {
-                                aux_2 = {}
-                                aux_2["name"] = alianza.nombre;
-                                aux_2["size"] = 1;
-                                dataAUX_2["children"].push(aux_2);
-                            } else d["size"] ++;
-                        }
-                    } else {
-                        d = dataAUX_2["children"].find(x => x["name"] === "Sin alianza");
-                        if (d === undefined) {
-                            aux_2 = {}
-                            aux_2["name"] = "Sin alianza";
-                            aux_2["size"] = 1;
-                            dataAUX_2["children"].push(aux_2);
-                        } else d["size"] ++;
-                    }
-                }
-            }
-            if (version == 4) {
-                dataAUX_3 = {};
-                dataAUX_3["name"] = "Partido político";
-                dataAUX_3["children"] = [];
-                ARR_background = {}
-                colorAUX = [];
-                for (var x in actores) {
-                    if (actores[x]["partido"].length != 0) {
-                        for (var p in actores[x]["partido"]) {
-                            partido = partidos[actores[x]["partido"][p]];
-                            d = dataAUX_3["children"].find(x => x["name"] === partido.nombre);
-                            if (d === undefined) {
-                                if (partido.color === null) partido["color"] = "#DEDEDE";
-                                if (colorAUX.indexOf(partido.color) < 0) colorAUX.push(partido.color)
-                                aux_3 = {}
-                                aux_3["name"] = partido.nombre;
-                                aux_3["color"] = partido.color;
-                                aux_3["size"] = 1;
-                                dataAUX_3["children"].push(aux_3);
-                            } else d["size"] ++;
-                        }
-                    } else {
-                        d = dataAUX_3["children"].find(x => x["name"] === "Sin partido");
-                        if (d === undefined) {
-                            aux_3 = {}
-                            aux_3["name"] = "Sin partido";
-                            aux_3["size"] = 1;
-                            dataAUX_3["children"].push(aux_3);
-                        } else d["size"] ++;
-                    }
-                }
-            }
-            </script>
+            
             <div id="body_grafico"></div>
-      </section>
+        </section>
     </span>
 
 

@@ -132,13 +132,14 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 			window.columnaDT[this.entidad] = [];
 
 			for(var i in this.objeto['ATRIBUTOS']) {
+				if(i == "id") continue;
 				let STR_valor = "";
 				if(this.objeto['ATRIBUTOS'][i]["VISIBILIDAD"] == "TP_INVISIBLE" || this.objeto['ATRIBUTOS'][i]["VISIBILIDAD"] == "TP_BANDERA" || this.objeto['ATRIBUTOS'][i]["VISIBILIDAD"] == "TP_OCULTO") continue;
 
 				if(this.objeto['ATRIBUTOS'][i]["NOMBRE"] === undefined) STR_valor = (i).toUpperCase();
 				else STR_valor = (this.objeto['ATRIBUTOS'][i]["NOMBRE"]).toUpperCase();
 
-				window.columna[this.entidad].push(i)
+				window.columna[this.entidad].push(i);
 				window.columnaDT[this.entidad].push({"title": STR_valor, "data": i});
 			}
 
@@ -230,7 +231,8 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 				case 'TP_RELACION':
 					if(OBJ_elemento['RELACION']['TABLA'] != this.entidad) {
 						// if(Object.keys(window.variables[OBJ_elemento['RELACION']['TABLA']].resultado).length > 0)
-							return window.variables[OBJ_elemento['RELACION']['TABLA']].select(OBJ_elemento,"frm_" + TAG_nombre,STR_class,OBJ_funcion);
+						pyrusAux = new Pyrus(OBJ_elemento['RELACION']['TABLA'],false);
+						return pyrusAux.select(OBJ_elemento,"frm_" + TAG_nombre,STR_class,OBJ_funcion);
 					} else return this.select(OBJ_elemento,"frm_" + TAG_nombre,STR_class,OBJ_funcion);
 				break;
 				case 'TP_ENUM':
@@ -298,8 +300,10 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 		return_STR += "</select>";
 		return return_STR;
 	}
-	this.selector = function(ARR_resultado = this.resultado) {
+	this.selector = function() {
 		let ARR_aux = {};
+		let ARR_resultado = null;
+		this.query("get_todos",{"entidad":this.entidad},function(e) { ARR_resultado = e; }, null, false);
 		if(this.objeto['VISIBLE'] === undefined) return ARR_aux;
 
 		let OBJ_attr = this.objeto['ATRIBUTOS'];
@@ -384,10 +388,7 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 	 *
 	 */
 	this.remove = function(id) {
-		let OBJ_eliminado = this.busqueda("id",id);
-		OBJ_eliminado["elim"] = 1;
-
-		this.guardar_1(OBJ_eliminado);
+		this.query("baja_generica",{"entidad":this.entidad,"id":id}, function() {},null,false);
 	}
 	/**
 	 *
@@ -736,42 +737,42 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 	}
 	this.getContenidoDATATABLEsimple = function(ARR_resultado) {
 		let OBJ_attr = this.especificacion;
-		let ARR_row = [];
+		let ARR_row = {};
 
 		for(var y in ARR_resultado) {
 			if(OBJ_attr[y] === undefined) continue;
 			if(OBJ_attr[y]["VISIBILIDAD"] == "TP_BANDERA" || OBJ_attr[y]["VISIBILIDAD"] == "TP_INVISIBLE" || OBJ_attr[y]["VISIBILIDAD"] == "TP_OCULTO") continue;
 			if(OBJ_attr[y]["TIPO"] == "TP_RELACION") {
+				pyrusAux = new Pyrus(OBJ_attr[y]["RELACION"]["TABLA"],false);
 				if(OBJ_attr[y]["FORMATO"] === undefined)
-					ARR_row.push(window.variables[OBJ_attr[y]["RELACION"]["TABLA"]].mostrar_1(ARR_resultado[y],OBJ_attr[y]["RELACION"]["ATTR"]));
+					ARR_row[y] = pyrusAux.mostrar_1(ARR_resultado[y],OBJ_attr[y]["RELACION"]["ATTR"]);
 				else {
 					if(OBJ_attr[y]["FORMATO"] == "json") {
 						let aux = JSON.parse(ARR_resultado[y]);
 						let h = "";
 						for(var xx in aux)
 							h += "<p class='m-0'>" +
-								window.variables[OBJ_attr[y]["RELACION"]["TABLA"]].mostrar_1(aux[xx],OBJ_attr[y]["RELACION"]["ATTR"]) + "</p>";
-						ARR_row.push(h);
-					} else ARR_row.push("");////FORMATO NO JSON
+								pyrusAux.mostrar_1(aux[xx],OBJ_attr[y]["RELACION"]["ATTR"]) + "</p>";
+						ARR_row[y] = h;
+					} else ARR_row[y] = "";////FORMATO NO JSON
 				}
 			} else {
 				if(OBJ_attr[y]["FORMATO"] === undefined)
-					ARR_row.push(ARR_resultado[y])
+					ARR_row[y] = ARR_resultado[y];
 				else {
 					switch(OBJ_attr[y]["FORMATO"]) {
 						case "json":
-							if(ARR_resultado[y] == "" || ARR_resultado[y] === null) ARR_row.push("");
+							if(ARR_resultado[y] == "" || ARR_resultado[y] === null) ARR_row[y] = "";
 							else {
 								let aux = JSON.parse(ARR_resultado[y]);
-								console.log(aux);
-								ARR_row.push(aux.join(" - "));
+								ARR_row[y] = aux.join(" - ");
 							}
 							break;
 						case "enum":
-							ARR_row.push(OBJ_attr[y]["ENUM"][ARR_resultado[y]]);
+							ARR_row[y] = OBJ_attr[y]["ENUM"][ARR_resultado[y]];
 							break;
 						case "mascara":
-							ARR_row.push((OBJ_attr[y]["MASCARA"]).repeat(ARR_resultado[y]));
+							ARR_row[y] = (OBJ_attr[y]["MASCARA"]).repeat(ARR_resultado[y]);
 							break;
 					}
 				}

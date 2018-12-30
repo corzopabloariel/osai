@@ -22,63 +22,117 @@ $especificacion = $params["especificacion"];
 $attr = "";
 $inner = "";
 $sql = "";
+$where = "";
 $A_entidades = Array();
 $A_arrays = Array();
 $A_visibles = Array();
-
-foreach($especificacion AS $k => $v) {
-    if(!empty($attr)) $attr .= ", ";
-    $attr .= "{$k}";
-    if(isset($v["FORMATO"]))
-        $A_arrays[$k] = $v["FORMATO"];
-    if($v["VISIBILIDAD"] == "TP_VISIBLE")
-        $A_visibles[] = $k;
-
-    if($v["TIPO"] != "TP_RELACION") {
-        continue;
-    }
-    $entidadAux = $v["RELACION"]["TABLA"];
-    $attrAux = $v["RELACION"]["ATTR"];
-    $visibleAux = $entidades->$entidadAux->VISIBLE;
-    $A_entidades[$k] = Array();
-    $A_entidades[$k]["ENTIDAD"] = $entidadAux;
-    $A_entidades[$k]["ATRIBUTO"] = $attrAux;
-    $A_entidades[$k]["VISIBILIDAD"] = $visibleAux;
-}
-
-$sql = "SELECT {$attr} FROM {$entidad}";
-$recordsTotal = total($mysqli,"{$sql} WHERE elim = 0");
-
-if(!empty($params["search"]["value"])) {
-    $search = "";
-    for($i = 0; $i < count($A_visibles); $i++) {
-        if(!empty($search)) $search .= " OR ";
-        $search .= "{$A_visibles[$i]} LIKE '%{$params["search"]["value"]}%' AND elim = 0";
-    }
-    $sql .= " WHERE {$search}";
-    $recordsFiltered = total($mysqli,$sql);
-} else $recordsFiltered = $recordsTotal;
-
-if(isset($order))
-    $sql .= " ORDER BY {$columns[$order["column"]]["data"]} {$order["dir"]}";
-
-$sql .= " LIMIT {$params['start']},{$params['length']}";
-$data = [];
-if($queryRecords = $mysqli->query($sql)) {
-    while($tabla = $queryRecords->fetch_assoc()) {
-        foreach($A_arrays AS $k => $v) {
-            $tabla[$k] = json_decode($tabla[$k]);
-        }
-        if($entidad == "actor") {
-            // $tabla["atributos"] = implode(", ", $tabla["atributos"]);
-        }
-        foreach($A_entidades AS $k => $v)
-            $tabla[$k] = mostrar_1($tabla[$k],$k,$v);
+$A_enum = Array();
+/**
+ * CONSIDERACIÓN IMPORTANTE
+ * Se puede agregar un atributo en declaration.js - después de creada la tabla; esto sirve para mostrar
+ * otros datos. Se usa solo en tipos TP_ENUM, que contienen un ARRAY de opciones posibles
+ */
+if($entidad != "cliente") {
+    foreach($especificacion AS $k => $v) {
+        if(strpos($k, "__") !== false) continue;
+        if(!empty($attr)) $attr .= ", ";
+        $attr .= "{$k}";
+        if(isset($v["FORMATO"]))
+            $A_arrays[$k] = $v["FORMATO"];
+        if($v["VISIBILIDAD"] == "TP_VISIBLE")
+            $A_visibles[] = $k;
         
-        $data[] = $tabla;
+        if($v["TIPO"] == "TP_ENUM") {
+            if(isset($v["ENUM"]))
+                $A_enum[$k] = $v["ENUM"];
+        }
+
+        if($v["TIPO"] != "TP_RELACION") {
+            continue;
+        }
+        $entidadAux = $v["RELACION"]["TABLA"];
+        $attrAux = $v["RELACION"]["ATTR"];
+        $visibleAux = $entidades->$entidadAux->VISIBLE;
+        $A_entidades[$k] = Array();
+        $A_entidades[$k]["ENTIDAD"] = $entidadAux;
+        $A_entidades[$k]["ATRIBUTO"] = $attrAux;
+        $A_entidades[$k]["VISIBILIDAD"] = $visibleAux;
+    }
+
+    $sql = "SELECT {$attr} FROM {$entidad}";
+    /////
+    if($entidad == "usuario") {
+        $where .= " AND nivel >= {$_SESSION["user_lvl"]}";
+        $where .= " AND id != {$_SESSION["user_id"]}";
+    }
+    /////
+    
+    $recordsTotal = total($mysqli,"{$sql} WHERE elim = 0{$where}");
+
+    if(!empty($params["search"]["value"])) {
+        $search = "";
+        for($i = 0; $i < count($A_visibles); $i++) {
+            if(!empty($search)) $search .= " OR ";
+            $search .= "{$A_visibles[$i]} LIKE '%{$params["search"]["value"]}%' AND elim = 0{$where}";
+        }
+        $sql .= " WHERE {$search}";
+        $recordsFiltered = total($mysqli,$sql);
+    } else {
+        $sql .= " WHERE elim = 0{$where}";
+        $recordsFiltered = $recordsTotal;
+    }
+    if(isset($order))
+        $sql .= " ORDER BY {$columns[$order["column"]]["data"]} {$order["dir"]}";
+
+    $sql .= " LIMIT {$params['start']},{$params['length']}";
+    $data = [];
+    if($queryRecords = $mysqli->query($sql)) {
+        while($tabla = $queryRecords->fetch_assoc()) {
+            foreach ($A_enum as $k => $v) {
+                $value = $v[$tabla[$k]];
+                $tabla[$k] = "";
+                $tabla["__{$k}__"] = $value;
+            }
+
+            foreach($A_arrays AS $k => $v) {
+                $tabla[$k] = json_decode($tabla[$k]);
+            }
+            foreach($A_entidades AS $k => $v)
+                $tabla[$k] = mostrar_1($tabla[$k],$k,$v);
+            
+            $data[] = $tabla;
+        }
+    }
+} else {
+    $Arr = [];
+    $Arr[] = "BLOQUEADO";
+    $Arr[] = "ACTIVO";
+    $sql = "SELECT ";
+    $sql .= "c.id,";
+    $sql .= "c.nombre,";
+    $sql .= "ou.user,";
+    $sql .= "ou.activo";
+    $sql .= " FROM cliente AS c ";
+      $sql .= "LEFT JOIN osai_usuario AS ou ON ";
+      $sql .= "(ou.id_cliente = c.id AND ou.elim = 0 AND ou.activo = 1) ";
+    $sql .= "WHERE c.elim = 0 AND c.todos = 0";
+    if(isset($order))
+        $sql .= " ORDER BY {$columns[$order["column"]]["data"]} {$order["dir"]}";
+
+    $recordsTotal = total($mysqli,"{$sql}");
+    $recordsFiltered = $recordsTotal;
+    $sql .= " LIMIT {$params['start']},{$params['length']}";
+
+    if($queryRecords = $mysqli->query($sql)) {
+      while($cliente = $queryRecords->fetch_assoc()) {
+        if(is_null($cliente["activo"])) $cliente["activo"] = "";
+        else $cliente["activo"] = $Arr[$cliente["activo"]];
+
+        if(is_null($cliente["user"])) $cliente["user"] = "";
+        $data[] = $cliente;
+      }
     }
 }
-
 mysqli_close($mysqli);
 
 $json_data = array(
