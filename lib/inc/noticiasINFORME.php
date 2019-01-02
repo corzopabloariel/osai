@@ -118,16 +118,16 @@ if(isset($_POST["vista"])) {
     }
   } else if($params["vista"] == "clipping") {
     $where_condition .= "AND n.estado IN (3,4,5) ";
-
+    $idAgendaNacional = 12;
     $attr .= ",GROUP_CONCAT(p.id_cliente) AS cliente";
     $attr .= ",GROUP_CONCAT(oc.id_usuario_osai) AS cliente_final";
     $group .= "n.id";
-    $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia) ";
+    $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia AND p.id_cliente != {$idAgendaNacional}) ";
 
     if(isset($params["unidadFilter"]) && !empty($params["unidadFilter"]))
       $inner .= "INNER JOIN osai_cliente AS oc ON (oc.elim = 0 AND oc.id_noticia = n.id AND oc.id_usuario_osai = {$params["unidadFilter"]} AND oc.tipo_aviso = 1)";
     else
-      $inner .= "INNER JOIN osai_cliente AS oc ON (oc.elim = 0 AND oc.id_noticia = n.id AND oc.tipo_aviso = 1) ";
+      $inner .= "INNER JOIN osai_cliente AS oc ON (oc.elim = 0 AND oc.id_noticia = n.id AND oc.tipo_aviso IN (0,1)) ";
   }
   /* / VISTA */
 
@@ -201,6 +201,7 @@ function separarPOR($mysqli,$sql,$Aelementos) {
   $A["cliente_final"]["no"] = "SIN CLIENTE";
   $Adatos = Array();
   foreach($Aelementos AS $e) $Adatos[$e] = Array();
+  
   if($queryRecords = $mysqli->query($sql)) {
     while($noticia = $queryRecords->fetch_assoc()) {
       foreach($Aelementos AS $e) {

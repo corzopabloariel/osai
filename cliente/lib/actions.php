@@ -94,8 +94,17 @@ class PYRUS_ACTION{
      * 
      */
     public static function agenda($d) {
-        $paginado = $d['paginado'];
-        response(200,'ok agenda nacional', PYRUS_DB::get_agenda($paginado));
+        response(200,'ok agenda nacional', PYRUS_DB::get_agenda($d));
+    }
+    /**
+     * 
+     */
+    public static function medios($d) {
+        response(200,'ok medios', PYRUS_DB::get_medios($d));
+    }
+    /** */
+    public static function totalRegistros($d) {
+        response(200,'ok total registros', PYRUS_DB::get_total($d));
     }
     /**
      *

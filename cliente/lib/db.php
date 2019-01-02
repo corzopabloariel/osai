@@ -51,12 +51,40 @@ class PYRUS_DB {
   /**
    * 
    */
-  static function get_agenda($paginado) {
+  static function get_agenda($valores) {
+    $paginado = $valores["paginado"];
     $start = $paginado * 10;
     $length = 10;
-    $idAgendaNacional = 12;
+    $id = $valores["id"];
+    $where = "p.id_cliente = {$id}";
+    if(isset($valores["medios"])) {
+      $idMedios = "";
+      foreach($valores["medios"] AS $x) {
+        if(!empty($idMedios)) $idMedios .= ",";
+        $idMedios .= "{$x}";
+      }
+      $where .= " AND ";
+      $where .= "n.id_medio IN ({$idMedios})";
+    }
+    if(isset($valores["secciones"])) {
+      $idSecciones = "";
+      foreach($valores["secciones"] AS $x) {
+        if(!empty($idSecciones)) $idSecciones .= ",";
+        $idSecciones .= "{$x}";
+      }
+      $where .= " AND ";
+      $where .= "n.id_seccion IN ({$idSecciones})";
+    }
+    if(isset($valores["desde"]) && !empty($valores["desde"])) {
+      $where .= " AND ";
+      $where .= "DATE_FORMAT(p.autofecha, '%Y%m%d') >= DATE_FORMAT('{$valores["desde"]}', '%Y%m%d')";
+    }
+    if(isset($valores["hasta"]) && !empty($valores["hasta"])) {
+      $where .= " AND ";
+      $where .= "DATE_FORMAT(p.autofecha, '%Y%m%d') <= DATE_FORMAT('{$valores["hasta"]}', '%Y%m%d')";
+    }
 
-    return R::getAll("SELECT n.* FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND n.estado >= 2) where p.id_cliente = {$idAgendaNacional} ORDER BY p.id DESC LIMIT {$start},{$length}");
+    return R::getAll("SELECT n.* FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND n.estado >= 2) where {$where} ORDER BY p.id DESC LIMIT {$start},{$length}");
   }
   /**
    * Trae la cantidad de elementos que con un cierto patron
@@ -100,7 +128,90 @@ class PYRUS_DB {
 				$Arr[$data["id"]] = $data;
 		}
 		return $Arr;
-	}
+  }
+  /** */
+  static function get_total($valores) {
+    $id = $valores["id"];
+    $where = "p.id_cliente = {$id}";
+    if(isset($valores["medios"])) {
+      $idMedios = "";
+      foreach($valores["medios"] AS $x) {
+        if(!empty($idMedios)) $idMedios .= ",";
+        $idMedios .= "{$x}";
+      }
+      $where .= " AND ";
+      $where .= "n.id_medio IN ({$idMedios})";
+    }
+    if(isset($valores["secciones"])) {
+      $idSecciones = "";
+      foreach($valores["secciones"] AS $x) {
+        if(!empty($idSecciones)) $idSecciones .= ",";
+        $idSecciones .= "{$x}";
+      }
+      $where .= " AND ";
+      $where .= "n.id_seccion IN ({$idSecciones})";
+    }
+    if(isset($valores["desde"]) && !empty($valores["desde"])) {
+      $where .= " AND ";
+      $where .= "DATE_FORMAT(p.autofecha, '%Y%m%d') >= DATE_FORMAT('{$valores["desde"]}', '%Y%m%d')";
+    }
+    if(isset($valores["hasta"]) && !empty($valores["hasta"])) {
+      $where .= " AND ";
+      $where .= "DATE_FORMAT(p.autofecha, '%Y%m%d') <= DATE_FORMAT('{$valores["hasta"]}', '%Y%m%d')";
+    }
+    $sql = "SELECT DISTINCT n.id FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND n.estado >= 2) where {$where}";
+    $total = total(self::$mysqli,$sql);
+    return $total;
+  }
+  /**
+   * 
+   */
+  static function get_medios($valores) {
+    if($valores["tipo"] == "A") {
+      $idAgendaNacional = $valores["id"];
+      $idMedios = "";
+      $where = "p.id_cliente = {$idAgendaNacional}";
+      if(isset($valores["medio"])) {
+        foreach($valores["medio"] AS $x) {
+          if(!empty($idMedios)) $idMedios .= ",";
+          $idMedios .= "{$x}";
+        }
+        $where .= " AND ";
+        $where .= "n.id_medio IN ({$idMedios})";
+      }
+
+      if(isset($valores["desde"]) && !empty($valores["desde"])) {
+        $where .= " AND ";
+        $where .= "DATE_FORMAT(p.autofecha, '%Y%m%d') >= DATE_FORMAT('{$valores["desde"]}', '%Y%m%d')";
+      }
+      if(isset($valores["hasta"]) && !empty($valores["hasta"])) {
+        $where .= " AND ";
+        $where .= "DATE_FORMAT(p.autofecha, '%Y%m%d') <= DATE_FORMAT('{$valores["hasta"]}', '%Y%m%d')";
+      }
+
+      $ARR_medios = R::findAll("medio","elim = 0");
+      $ARR_secciones = R::findAll("seccion","elim = 0");
+      $elementosMedio = R::getAll("SELECT n.id_medio AS medio FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND n.estado >= 2) where {$where} GROUP BY n.id_medio");
+      $elementosSeccion = R::getAll("SELECT n.id_medio AS medio,n.id_seccion AS seccion FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND n.estado >= 2) where {$where} GROUP BY n.id_seccion");
+      $medios = $secciones = Array();
+
+      $medios[] = $secciones[] = Array("id" => "","text" => "");
+      foreach($elementosMedio AS $k => $v)
+        $medios[] = Array("id" => $v["medio"],"text" => $ARR_medios[$v["medio"]]["medio"]);
+      
+      foreach($elementosSeccion AS $k => $v) {
+        $nombre = "SIN SECCIÓN";
+        if(isset($ARR_secciones[$v["seccion"]])) $nombre = $ARR_secciones[$v["seccion"]]["nombre"];
+        if(isset($valores["medio"]) && count($valores["medio"]) > 1)
+          $text = "{$ARR_medios[$v["medio"]]["medio"]} - {$nombre}";
+        else
+          $text = $nombre;
+        $secciones[] = Array("id" => $v["seccion"],"text" => $text);
+      }
+      
+      return Array("medio" => $medios,"seccion" => $secciones);
+    }
+  }
 	/**
 	 *
 	 */
@@ -138,4 +249,9 @@ class PYRUS_DB {
       return R::store($bean);
       //return true;
   }
+}
+
+////
+function total($mysqli,$sql) {
+  return mysqli_num_rows($mysqli->query($sql));
 }

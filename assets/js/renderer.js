@@ -1850,7 +1850,7 @@ if(userDATOS.verificar(1)) {
       let tituloFilter = $('#titulo').val();
       let seccionFilter = $('#select_seccion').val();
       data = {"moderado":1,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0 && unidadFilter == "") {
         userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
         return false;
       }
@@ -2064,7 +2064,7 @@ if(userDATOS.verificar(1)) {
       let seccionFilter = $('#select_seccionBUSCADOR').val();
       let unidadFilter = $("#select_unidadNOTICIA").val();
       data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter),"unidadFilter":unidadFilter}
-      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0 && unidadFilter == "") {
         userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
         return false;
       }
@@ -2223,105 +2223,100 @@ if(userDATOS.verificar(1)) {
       let proceso = [];
       let procesos = null;
       let msg = "";
-      userDATOS.busqueda({"value":row.id,"tabla":"noticia"}, function(d) {
-        noticia = d;
-      });
-      userDATOS.busqueda({"value":row.id,"tabla":"proceso","column":"did_noticia","retorno":0}, function(d) {
-        procesos = d;
-      });
-      for(var i in procesos) {
-        console.log(procesos[i])
-        if(parseInt(procesos[i]["id_cliente"]) == idAgendaNacional) {
-          userDATOS.busqueda({"value":idAgendaNacional,"tabla":"cliente"},function(cliente) {
-            msg = "<p class='m-0 text-center'>Noticia procesada en <strong>" + cliente.nombre + "</strong></p>";
-          });
-          continue;
-        }
-        proceso.push(procesos[i]["id_cliente"]);
-      }
-      /**
-       * ESTADOS DE UNA NOTICIA <-- OJO, no confundir con TIPO DE NOTICIA (NUEVA/VIEJA)
-       * - 0: Default
-       * - 1: Relevado
-       * - 2: Procesada
-       * - 3: Publicada
-       * - 4: Publicada
-       */
-      if(parseInt(noticia.estado_num) == 3) {
-        userDATOS.notificacion("Noticia pre publicada en CLIENTE/S");
-        return false;
-      }
-      if(parseInt(noticia.estado_num) == 4) {
-        userDATOS.notificacion("Noticia publicada en CLIENTE/S");
-        return false;
-      }
-      
-      userDATOS.busquedaUsuariosFinales(function(clientes) {
-        for(var i in proceso) {
-          if(clientes[proceso[i]] !== undefined) {
-            msg += "<p class='m-0'>" + clientes[proceso[i]] + "</p>";
-            delete clientes[proceso[i]];
-          }
-        }
-        $.MessageBox({
-          buttonDone  : strings.btn.si,
-          buttonFail  : strings.btn.no,
-          message     : strings.noticia.prePublicar(msg),
-          input   : { 
-            input_detalle  : {
-              type         : "texts",
-              label        : "Descripción (máx. 200 caracteres):",
-              title        : "Descripción de la noticia",
-              maxlength    : 200
-            },
-            select_tipo : {
-              type         : "selects",
-              label        : "Seleccione Cliente final para publicar",
-              title        : "cliente final",
-              options      : clientes.data,
-              default      : proceso
-            },
-          },
-          filterDone  : function(data) {
-            if(data.input_detalle == "")
-              return "Descripción necesaria"
-          }
-        }).done(function(data){
-          userDATOS.notificacion((data.select_tipo.length == 0 ? strings.noticia.publicar[1] : strings.noticia.publicar[2]),"info",false);
-          userDATOS.notificacion(strings.tablaReseteo,"warning",false);
-          userDATOS.change(noticia.id,"noticia","estado",3);
-          id_usuario = window.user_id;//USUARIO de OSAI que generó esto
-          setTimeout(function() {
-            clientesFinales = proceso.concat(data.select_tipo);///VERIFICAR ESTO
-            for(var i in clientesFinales) {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
-              aux = {};
-              aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
-              aux["id_usuario_osai"] = clientesFinales[i];
-              if(proceso.indexOf(clientesFinales[i]) >= 0)
-                aux["tipo_aviso"] = 1;
-              x = null;
-              userDATOS.insertDatos("osai_cliente",aux,function(x) {
-                userDATOS.log(window.user_id,"NOTICIA publicada",0,x,"osai_cliente");
-              },true);
-              userDATOS.insertDatos("osai_notificacion",
-                {"id_usuario":id_usuario,
-                "id_noticia":noticia.id,
-                "id_usuario_osai":clientesFinales[i],
-                "mensaje": data.input_detalle,
-                "nivel": 0,
-                "estado": 1});
-            }
+      userDATOS.busqueda({"value":row.id,"tabla":"noticia"}, function(noticia) {
 
-            selectMEDIOS = userDATOS.noticiasSELECT("procesada");
-            tabla_noticia.draw();
-            angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
-            angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
-            angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
-            angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
-            scopeNoticias(angular.element($(".submenu")).scope(),"procesadas",-1);
-          },500);
-        });
-      },true);
+        if(parseInt(noticia.estado_num) == 3) {
+          userDATOS.notificacion("Noticia pre publicada en CLIENTE/S");
+          return false;
+        }
+        if(parseInt(noticia.estado_num) == 4) {
+          userDATOS.notificacion("Noticia publicada en CLIENTE/S");
+          return false;
+        }
+        userDATOS.busqueda({"value":row.id,"tabla":"proceso","column":"did_noticia","retorno":0}, function(procesos) {
+          for(var i in procesos) {
+            if(parseInt(procesos[i]["id_cliente"]) == idAgendaNacional) {
+              userDATOS.busqueda({"value":idAgendaNacional,"tabla":"cliente"},function(cliente) {
+                msg = "<p class='m-0 text-center'>Noticia procesada en <strong>" + cliente.nombre + "</strong></p>";
+              });
+              continue;
+            }
+            proceso.push(procesos[i]["id_cliente"]);
+          }
+
+          
+          userDATOS.busquedaUsuariosFinales(function(clientes) {
+            for(var i in proceso) {
+              if(clientes[proceso[i]] !== undefined) {
+                msg += "<p class='m-0'>" + clientes[proceso[i]] + "</p>";
+                delete clientes[proceso[i]];
+              }
+            }
+            $.MessageBox({
+              buttonDone  : strings.btn.si,
+              buttonFail  : strings.btn.no,
+              message     : strings.noticia.prePublicar(msg),
+              input   : { 
+                input_detalle  : {
+                  type         : "texts",
+                  label        : "Descripción (máx. 200 caracteres):",
+                  title        : "Descripción de la noticia",
+                  maxlength    : 200
+                },
+                select_tipo : {
+                  type         : "selects",
+                  label        : "Seleccione Cliente final para publicar",
+                  title        : "cliente final",
+                  options      : clientes.data,
+                  default      : proceso
+                },
+              },
+              filterDone  : function(data) {
+                if(data.input_detalle == "")
+                  return "Descripción necesaria"
+              }
+            }).done(function(data){
+              userDATOS.notificacion((data.select_tipo.length == 0 ? strings.noticia.publicar[1] : strings.noticia.publicar[2]),"info",false);
+              userDATOS.notificacion(strings.tablaReseteo,"warning",false);
+              userDATOS.change(noticia.id,"noticia","estado",3);
+              id_usuario = window.user_id;//USUARIO de OSAI que generó esto
+              
+              setTimeout(function() {
+                data.forEach(cliente => {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
+                  aux = {};
+                  aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
+                  aux["id_usuario_osai"] = cliente;
+                  /** 
+                   * Si se encuentra dentro del ARRAY proceso, significa que la noticia que se proceso
+                   * va dirigida al usuario seleccionado -> Se agrega el flag tipo_aviso = 1
+                   */
+                  if(proceso.includes(cliente))
+                    aux["tipo_aviso"] = 1;
+                  
+                  userDATOS.insertDatos("osai_cliente",aux,function(id_osai_cliente) {
+                    userDATOS.log(window.user_id,"NOTICIA publicada",0,id_osai_cliente,"osai_cliente");
+                  },true);
+                  userDATOS.insertDatos("osai_notificacion",
+                    {"id_usuario":id_usuario,
+                    "id_noticia":noticia.id,
+                    "id_usuario_osai":cliente,
+                    "mensaje": data.input_detalle,
+                    "nivel": 0,
+                    "estado": 1});
+                });
+
+                selectMEDIOS = userDATOS.noticiasSELECT("procesada");
+                tabla_noticia.draw();
+                angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
+                angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
+                angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
+                angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
+                scopeNoticias(angular.element($(".submenu")).scope(),"procesadas",-1);
+              },500);
+            });
+          },true);
+        }, true);
+      }, true);
     }
 
     userDATOS.submit = function(t) {
@@ -2999,7 +2994,7 @@ if(userDATOS.verificar(1)) {
       let seccionFilter = $('#select_seccionBUSCADOR').val();
       let unidadFilter = $("#select_unidadNOTICIA").val();
       data = {"moderado":1,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter),"unidadFilter":unidadFilter}
-      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0 && unidadFilter == "") {
         userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
         return false;
       }
@@ -3572,7 +3567,7 @@ if(userDATOS.verificar(1)) {
       let tituloFilter = $('#titulo').val();
       let seccionFilter = $('#select_seccion').val();
       data = {"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0) {
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0 && unidadFilter == "") {
         userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
         return false;
       }

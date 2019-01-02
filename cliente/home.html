@@ -9,6 +9,8 @@
     <script type="text/javascript" src="../assets/js/popper.min.js"></script>
     <script type="text/javascript" src="../assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../assets/js/lobibox.js"></script>
+    <script type="text/javascript" src="../assets/js/messagebox.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
 
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-route.js"></script>
@@ -22,8 +24,12 @@
 
     <!-- <css> -->
     <link rel="stylesheet" href="../assets/css/bootstrap.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
     <link rel="stylesheet" href="../assets/css/fontawesome-all.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.1/css/select2.css">
+    <link rel="stylesheet" href="../assets/css/select2-bootstrap4.css" />
     <link rel="stylesheet" href="../assets/css/lobibox.css">
+    <link rel="stylesheet" href="../assets/css/messagebox.css">
     <!-- </css> -->
     <style media="screen">
     @import url('https://fonts.googleapis.com/css?family=Quicksand');
@@ -44,7 +50,9 @@
     .dropdown-menu:before, .dropdown-menu:after { border-left: 7px solid transparent; border-right: 7px solid transparent; top:-7px; content: " "; position: absolute; display: block; width: 0; height: 0; }
     .dropdown-menu:after { border-bottom: 8px solid #f8f9fa; left: 6px; top: -8px; z-index: 2; }
     .dropdown-menu:before { border-bottom: 7px solid #dee2e6; left: 7px; z-index: 1; }
+    .messagebox_overlay { z-index: 1000; }
     .info-oculta { cursor: pointer; }
+    .fieldset { opacity: .7; }
     .column-metricas { left:0; top: 76px; z-index: 20; height: calc(100% - 76px); }
     /*effect-underline*/
     a.active::after,a.active::before { content: "#"; }
@@ -92,8 +100,29 @@
         </span>
       </footer>
     </div>
+    <div id="modal" style="z-index:1000; top: 0; left: 0; right: 0; margin-left: auto; margin-right: auto; display: none; opacity: .95;" class="bg-white position-absolute col-6 p-0 h-100">
+      <div class="row justify-content-center align-items-center h-100 m-0">
+        <div class="col-12 p-0 h-100 border-left">
+          <div class="container h-100" style="overflow-y: scroll;">
+            <header>
+              <div class="container-fluid font-weight-light py-2 position-relative">
+                <button onclick="userDATOS.modal('#modal',null,null,0);" type="button" class="close position-absolute p-2" style="right:0; top:0; z-index:2; outline: none;"
+                  aria-label="Close">
+                  <span aria-hidden="true" style="font-size: 3em;line-height: 18px;" class="font-weight-light text-dark">×</span>
+                </button>
+                <h2 class="text-center text-uppercase border-bottom border-dark mb-0">filtro</h2>
+              </div>
+            </header>
+            <section>
+              <div class="container-fluid font-weight-light py-2"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
     <div onclick="userDATOS.menu(0);" id="menuBackground" style="z-index:900;top:0;left:0;opacity: .7; display: none;" class="bg-dark w-100 h-100 position-fixed"></div>
-    <header class="position-fixed shadow-sm w-100 border-bottom bg-white" style="z-index:1; font-size: 2em;">
+    <div onclick="userDATOS.modal('#modal',null,null,0);" id="modalBackground" class="bg-light w-100 h-100 position-fixed" style="left:0;top:0;z-index: 200; display: none;"></div>
+    <header class="position-fixed shadow-sm w-100 border-bottom bg-white" style="z-index:100; font-size: 2em;">
       <div class="d-flex">
         <ul class="list-inline m-0 d-flex border-right justify-content-end">
           <li class="list-inline-item ml-2 d-flex cursor-pointer" onclick="userDATOS.menu(1);"><span class="d-flex align-self-center"><i class="fas fa-bars"></i></span></li>
@@ -111,7 +140,7 @@
         </ul>
       </div>
     </header>
-    <div id="cargando" class="position-fixed w-100 text-uppercase py-3" style="bottom:0;left:0;z-index: 10;display:none;">
+    <div id="cargando" class="position-fixed w-100 text-uppercase bg-light border-top py-3" style="bottom:0;left:0;z-index: 10;display:none;">
       <div class="w-100 d-flex justify-content-center">
         cargando<img class="d-inline-block ml-2" src="http://93.188.164.27/assets/images/loading_notificacion.gif" style="height: 30px;">
       </div>

@@ -1,3 +1,10 @@
+/** <VARIABLES> */
+Lobibox.notify.OPTIONS.error.sound = "error";
+Lobibox.notify.OPTIONS.info.sound = "info";
+Lobibox.notify.OPTIONS.default.sound = "default";
+Lobibox.notify.OPTIONS.success.sound = "success";
+Lobibox.notify.OPTIONS.warning.sound = "warning";
+/** </VARIABLES> */
 const url_cliente = "http://93.188.164.27/cliente/lib/cliente.php";
 let userDATOS = {};
 
@@ -8,23 +15,29 @@ let userDATOS = {};
  *@param tipo STRING: permite cambiar el color a la notificación
  *@param dlay BOOL: flag para mostrar el indicador de demora
  */
-userDATOS.notificacion = function (mensaje,tipo = 'info',dlay = true){
+userDATOS.notificacion = function (mensaje,tipo = 'info',delayIndicator = true, size = 'mini', delay = 2500){
   // Available types 'default', 'warning', 'info', 'success', 'error'
+  // Available size 'normal', 'mini', 'large'
   if(mensaje == "") return false;
-  let types = ['default', 'warning', 'info', 'success', 'error'];
-  if(types.indexOf(tipo) < 0) {
+  let types = {'default': "", 'warning': "Precaución", 'info': "Información", 'success': "Completo", 'error': "Error"};
+  if(types[tipo] === undefined) {
     console.log("Tipo erroneo");
     return false;
   }
   let data = {
-    size: 'mini',
-    icon: true,
-    iconSource: 'fontAwesome',
-    delayIndicator: dlay,
-    msg: mensaje,
-    soundPath: '../assets/sounds/',
-    soundExt: '.ogg',
-    sound: true
+    'size': size,
+    'icon': true,
+    'iconSource': 'fontAwesome',
+    'delayIndicator': delayIndicator,
+    'delay': delay,
+    'title': types[tipo],
+    'showClass': 'fadeInDown',
+    'hideClass': 'fadeUpDown',
+    'msg': mensaje,
+    'soundPath': '../assets/sounds/',
+    'soundExt': '.ogg',
+    'onClickUrl': null,
+    'sound': true
   };
   Lobibox.notify(tipo,data);
 };
@@ -34,12 +47,13 @@ userDATOS.notificacion = function (mensaje,tipo = 'info',dlay = true){
  * @param done FUNCTION: función que ejecuta si respuesta es afirmativa
  * @param fail FUNCTION: función que ejecuta si respuesta es negativa
  */
-userDATOS.messagebox = function(msg, done, fail) {
+userDATOS.messagebox = function(msg, done, fail = null) {
   $.MessageBox({
 		buttonDone  : "Si",
 		buttonFail  : "No",
 		message   : msg
-	}).done(done).fail(fail);
+  }).done(done)
+    .fail((fail === null ? function() {} : fail));
 }
 /**
  * Función AJAX
@@ -112,9 +126,30 @@ userDATOS.busqueda_paginado = function(values, callBackOK, asy = false) {
   userDATOS.ajax("search_paginado",data,asy,callBackOK);
 }
 /**
+ * Función para traer todos los medios involucrados
+ */
+userDATOS.busqueda_medios = function(values, callBackOK, asy = false) {
+  let data = { 
+    "tipo":"A"
+  };
+  if(values !== null) {
+    data = userDATOS.extend(data,values);
+  }
+  userDATOS.ajax("medios",data,asy,callBackOK);
+}
+/**
+ * Función para concatenar 2 objetos
+ */
+userDATOS.extend = function(objetoBase, objetoAnadir) {
+  for (var key in objetoAnadir) {
+    if (objetoAnadir.hasOwnProperty(key)) objetoBase[key] = objetoAnadir[key];
+  }
+  return objetoBase;
+}
+/**
  * 
  */
-userDATOS.busqueda_agenda = function(callBackOK, asy = false) {
+userDATOS.busqueda_agenda = function(values,callBackOK, asy = false) {
   let name = "agenda";
   if(window["name_" + name] === undefined) window["name_" + name] = 0;
   else window["name_" + name] ++;
@@ -122,12 +157,18 @@ userDATOS.busqueda_agenda = function(callBackOK, asy = false) {
     "paginado": window["name_" + name],
     "paginado_name": "name_" + name
   };
+  if(values !== null)
+    data = userDATOS.extend(data,values);
   userDATOS.ajax("agenda",data,asy,callBackOK);
+}
+/** */
+userDATOS.totalRegistros = function(data, callBackOK, asy = false) {
+  userDATOS.ajax("totalRegistros",data,asy,callBackOK);
 }
 /**  */
 userDATOS.view = function(t,tipo,target) {
   let elemento = $(t);
-  let cuerpo = $("#section_body");
+  let cuerpo = $(target);
   
   if(cuerpo.find(".loading").length || cuerpo.find(".sinCuerpo").length) return false;
   elemento.removeClass("text-muted cursor-pointer").addClass("text-primary");
@@ -135,10 +176,71 @@ userDATOS.view = function(t,tipo,target) {
   if(tipo) cuerpo.addClass("card-columns");
   else cuerpo.removeClass("card-columns");
 }
+/** */
+userDATOS.select2 = function(target,data = null,disabled = 1,empty = 0) {
+  let select = {};
+  if(empty)
+    $(target).empty();
+  if(data !== null)
+    select["data"] = data;
+  select["width"] = 'resolve';
+  select["tags"] = true;
+  select["theme"] = "bootstrap4";
+  select["language"] = "es";
+  // select["dir"] = "rtl";
+  select["containerCssClass"] = ':all:';
+  select["language"] = {
+    noResults: function() {
+      return "No hay resultados";        
+    },
+    searching: function() {
+      return "Buscando...";
+    }
+  };
+  select["createTag"] = function(params) {
+    return undefined;
+  };
+  if(disabled)
+    $(target).removeAttr("disabled");
+  else
+    $(target).attr("disabled",true);
+  $(target).select2(select);
+}
+/**
+ * Función para el parseo de string a JSON
+ */
+userDATOS.parseJSON = function(cadena) {
+  //console.log(cadena)
+  return eval("(" + cadena + ")");
+}
 /**
  * 
  */
 userDATOS.scroll = function(t) {}
+/** */
+userDATOS.modal = function(t, html = null, title = null, open = 1) {
+  let elemento = $(t);
+  let bodyModal = elemento.find("section");
+  let headerModal = elemento.find("header");
+
+  if(open) {
+    if(title !== null)
+      headerModal.find("h2").text(title);
+    if(html !== null)
+      bodyModal.find("> div").html(html)
+    if(elemento.find('[data-toggle="tooltip"]').length)
+      elemento.find('[data-toggle="tooltip"]').tooltip();
+    elemento.show();
+    $("body").css({overflow:"hidden",paddingRight:"15px"});
+    $("#modalBackground").show();
+  } else {
+    bodyModal.find("> div").html("");
+    headerModal.find("h2").text("");
+    elemento.hide();
+    $("body").removeAttr("style");
+    $("#modalBackground").hide();
+  }
+}
 /**
  * Función para validar el formulario con elemento required y visible
  * @param t STRING: elemento donde se busca la info

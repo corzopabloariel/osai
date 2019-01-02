@@ -127,13 +127,14 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
     $inner .= "INNER JOIN usuario AS u ON (u.elim = 0 AND u.id = p.id_usuario AND p.id_usuario = {$_SESSION["user_id"]}) ";
   }
 } else if(isset($params["clipping"])) {
+  $idAgendaNacional = 12;
   $where_condition .= "AND n.estado IN (3,4,5) ";//ESTADOS DISPONIBLES
   $attr .= ",GROUP_CONCAT(p.id_cliente) AS cliente";
   $attr .= ",GROUP_CONCAT(oc.id_usuario_osai) AS cliente_final";
   $attr .= ",oc.autofecha AS fecha_clipping";
   $group .= "n.id";
 
-  $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia) ";
+  $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia AND p.id_cliente != {$idAgendaNacional}) ";
 
   if(isset($params["unidadFilter"]) && !empty($params["unidadFilter"]))
     $inner .= "INNER JOIN osai_cliente AS oc ON (oc.elim = 0 AND oc.id_noticia = n.id AND oc.id_usuario_osai = {$params["unidadFilter"]} AND oc.tipo_aviso = 1)";
