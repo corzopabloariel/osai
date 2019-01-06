@@ -318,10 +318,12 @@ if(userDATOS.verificar(1)) {
      *
      */
     $scope.pasarNoticia = function() {
-      let osai_usuario = userDATOS.busqueda({"value":window.notificacionOBJ.id_cliente,"tabla":"osai_usuario","column":"id_cliente"}, function(d) {
+      let osai_usuario = null;
+      userDATOS.busqueda({"value":window.notificacionOBJ.id_cliente,"tabla":"osai_usuario","column":"id_cliente"}, function(d) {
         osai_usuario = d;
       });
-      let cliente = userDATOS.busqueda({"value":window.notificacionOBJ.id_cliente,"tabla":"cliente"}, function(d) {
+      let cliente = null;
+      userDATOS.busqueda({"value":window.notificacionOBJ.id_cliente,"tabla":"cliente"}, function(d) {
         cliente = d;
       });
 
@@ -339,8 +341,9 @@ if(userDATOS.verificar(1)) {
       for(var i in clientes_osai) {
         if(OBJ_clientes_osai[i] === undefined) {  
           OBJ_clientes_osai[i] = "";
-          u = userDATOS.busqueda({"value":clientes_osai[i]["id_cliente"],"tabla":"cliente"}, function(d) {
-           u = d; 
+          u = null;
+          userDATOS.busqueda({"value":clientes_osai[i]["id_cliente"],"tabla":"cliente"}, function(d) {
+            u = d; 
           });
           if(clientes_osai[i]["id_cliente"] == cliente.id)
             defaultValue = i;
@@ -2282,28 +2285,28 @@ if(userDATOS.verificar(1)) {
               id_usuario = window.user_id;//USUARIO de OSAI que generó esto
               
               setTimeout(function() {
-                data.forEach(cliente => {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
-                  aux = {};
-                  aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
-                  aux["id_usuario_osai"] = cliente;
-                  /** 
-                   * Si se encuentra dentro del ARRAY proceso, significa que la noticia que se proceso
-                   * va dirigida al usuario seleccionado -> Se agrega el flag tipo_aviso = 1
-                   */
-                  if(proceso.includes(cliente))
-                    aux["tipo_aviso"] = 1;
+              //   data.forEach(cliente => {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
+              //     aux = {};
+              //     aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
+              //     aux["id_usuario_osai"] = cliente;
+              //     /** 
+              //      * Si se encuentra dentro del ARRAY proceso, significa que la noticia que se proceso
+              //      * va dirigida al usuario seleccionado -> Se agrega el flag tipo_aviso = 1
+              //      */
+              //     if(proceso.includes(cliente))
+              //       aux["tipo_aviso"] = 1;
                   
-                  userDATOS.insertDatos("osai_cliente",aux,function(id_osai_cliente) {
-                    userDATOS.log(window.user_id,"NOTICIA publicada",0,id_osai_cliente,"osai_cliente");
-                  },true);
-                  userDATOS.insertDatos("osai_notificacion",
-                    {"id_usuario":id_usuario,
-                    "id_noticia":noticia.id,
-                    "id_usuario_osai":cliente,
-                    "mensaje": data.input_detalle,
-                    "nivel": 0,
-                    "estado": 1});
-                });
+              //     userDATOS.insertDatos("osai_cliente",aux,function(id_osai_cliente) {
+              //       userDATOS.log(window.user_id,"NOTICIA publicada",0,id_osai_cliente,"osai_cliente");
+              //     },true);
+              //     userDATOS.insertDatos("osai_notificacion",
+              //       {"id_usuario":id_usuario,
+              //       "id_noticia":noticia.id,
+              //       "id_usuario_osai":cliente,
+              //       "mensaje": data.input_detalle,
+              //       "nivel": 0,
+              //       "estado": 1});
+              //   });
 
                 selectMEDIOS = userDATOS.noticiasSELECT("procesada");
                 tabla_noticia.draw();

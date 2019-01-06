@@ -2,7 +2,7 @@
 <html lang="es" dir="ltr" ng-app="simat-app" ng-controller="jsonController">
   <head>
     <meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>OSAI :: Cliente</title>
     <!-- <js> -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -15,11 +15,17 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-route.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-sanitize.js"></script>
-
+    <script type="text/javascript" src="../assets/js/md5.js"></script>
+    <script src="assets/js/jquery.nicescroll.js"></script>
+    <script src="assets/js/angular-nicescroll.js"></script>
     <script src="assets/js/declaration.js"></script>
     <script src="assets/js/toolbox.js"></script>
     <script src="assets/js/pyrus.js"></script>
     <script src="assets/js/userDATOS.js"></script>
+    <!-- <GRAFICOS JS> -->
+    <script src="assets/grafico1/d3.min.js"></script>
+    <script src="assets/grafico1/client.js"></script>
+    <!-- </GRAFICOS JS> -->
     <!-- </js> -->
 
     <!-- <css> -->
@@ -30,6 +36,7 @@
     <link rel="stylesheet" href="../assets/css/select2-bootstrap4.css" />
     <link rel="stylesheet" href="../assets/css/lobibox.css">
     <link rel="stylesheet" href="../assets/css/messagebox.css">
+    <link rel="stylesheet" href="assets/grafico1/client.css">
     <!-- </css> -->
     <style media="screen">
     @import url('https://fonts.googleapis.com/css?family=Quicksand');
@@ -47,9 +54,10 @@
     .bg-blue { background-color: #4267b2; }
     .cursor-pointer { cursor: pointer;  }
 
-    .dropdown-menu:before, .dropdown-menu:after { border-left: 7px solid transparent; border-right: 7px solid transparent; top:-7px; content: " "; position: absolute; display: block; width: 0; height: 0; }
-    .dropdown-menu:after { border-bottom: 8px solid #f8f9fa; left: 6px; top: -8px; z-index: 2; }
-    .dropdown-menu:before { border-bottom: 7px solid #dee2e6; left: 7px; z-index: 1; }
+    /* .dropdown-menu:after { border-left: 7px solid transparent; border-right: 7px solid transparent; top:-7px; content: " "; position: absolute; display: block; width: 0; height: 0; }
+    .dropdown-menu:before { border-left: 8px solid transparent; border-right: 8px solid transparent; top:-8px; content: " "; position: absolute; display: block; width: 0; height: 0; }
+    .dropdown-menu:after { border-bottom: 8px solid #ffffff; left: 6px; top: -8px; z-index: 2; }
+    .dropdown-menu:before { border-bottom: 8px solid #bbb; left: 5px; z-index: 1; } */
     .messagebox_overlay { z-index: 1000; }
     .info-oculta { cursor: pointer; }
     .fieldset { opacity: .7; }
@@ -67,20 +75,33 @@
     .loading div:nth-child(1) { left: 6px; animation-delay: -0.24s; }
     .loading div:nth-child(2) { left: 26px; animation-delay: -0.12s; }
     .loading div:nth-child(3) { left: 45px; animation-delay: 0; }
+    /**/
+    .bg-intermedio { background-color: #ff8000; }
+    select[name='select_tipoAlerta'] option:nth-child(3) { background-color: #6c757d; color: #fff; }
+    select[name='select_tipoAlerta'] option:nth-child(4) { background-color: #ffc107; color: #000; }
+    select[name='select_tipoAlerta'] option:nth-child(5) { background-color: #ff8000; color: #fff; }
+    select[name='select_tipoAlerta'] option:last-child { background-color: #dc3545; color: #fff; }
+    /**/
+    *[data-proceso] + div img { max-width: 100% !important; height: auto !important; }
     @keyframes loading {
       0% { top: 6px; height: 51px; }
       50%, 100% { top: 19px; height: 26px; }
     }
+    .dropdown-width { width: 350px; }
+    @media (max-width: 575.98px) {
+      .dropdown-width { width: 100%; }
+      .column-metricas.position-fixed { position:static !important; }
+    }
     </style>
   </head>
   <body onscroll="userDATOS.scroll(this);">
-    <div id="menu" style="z-index:1000; top:0; left:0; display: none;" class="col-6 bg-white position-fixed h-100">
+    <div id="menu" style="z-index:1000; top:0; left:0; display: none;" class="col-12 col-md-6 bg-white position-fixed h-100">
       <button onclick="userDATOS.menu(0);" type="button" class="close position-absolute p-2" style="right:0; top:0; z-index:2; outline: none;" aria-label="Close">
         <span aria-hidden="true" style="font-size: 3em;line-height: 18px;" class="font-weight-light text-dark">×</span>
       </button>
       <header class="w-100 position-absolute" style="left: 0; top: 0;">
         <div class="container-fluid font-weight-light py-2">
-          <h2 class="text-center text-uppercase border-bottom border-dark mb-0">osai</h2>
+          <h2 id="user_name" class="text-center text-uppercase border-bottom border-dark mb-0">osai</h2>
         </div>
       </header>
       <section class="w-100 position-absolute d-flex align-items-center" style="z-index: 1; left: 0; top: 55px; height: calc(100% - 58px - 55px); font-size: 1.2em;">
@@ -96,32 +117,29 @@
         <span onclick="userDATOS.logout();" class="cursor-pointer text-uppercase d-inline-block border-top border-dark pb-1 px-3 pt-2">
           <i class="text-danger fas fa-power-off mr-2"></i>Salir
         </span>
-        <span id="user_name" class="text-uppercase d-inline-block border-top border-dark pb-1 px-3 pt-2">
-        </span>
       </footer>
     </div>
-    <div id="modal" style="z-index:1000; top: 0; left: 0; right: 0; margin-left: auto; margin-right: auto; display: none; opacity: .95;" class="bg-white position-absolute col-6 p-0 h-100">
-      <div class="row justify-content-center align-items-center h-100 m-0">
-        <div class="col-12 p-0 h-100 border-left">
-          <div class="container h-100" style="overflow-y: scroll;">
-            <header>
-              <div class="container-fluid font-weight-light py-2 position-relative">
-                <button onclick="userDATOS.modal('#modal',null,null,0);" type="button" class="close position-absolute p-2" style="right:0; top:0; z-index:2; outline: none;"
-                  aria-label="Close">
-                  <span aria-hidden="true" style="font-size: 3em;line-height: 18px;" class="font-weight-light text-dark">×</span>
-                </button>
-                <h2 class="text-center text-uppercase border-bottom border-dark mb-0">filtro</h2>
-              </div>
-            </header>
-            <section>
-              <div class="container-fluid font-weight-light py-2"></div>
-            </section>
+    <div id="modal" style="z-index:1000; top: 0; left: 0; right: 0; margin-left: auto; margin-right: auto; display: none; opacity: .95;" class="bg-white position-fixed col-12 col-md-6 p-0 h-100">
+      <div class="container h-100 border-left" style="overflow-y: auto;">
+        <header>
+          <div class="container-fluid font-weight-light py-2 position-relative">
+            <button onclick="userDATOS.modal('#modal',null,null,0);" type="button" class="close position-absolute p-2" style="right:0; top:0; z-index:2; outline: none;"
+              aria-label="Close">
+              <span aria-hidden="true" style="font-size: 3em;line-height: 18px;" class="font-weight-light text-dark">×</span>
+            </button>
+            <h2 class="text-center text-uppercase border-bottom border-dark mb-0">filtro</h2>
           </div>
-        </div>
+        </header>
+        <section>
+          <div class="container-fluid font-weight-light py-2"></div>
+        </section>
       </div>
     </div>
-    <div onclick="userDATOS.menu(0);" id="menuBackground" style="z-index:900;top:0;left:0;opacity: .7; display: none;" class="bg-dark w-100 h-100 position-fixed"></div>
-    <div onclick="userDATOS.modal('#modal',null,null,0);" id="modalBackground" class="bg-light w-100 h-100 position-fixed" style="left:0;top:0;z-index: 200; display: none;"></div>
+    <div id="noticiaProceso" class="w-100 h-100 bg-light position-fixed" style="left:0; top:0; z-index:500; display: none;">
+      <div class="container-fluid h-100 d-flex position-relative" style="overflow-y: auto;"></div>
+    </div>
+    <div onclick="userDATOS.menu(0);" id="menuBackground" style="z-index:900;top:0;left:0;opacity: .7; display: none; cursor: pointer;" class="bg-dark w-100 h-100 position-fixed"></div>
+    <div onclick="userDATOS.modal('#modal',null,null,0);" id="modalBackground" class="bg-light w-100 h-100 position-fixed" style="left:0;top:0;z-index: 200; display: none; cursor: pointer; opacity: .9"></div>
     <header class="position-fixed shadow-sm w-100 border-bottom bg-white" style="z-index:100; font-size: 2em;">
       <div class="d-flex">
         <ul class="list-inline m-0 d-flex border-right justify-content-end">
@@ -130,10 +148,14 @@
             <p class="m-0 p-2">OSAI</p>
           </li>
           <li class="list-inline-item border-left d-flex align-items-stretch position-relative" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <div class="d-flex align-items-center px-3 cursor-pointer">
-              <span class="badge bg-danger badge-pill position-absolute text-white" style="right:5px; bottom:5px; font-size:10px;">14</span>
+            <div class="d-flex align-items-center px-3 cursor-pointer"><!-- badge-danger -->
+              <span class="badge badge-secondary badge-pill position-absolute text-white" style="right:5px; bottom:5px; font-size:10px;">0</span>
               <p class="m-0 px-1"><i class="fas fa-bell"></i></p>
-              <div class="dropdown-menu dropdown-menu-left rounded-0">
+              <div id="dropdownMenu" class="dropdown-menu dropdown-menu-left rounded-0 bg-light dropdown-width">
+                <h5 class="text-uppercase px-2">notificaciones</h5>
+                <ul class="list-group">
+                  <li class="list-group-item rounded-0 border-0 nada text-center">Nada para mostrar</li>
+                </ul>
               </div>
             </div>
           </li>

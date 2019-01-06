@@ -1,10 +1,11 @@
 <div class="container-fluid py-3">
-  <div class="row justify-content-center" style="padding-bottom:65px;">
+  <div class="row justify-content-center mb-2">
     <div class="col-12">
       <h2 class="m-0 text-uppercase">Mis noticias
         <div class="float-right d-flex">
-          <i data-tipo="0" class="fas fa-th mr-2 text-primary" onclick="userDATOS.view(this,1,'#section_body > .row > div:last-child()');"></i>
-          <i data-tipo="1" class="fas fa-th-list text-muted cursor-pointer" onclick="userDATOS.view(this,0,'#section_body > .row > div:last-child()');"></i>
+          <i onclick="userDATOS.filtro(this);" class="fas fa-search cursor-pointer mr-2"></i>
+          <i data-tipo="0" class="fas fa-th mr-2 d-none d-sm-block text-primary" onclick="userDATOS.view(this,1,'#section_body > .row > div:last-child()');"></i>
+          <i data-tipo="1" class="fas fa-th-list d-none d-sm-block text-muted cursor-pointer" onclick="userDATOS.view(this,0,'#section_body > .row > div:last-child()');"></i>
         </div>
       </h2>
     </div>

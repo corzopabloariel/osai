@@ -1,0 +1,36 @@
+<div class="container-fluid py-3">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <h2 class="m-0 text-uppercase">Mis datos</h2>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    Contraseña
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Cambio de contraseña del sistema</h5>
+                    <form onsubmit="event.preventDefault(); userDATOS.submit(this);" novalidate class="needs-validation" method="POST">
+                        <div class="form-group position-relative">
+                            <label>Antigua</label>
+                            <input required="true" type="password" class="form-control form-control-lg" name="passwordOld" id="passwordOld" placeholder="Contraseña">
+                        </div>
+                        <div class="form-group position-relative">
+                            <label>Nueva</label>
+                            <input required="true" type="password" class="form-control form-control-lg" name="passwordNew_1" id="passwordNew_1" placeholder="Contraseña">
+                            <i class="fas fa-eye position-absolute cursor-pointer" style="right: 10px; top: calc(50% + 8px); z-index: 2;"></i>
+                        </div>
+                        <div class="form-group position-relative">
+                            <label>Repita nueva</label>
+                            <input required="true" type="password" class="form-control form-control-lg" name="passwordNew_2" id="passwordNew_2" placeholder="Contraseña">
+                            <i class="fas fa-eye position-absolute cursor-pointer" style="right: 10px; top: calc(50% + 8px); z-index: 2;"></i>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg text-uppercase">Cambiar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -120,7 +120,7 @@ Pyrus = function( e = null ){
 	/**
 	 *
 	 */
-  this.guardar_1 = function(OBJ_dato) {
+  this.guardar_1 = function(OBJ_dato, asy = false) {
  		let dato_guardar = {};
  		if(this.objeto["UNIQUE"] !== undefined) {
  			let aux = {};
@@ -140,7 +140,7 @@ Pyrus = function( e = null ){
 		id = -1;
 		this.query("guardar_uno_generico",dato_guardar, function(m) {
       id = m;
-		}, null, false);
+		}, null, asy);
 		return id;
  	};
 	/**

@@ -71,6 +71,14 @@ class PYRUS_ACTION{
         $entidad = $d['entidad'];
         response(200,'ok ' . $entidad, PYRUS_DB::get_registros($entidad));
     }
+    /** */
+    public static function change($d) {
+        response(200,"ok change {$d["entidad"]}", PYRUS_DB::change($d));
+    }
+    /** */
+    public static function verProceso($d) {
+        response(200,"ok proceso", PYRUS_DB::verProceso($d["idUnidad"],$d["idNoticia"]));
+    }
     /**
      *
      */
@@ -85,16 +93,20 @@ class PYRUS_ACTION{
      *
      */
     public static function search_paginado($d) {
+        // print_r($d);die();
         $entidad = $d['entidad'];
-        $values = $d['values'];
-        $paginado = $d['paginado'];
-        response(200,'ok ' . $entidad, PYRUS_DB::get_value_paginado($entidad,$values,$paginado));
+        response(200,'ok ' . $entidad, PYRUS_DB::get_value_paginado($d));
     }
     /**
      * 
      */
     public static function agenda($d) {
         response(200,'ok agenda nacional', PYRUS_DB::get_agenda($d));
+    }
+    /** */
+    public static function notificacionMedios($d) {
+        $id = $d["id"];//id_cliente -> OSAI_CLIENTE
+        response(200,'ok medios notificacion', PYRUS_DB::get_medios_notificacion($id));
     }
     /**
      * 

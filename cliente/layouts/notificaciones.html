@@ -1,0 +1,62 @@
+<div class="container-fluid">
+    <div class="row border-top border-dark justify-content-end">
+        <div class="col-12 col-md-5 col-lg-4 col-xl-3 p-0 bg-light position-fixed column-metricas">
+            <h2 class="text-uppercase text-white bg-dark p-3 mb-0">Notificaciones</h2>
+            <div class="p-3" style="overflow-y: auto; height: calc(100% - 70px);">
+                <fieldset class="p-2 border border-dark">
+                    <legend class="text-uppercase d-inline-block px-2 py-1 border border-dark" style="width:auto;"><i class="fas fa-calendar"></i></legend>
+                    <input data-toggle="tooltip" data-placement="top" title="Fecha desde" disabled="true" type="date" class="form-control text-uppercase rounded-0 mb-2"
+                        id="fecha_min" value="">
+                    <input data-toggle="tooltip" data-placement="bottom" title="Fecha hasta" disabled="true" type="date" class="form-control text-uppercase rounded-0"
+                        id="fecha_max" value="">
+                </fieldset>
+                <fieldset class="p-2 mt-3 border border-dark">
+                    <legend class="text-uppercase d-inline-block px-2 py-1 border border-dark" style="width:auto;"><i class="fas fa-newspaper"></i><i
+                            class="fas fa-tags ml-2"></i></legend>
+                    <div class="row">
+                        <div class="col-12">
+                            <select id="select_medio" name="select_medio[]" multiple="multiple"
+                                disabled="true" class="form-control w-100 select__2" data-tags="true" data-placeholder="MEDIOS">
+                                <option value=""></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <select disabled="true" id="select_tipoAlerta" name="select_tipoAlerta" class="form-control w-100">
+                                <option value="" hidden="true">TIPO DE ALERTA</option>
+                                <option value="-1">ALERTA: TODAS</option>
+                                <option value="0">ALERTA: Normal</option>
+                                <option value="1">ALERTA: Amarilla</option>
+                                <option value="2">ALERTA: Naranja</option>
+                                <option value="3">ALERTA: Rojo</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset><fieldset class="p-2 mt-3 border border-dark">
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <select disabled="true" id="select_cantidad" name="select_cantidad" class="form-control w-100">
+                                <option value="0">TODAS</option>
+                                <option value="1">S/ LEER</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="w-100 mt-4">
+                    <button disabled="true" type="button" class="btn mb-3 btn-block text-uppercase" id="btn_filtro" onclick="userDATOS.filtrar(this);">filtrar <i class="fas fa-filter"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-7 col-lg-8 col-xl-9 py-3 border-left position-relative" style="background:#ececec" id="section_body">
+            <div class="text-center d-flex justify-content-center">
+                <span class="text-uppercase d-flex align-items-center">cargando</span>
+                <div class="loading">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

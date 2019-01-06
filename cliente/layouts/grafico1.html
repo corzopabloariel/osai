@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es-ES">
+	<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Grafico 1</title>
+
+
+	    </head>
+    <body class="post-template-default single single-post postid-1270 single-format-standard layout-boxed two_col_left two-columns singular cookies-not-set">
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/cliente/assets/grafico1/client.css">
+<script src="/cliente/assets/grafico1/d3.min.js"></script><br>
+<script src="/cliente/assets/grafico1/jquery.min.js"></script><br>
+<script src="/cliente/assets/grafico1/client.js"></script><p></p>
+<div style="width: 100%; display: table;">
+	<div style="display: table-row">
+		<div id="knowledgegraphcontent" style="width: 600px; float: left;"></div>
+		<div style="display: table-cell;vertical-align: top;" id="colores_temas">
+			<table id='tabla_temas_colores'></table>
+		</div>
+	</div>
+</div>
+<p><script type="text/javascript">
+
+// https://stackoverflow.com/questions/18638900/javascript-crc32
+var makeCRCTable = function(){
+    var c;
+    var crcTable = [];
+    for(var n =0; n < 256; n++){
+        c = n;
+        for(var k =0; k < 8; k++){
+            c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+        }
+        crcTable[n] = c;
+    }
+    return crcTable;
+}
+
+var crc32 = function(str) {
+    var crcTable = window.crcTable || (window.crcTable = makeCRCTable());
+    var crc = 0 ^ (-1);
+
+    for (var i = 0; i < str.length; i++ ) {
+        crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+    }
+
+    return (crc ^ (-1)) >>> 0;
+};
+
+
+function initGrafico(desde_, hasta_, ua_){
+	$.get(
+		"/lib/queryGraph.php?desde="+desde_+"&hasta="+hasta_+"&ua="+ua_,
+		function ( data ){
+			// le envio al grafico el dato
+			window.recibo = JSON.parse( data );
+			demoGraph( window.recibo.grafico );
+			
+			var table = document.getElementById("tabla_temas_colores");
+			i = 0;
+			for(var p in window.recibo.temas){
+				// Create an empty <tr> element and add it to the 1st position of the table:
+				var row = table.insertRow(i);
+
+				// Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+
+				// Add some text to the new cells:
+				console.log( crc32( window.recibo.temas[p] ) );
+				cell1.style.backgroundColor = window.paleta_de_colores[ crc32( window.recibo.temas[p] ) % window.recibo.colores_cantidad ];
+				// cell1.innerHTML = "NEW CELL1"; // COLOR DE FONDO
+				cell2.innerHTML = window.recibo.temas[p];
+			}
+		}
+	);
+}
+
+$(document).ready(function() {
+	// tomo lo que me enviaron
+	var p = window.opener.parametros;
+	initGrafico(p.desde,p.hasta,p.ua);
+});
+
+/*	$.get("/lib/queryGraph.php?desde=2018-11-28&hasta=2018-12-29&ua=12",
+		function ( data ){
+			// le envio al grafico el dato
+			window.recibo = JSON.parse( data );
+			demoGraph( window.recibo.grafico );
+		});
+*/
+
+</script></p>
+
+
+
+			
+</body></html>
