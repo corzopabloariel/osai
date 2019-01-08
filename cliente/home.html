@@ -15,6 +15,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-route.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular-sanitize.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ngInfiniteScroll/1.3.0/ng-infinite-scroll.min.js"></script>
     <script type="text/javascript" src="../assets/js/md5.js"></script>
     <script src="assets/js/jquery.nicescroll.js"></script>
     <script src="assets/js/angular-nicescroll.js"></script>
@@ -94,7 +95,7 @@
     }
     </style>
   </head>
-  <body onscroll="userDATOS.scroll(this);">
+  <body onscroll="userDATOS.scroll(this);" infinite-scroll='cosa()' infinite-scroll-distance='1'>
     <div id="menu" style="z-index:1000; top:0; left:0; display: none;" class="col-12 col-md-6 bg-white position-fixed h-100">
       <button onclick="userDATOS.menu(0);" type="button" class="close position-absolute p-2" style="right:0; top:0; z-index:2; outline: none;" aria-label="Close">
         <span aria-hidden="true" style="font-size: 3em;line-height: 18px;" class="font-weight-light text-dark">×</span>
@@ -106,11 +107,11 @@
       </header>
       <section class="w-100 position-absolute d-flex align-items-center" style="z-index: 1; left: 0; top: 55px; height: calc(100% - 58px - 55px); font-size: 1.2em;">
         <div class="container-fluid font-weight-light py-2">
-          <p class="text-uppercase text-center"><a data-href="#!" class="d-inline-block position-relative active text-dark">home</a></p>
-          <p class="text-uppercase text-center"><a data-href="#!mis_noticias" href="#!mis_noticias" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">mis noticias</a></p>
-          <p class="text-uppercase text-center"><a data-href="#!agenda_nacional" href="#!agenda_nacional" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">agenda nacional</a></p>
-          <p class="text-uppercase text-center"><a data-href="#!notificaciones" href="#!notificaciones" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">notificaciones</a></p>
-          <p class="text-uppercase text-center mb-0"><a data-href="#!configuracion" href="#!configuracion" class="d-inline-block position-relative effect-underline cursor-pointer text-dark">configuración</a></p>
+          <p class="text-uppercase text-center"><a data-href="#!" class="d-inline-block position-relative active text-dark"><i class="fas fa-home"></i> home</a></p>
+          <p class="text-uppercase text-center"><a data-href="#!mis_noticias" href="#!mis_noticias" class="d-inline-block position-relative effect-underline cursor-pointer text-dark"><i class="fas fa-newspaper"></i> mis noticias</a></p>
+          <p class="text-uppercase text-center"><a data-href="#!agenda_nacional" href="#!agenda_nacional" class="d-inline-block position-relative effect-underline cursor-pointer text-dark"><i class="fas fa-book-open"></i> agenda nacional</a></p>
+          <p class="text-uppercase text-center"><a data-href="#!notificaciones" href="#!notificaciones" class="d-inline-block position-relative effect-underline cursor-pointer text-dark"><i class="fas fa-bell"></i> notificaciones</a></p>
+          <p class="text-uppercase text-center mb-0"><a data-href="#!configuracion" href="#!configuracion" class="d-inline-block position-relative effect-underline cursor-pointer text-dark"><i class="fas fa-cogs"></i> configuración</a></p>
         </div>
       </section>
       <footer class="position-absolute text-center w-100" style="bottom:0; left:0; font-size: 1.5em;">

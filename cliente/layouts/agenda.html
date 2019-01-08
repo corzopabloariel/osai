@@ -11,6 +11,9 @@
         </div>
     </div>
     <div class="row justify-content-center">
+        <div infinite-scroll="addMoreItems()">
+            <div ng-repeat="item in items">Item number {{$index}}: {{$item}}</div>
+        </div>
         <div class="col-12 pb-4" id="section_body">
             <div class="text-center d-flex justify-content-center">
                 <span class="text-uppercase d-flex align-items-center">cargando</span>

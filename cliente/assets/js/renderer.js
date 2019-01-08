@@ -35,6 +35,7 @@ if(userDATOS.verificar(1)) {
         controller : 'configuracion'
       })
   });
+  
   /**
    * Carga principal de entidades
    */
@@ -44,7 +45,6 @@ if(userDATOS.verificar(1)) {
     $scope.$on('$viewContentLoaded', function(){
       $(function () {
         $('[data-toggle="tooltip"]').tooltip();
-        // $("body").niceScroll();
       });
     });
   }]);
@@ -87,7 +87,6 @@ if(userDATOS.verificar(1)) {
               ARR_medios[noticia.data.id_medio]["cantidad"] ++;
               ARR_secciones[noticia.data.id_seccion]["cantidad"] ++;
               seccion = ARR_secciones[noticia.data.id_seccion]["nombre"];
-              console.log(seccion)
               ////--------------------
               date = value["autofecha"];
               tipo = value["tipo_aviso"];
@@ -137,13 +136,56 @@ if(userDATOS.verificar(1)) {
                 $("#section_body").append(html);
               }
               $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+              window["scroll"] = undefined;
             }, true);
           });
         }
       },true);
     }
     userDATOS.mostrar();
+	
+	userDATOS.transfererDatosAGraficoUnMes = function(url){
+		var w = window.open(url,'_blank');
+		// obtengo la unidad de analisis desde userDATOS
+		s = userDATOS.session();
+		ua = s.id_cliente;
+		// obtengo la fecha
+		var today = new Date();
+		var dd = today.getDate();
+		var mm = today.getMonth()+1; //January is 0!
+		var yyyy = today.getFullYear();
+		if(dd<10) dd = '0'+dd
+		if(mm<10) mm = '0'+mm
+		str_today = yyyy + '-' + mm + '-' + dd;
+		// resto un mes
+		today.setMonth(today.getMonth() -1 );
+		var dd = today.getDate();
+		var mm = today.getMonth()+1; //January is 0!
+		var yyyy = today.getFullYear();
+		if(dd<10) dd = '0'+dd
+		if(mm<10) mm = '0'+mm
+		str_lastmonth = yyyy + '-' + mm + '-' + dd;
+		
+		var parametros = {'desde':str_lastmonth, 'hasta':str_today, 'ua':ua};
+		w.variables = parametros;
+	};
 
+    userDATOS.busqueda({"value":session.id_cliente,"entidad":"osai_grafico","column":"id_usuario_osai","retorno":0},function(data) {
+      html = "";
+      for(var i in data.data) {
+        html += '<div class="card rounded-0 position-relative">';
+          if(data.data[i]["image"] !== null)
+            html += '<img src="' + data.data[i]["image"] + '" class="w-100 border-0 bg-light card-img-top"/>';
+          html += '<div class="card-body">';
+            html += '<h5 class="card-title mb-0">' + data.data[i]["titulo"] + '</h5>';
+            html += '<p class="card-text">' + data.data[i]["descripcion"] + '</p>';
+            // html += '<a onclick="event.preventDefault()" target="blank" href="grafico#' + i + '" class="btn btn-primary">Ver gráfico</a>'
+            html += '<a onclick="userDATOS.transfererDatosAGraficoUnMes(\'' + data.data[i]['url'] + '\')" href="#' + i + '" class="btn btn-primary">Ver gráfico</a>';
+          html += '</div>';
+        html += '</div>';
+      }
+      $("#knowledgegraphcontent").html(html);
+    }, true);
     function ejecutarGrafico(){
 			desde = document.getElementById("desde").value;
 			hasta = document.getElementById("hasta").value;
@@ -155,11 +197,11 @@ if(userDATOS.verificar(1)) {
 					demoGraph( window.allData.grafico );
 				});
     }
-    $.get("/lib/queryGraph.php?desde=2018-11-28&hasta=2018-12-29&ua=12",
-      function(data){
-        window.allData = JSON.parse( data ); 
-        demoGraph( window.allData.grafico );
-      });
+    // $.get("/lib/queryGraph.php?desde=2018-11-28&hasta=2018-12-29&ua=12",
+    //   function(data){
+    //     window.allData = JSON.parse( data ); 
+    //     demoGraph( window.allData.grafico );
+    //   });
   });
   /**
    * Acciones de vista MIS NOTICIAS
@@ -281,6 +323,7 @@ if(userDATOS.verificar(1)) {
                   if(!$("#ulMedio").find("li[data-id='" + k + "']").length)
                     $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
                 });
+                window["scroll"] = undefined;
               },true);
             });
           }
@@ -558,7 +601,10 @@ if(userDATOS.verificar(1)) {
                     texto = body;
                   }
                   texto = texto.trim();
-                  subtexto = texto.substring(0,200) + " [...]";
+                  if(texto.length > 200)
+                    subtexto = texto.substring(0,200) + " [...]";
+                  else
+                    subtexto = texto;
 
                   html = '<div class="card rounded-0 position-relative">';
                     html += '<div class="card-body p-3">';
@@ -575,7 +621,6 @@ if(userDATOS.verificar(1)) {
                       html += '</p>';
                     html += '</div>';
                   html += '</div>';
-                  
                   if(!append) {
                     if($("#section_body").find(".loading").length) {
                       htmlBody = "";
@@ -618,6 +663,7 @@ if(userDATOS.verificar(1)) {
                   });
                   $("#section_body").find('[data-toggle="tooltip"]').tooltip();
                 });
+                window["scroll"] = undefined;
               },true);
             });
           }
@@ -922,6 +968,7 @@ if(userDATOS.verificar(1)) {
                   $("#section_body").append(html);
                 }
                 $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                window["scroll"] = undefined;
               },true);
             });
           }
@@ -1011,19 +1058,27 @@ $(document).ready(function() {
     $("#dropdownMenu").css({"width": window.innerWidth - 10});
   }
   $(window).scroll(function() {
-    if($(this).scrollTop() == $(document).height() - $(window).height()) {
+    if($(window).scrollTop() >= ($(document).height() - $(window).height() - 10)) {
       if($("#menu a:not([href])").data("href") == "#!agenda_nacional") {
-        userDATOS.mostrar(true);
+        if(window["scroll"] == undefined) {
+          window["scroll"] = 1;
+          userDATOS.mostrar(true);
+        }
       }
     }
+    // userDATOS.notificacion("El scroll");
+    // if ($(document).height() - $(window).height() == $(window).scrollTop()){
+    //   userDATOS.notificacion("El scroll ha llegado al final");
+    //   // Aqui tu petición Ajax
+    // }
   });
 
   $("body").on("click",".info-oculta",function() {
     $(this).find("span").toggle(500, function() {
-      if($(this).is(":visible"))
-        userDATOS.notificacion("Mostrando información")
-      else
-        userDATOS.notificacion("Ocultando información")
+      // if($(this).is(":visible"))
+      //   userDATOS.notificacion("Mostrando información")
+      // else
+      //   userDATOS.notificacion("Ocultando información")
     });
   });
 

@@ -214,7 +214,6 @@ userDATOS.select2 = function(target,data = null,disabled = 1,empty = 0) {
  * Función para el parseo de string a JSON
  */
 userDATOS.parseJSON = function(cadena) {
-  //console.log(cadena)
   return eval("(" + cadena + ")");
 }
 /**
@@ -471,6 +470,11 @@ userDATOS.menu = function(tipo) {
   if(tipo) {
     $("body").css({overflow:"hidden",paddingRight:"15px"});
     $("#menuBackground,#menu").show();
+    setTimeout(() => {
+      $("#menu section p a").addClass('animated shake').one(animationEnd, function() {
+        $(this).removeClass("animated shake");
+      });
+    }, 100);
   } else {
     $("body").removeAttr("style");
     $("#menuBackground,#menu").hide();
@@ -516,3 +520,18 @@ let dates = {
       return ((a.getTime() === b.getTime()) ? 0 : ((a.getTime() > b.getTime()) ? 1 : - 1));
   }
 }
+
+let animationEnd = (function(el) {
+  let animations = {
+    animation: 'animationend',
+    OAnimation: 'oAnimationEnd',
+    MozAnimation: 'mozAnimationEnd',
+    WebkitAnimation: 'webkitAnimationEnd',
+  };
+
+  for (var t in animations) {
+    if (el.style[t] !== undefined) {
+      return animations[t];
+    }
+  }
+})(document.createElement('div'));

@@ -238,5 +238,52 @@ const ENTIDAD = {
         'DEFAULT': 0
       }
     }
+  },
+  'osai_grafico': {
+    'ATRIBUTOS': {
+      'id': {
+        'TIPO': 'TP_PK',
+        'VISIBILIDAD': 'TP_INVISIBLE',
+        'NECESARIO': 0,
+        'DEFAULT': 'nulo'
+      },
+      'autofecha': {
+        'TIPO': 'TP_FECHA_LARGA',
+        'VISIBILIDAD': 'TP_BANDERA',
+        'NECESARIO': 0
+      },
+      'id_usuario_osai': {
+        'TIPO': 'TP_RELACION',
+        'VISIBILIDAD': 'TP_VISIBLE',
+        'NECESARIO': 1,
+        'NOMBRE': 'usuario',
+        'RELACION': {'TABLA':'osai_usuario','ATTR':'id'}
+      },
+      'grafico': {
+        'TIPO': 'TP_ENTERO',
+        'VISIBILIDAD': 'TP_VISIBLE',
+        'NECESARIO': 1,
+        'NOMBRE': 'gráfico',
+        'DEFAULT': 0
+      },
+      'image': {
+        'TIPO': 'TP_STRING',
+        'VISIBILIDAD': 'TP_VISIBLE',
+        'NECESARIO': 1,
+        'NOMBRE': 'imagen'
+      },
+      'descripcion': {
+        'TIPO': 'TP_TEXT',
+        'VISIBILIDAD': 'TP_VISIBLE',
+        'NECESARIO': 1,
+        'NOMBRE': 'descripción'
+      },
+      'elim': {
+        'TIPO': 'TP_BOLEANO',
+        'VISIBILIDAD': 'TP_BANDERA',
+        'NECESARIO': 0,
+        'DEFAULT': 0
+      }
+    }
   }
 };
