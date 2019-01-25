@@ -728,6 +728,40 @@ const ENTIDAD = {
 			},
 		}
 	},
+	'noticiastema': {
+		'ATRIBUTOS':  {
+			'id':        {
+				"TIPO": "TP_PK",
+				"VISIBILIDAD": "TP_VISIBLE_NUNCA",
+				"NECESARIO": 0
+			},
+			'autofecha': {
+				'TIPO': 'TP_FECHA_LARGA',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'NECESARIO': 0
+			},
+			'id_cliente': {
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
+			'id_noticia': {
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
+			'valor': {
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
+			'elim':     {
+				'TIPO': 'TP_BOLEANO',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'DEFAULT': 0
+			},
+		}
+	},
 	'noticias': {
 		'ATRIBUTOS':  {
 			'id':        {

@@ -15,7 +15,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 var serverUrl = "http://localhost:8080/do";
-window.paleta_de_colores = [ "White","Gray","Red","Maroon","Yellow","Olive","Lime","Green","Aqua","Teal","Blue","Navy","Fuchsia","Purple","Black" ];
+window.paleta_de_colores = ['AliceBlue','AntiqueWhite','Aqua','Aquamarine','Azure','Beige','Bisque','Black','BlanchedAlmond','Blue','BlueViolet','Brown','BurlyWood','CadetBlue','Chartreuse','Chocolate','Coral','CornflowerBlue','Cornsilk','Crimson','Cyan','DarkBlue','DarkCyan','DarkGoldenRod','DarkGray','DarkGrey','DarkGreen','DarkKhaki','DarkMagenta','DarkOliveGreen','DarkOrange','DarkOrchid','DarkRed','DarkSalmon','DarkSeaGreen','DarkSlateBlue','DarkSlateGray','DarkSlateGrey','DarkTurquoise','DarkViolet','DeepPink','DeepSkyBlue','DimGray','DimGrey','DodgerBlue','FireBrick','FloralWhite','ForestGreen','Fuchsia','Gainsboro','GhostWhite','Gold','GoldenRod','Gray','Grey','Green','GreenYellow','HoneyDew','HotPink','IndianRed','Indigo','Ivory','Khaki','Lavender','LavenderBlush','LawnGreen','LemonChiffon','LightBlue','LightCoral','LightCyan','LightGoldenRodYellow','LightGray','LightGrey','LightGreen','LightPink','LightSalmon','LightSeaGreen','LightSkyBlue','LightSlateGray','LightSlateGrey','LightSteelBlue','LightYellow','Lime','LimeGreen','Linen','Magenta','Maroon','MediumAquaMarine','MediumBlue','MediumOrchid','MediumPurple','MediumSeaGreen','MediumSlateBlue','MediumSpringGreen','MediumTurquoise','MediumVioletRed','MidnightBlue','MintCream','MistyRose','Moccasin','NavajoWhite','Navy','OldLace','Olive','OliveDrab','Orange','OrangeRed','Orchid','PaleGoldenRod','PaleGreen','PaleTurquoise','PaleVioletRed','PapayaWhip','PeachPuff','Peru','Pink','Plum','PowderBlue','Purple','RebeccaPurple','Red','RosyBrown','RoyalBlue','SaddleBrown','Salmon','SandyBrown','SeaGreen','SeaShell','Sienna','Silver','SkyBlue','SlateBlue','SlateGray','SlateGrey','Snow','SpringGreen','SteelBlue','Tan','Teal','Thistle','Tomato','Turquoise','Violet','Wheat','White','WhiteSmoke','Yellow','YellowGreen'];
+window.paleta_de_colores = shuffle(window.paleta_de_colores);
+window.color_tmp = [];
+
 
 function askUser() {
 	
@@ -221,10 +224,14 @@ function drawBubbleGraph(root) {
 	var minWeight = d3.min(nodes, function(d) {
 		return +d.weight;
 	});
-	console.log("Weight: " + minWeight + "," + maxWeight);
 	
-	var color = d3.scale.linear().domain([ minWeight, 0, maxWeight ]).interpolate(
-			d3.interpolateHsl).range( window.paleta_de_colores );
+	var color = function(i){
+		if(typeof(i) == "string") return i;
+		else return window.paleta_de_colores[i];	
+	};
+	
+	/*var color = d3.scale.linear().domain([ minWeight, 0, window.paleta_de_colores.length ]).interpolate(
+			d3.interpolateHsl).range( window.paleta_de_colores );*/
 
 	var circle = svg.selectAll("circle").data(nodes).enter().append("circle")
 			.attr(
@@ -331,8 +338,9 @@ function drawGraph(jsonData) {
 	console.log("Rank: " + minRank + "," + maxRank);
 
 	var color = d3.scale.linear().domain([ minWeight, 0, maxWeight ])
-			.interpolate(d3.interpolateHsl).range([ "red", "yellow", "green" ]);
-
+			// .interpolate(d3.interpolateHsl).range([ "red", "yellow", "green" ]);
+			.interpolate(d3.interpolateHsl).range( window.paleta_de_colores );
+			
 	var size = d3.scale.linear().domain([ minRank, maxRank ]).range(
 			[ 5, 30 ]);
 
@@ -374,9 +382,19 @@ function drawGraph(jsonData) {
 
 }
 
+// https://stackoverflow.com/questions/6274339/
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 function demoGraph(dataIn) {
 	
 	var data = dataIn;
+	console.log(data);
 	var content = "<div id='knowledgegraph'></div>";
 	$("#knowledgegraphcontent").html(content);
 	drawBubbleGraph(data);

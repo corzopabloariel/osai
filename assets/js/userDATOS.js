@@ -97,10 +97,22 @@ userDATOS.filterNotificacion = function(flag, form = null, target = null) {
   let modal = $("#modalNotificacion");
   $('#dropdown-notificacion').dropdown('toggle');
   if(flag) {
+    if(window.filterNotificacion !== undefined) {
+      if(window.filterNotificacion.length == 4)
+        $("#modalNotificacion").find("input[type='checkbox']").attr("checked",true);
+      else {
+        $("#modalNotificacion").find("thead input[type='checkbox']").removeAttr("checked");
+        $("#modalNotificacion").find("tbody input[type='checkbox']").removeAttr("checked");
+        window.filterNotificacion.forEach(function(i) {
+          $("#modalNotificacion").find("tbody input[type='checkbox'][name='input-" + i + "']").attr("checked",true);
+        });
+      }
+    }
     modal.modal("show");
   } else {
     let data = $(form).serializeArray();
-    if(window["notificacionPAGINADO_" + target] !== undefined) window["notificacionPAGINADO_" + target] = undefined
+    if(window["notificacionPAGINADO_" + target] !== undefined)
+      window["notificacionPAGINADO_" + target] = undefined
     if(data.length == 4) window.filterNotificacion = undefined;
     else {
       window.filterNotificacion = [];
@@ -109,7 +121,7 @@ userDATOS.filterNotificacion = function(flag, form = null, target = null) {
         window.filterNotificacion.push(x[1]);
       }
       $(target).html('');
-      userDATOS.verificarNotificacion(target,1, false);
+      userDATOS.verificarNotificacion(target,1, true);
     }
     modal.modal("hide");
   }
@@ -127,7 +139,8 @@ userDATOS.traerNotificacion = function(id, target) {
       async: true,
       data: { "tipo": "query", "accion": "traerNotificacion", "id": id },
   }).done(function(msg) {
-    if($(target).find(".loading_notificacion").length) $(target).find(".loading_notificacion").remove();
+    if($(target).find(".loading_notificacion").length)
+      $(target).find(".loading_notificacion").remove();
     $(target).append(msg.html);
   });
 }
@@ -137,7 +150,8 @@ userDATOS.traerNotificacion = function(id, target) {
  * @param target STRING: lugar dónde irán las notificaciones
  */
 userDATOS.verificarNotificacion = function(target = "#tabla_notificacion_viejas",loading = 0, new_ = true) {
-  if(window["notificacionPAGINADO_" + target] === undefined) window["notificacionPAGINADO_" + target] = 0;
+  if(window["notificacionPAGINADO_" + target] === undefined)
+    window["notificacionPAGINADO_" + target] = 0;
   if(!new_) window["notificacionPAGINADO_" + target] ++;
   let filterNotificacion = null;
   if(window.filterNotificacion !== undefined) filterNotificacion = window.filterNotificacion;
@@ -156,8 +170,12 @@ userDATOS.verificarNotificacion = function(target = "#tabla_notificacion_viejas"
         $(target).find(".loading_notificacion").remove();
       }
   }).done(function(msg) {
-    $(target).append(msg.html);
+    if(msg.html == "")
+      $(target).html('<div class="col py-2 text-uppercase text-center bg-white">Sin novedades</div>');
+    else $(target).append(msg.html);
     $('*[data-notificacion="numero"]').text(msg.total);
+    if(window["scroll_notificacion_vieja"] !== undefined)
+      window["scroll_notificacion_vieja"] = undefined;
   });
 }
 /**
@@ -333,6 +351,7 @@ userDATOS.insertDatos = function(tabla,values, callbackOK = null) {
     "tabla": tabla,
     "data": values
   };
+  console.log(data)
   $.ajax({
     type: 'POST',
     url: cliente_url,
@@ -421,21 +440,21 @@ userDATOS.noticiasVALOR = function(callbackOK) {
     callbackOK.call(this,msg)
   });
 }
-userDATOS.noticiasSELECT = function(tipo = "", select = null) {
+userDATOS.noticiasSELECT = function(tipo = "", select = null, callbackOK) {
   let d;
   if(select !== null) {
     if(Array.isArray(select.seccion)) select.seccion = JSON.stringify(select.seccion)
   }
   $.ajax({
-     type: 'POST',
-     url: cliente_url,
-     dataType: 'json',
-     async: false,
-     data: { "tipo": "noticiasINFORME","vista":tipo,"select":select }
+    context: this,
+    type: 'POST',
+    url: cliente_url,
+    dataType: 'json',
+    async: true,
+    data: { "tipo": "noticiasINFORME","vista":tipo,"select":select }
   }).done(function(msg) {
-    d = msg;
+    callbackOK.call(this, msg);
   });
-  return d;
 }
 
 userDATOS.log = function(id_usuario, accion, acceso = 1, id_tabla = 0, tabla = null, elim = 0) {
@@ -829,8 +848,8 @@ userDATOS.calcularValoracion = function(e,valor,tipo,id) {
   for(var i in window.valoracionARR[id])
     window.valoracion += window.valoracionARR[id][i];
 
-  if(window.valoracion > 2) detalle = '<div class="bg-success text-white p-2 text-center text-uppercase">positivo</div>';
-  else if(window.valoracion >= 0) detalle = '<div class="bg-warning text-dark p-2 text-center text-uppercase">neutro</div>'
+  if(window.valoracion > 0) detalle = '<div class="bg-success text-white p-2 text-center text-uppercase">positivo</div>';
+  else if(window.valoracion == 0) detalle = '<div class="bg-warning text-dark p-2 text-center text-uppercase">neutro</div>'
   else detalle = '<div class="bg-danger p-2 text-center text-white text-uppercase">negativo</div>'
 
   $("#div_valoracion").html(detalle);
@@ -1683,16 +1702,20 @@ userDATOS.dataTableNOTICIAS3 = function(target,datos,searching = true) {
       }
     });//FECHA
     columnDefs.push({"width": "15%", "targets": [3], "className": "text-left text-uppercase"});//UNIDAD DE ANALISIS
-    columnDefs.push({"width": "12%", "targets": [4], "className": "text-left text-uppercase"});//TIPO
-    columnDefs.push({"width": "12%", "targets": [5], "className": "text-left text-uppercase"});//MEDIO
-    columnDefs.push({"width": "15%", "targets": [6], "className": "text-left text-uppercase"});//SECCION
-    columnDefs.push({"width": "32%", "targets": [7], "className": "text-left"});//TITULO
+    columnDefs.push({"width": "15%", "targets": [4], "className": "text-left text-uppercase"});//TEMAS
+    columnDefs.push({"width": "15%", "targets": [5], "className": "text-left text-uppercase"});//ACTORES
+    columnDefs.push({"width": "12%", "targets": [6], "className": "text-left text-uppercase"});//TIPO
+    columnDefs.push({"width": "12%", "targets": [7], "className": "text-left text-uppercase"});//MEDIO
+    columnDefs.push({"width": "15%", "targets": [8], "className": "text-left text-uppercase"});//SECCION
+    columnDefs.push({"width": "32%", "targets": [9], "className": "text-left"});//TITULO
 
     columns = [
       {"data":"id","title": "ID"},
       {"data":"fecha","title": "FECHA"},
       {"data":"fecha_proceso","title": "F. PROCESO"},
       {"data":"cliente","title": "U. ANÁLISIS"},
+      {"data":"tema","title": "TEMAS"},
+      {"data":"actor","title": "ACTORES"},
       {"data":"medio_tipo","title": "TIPO"},
       {"data":"medio","title": "MEDIO"},
       {"data":"seccion","title": "SECCIÓN"},
@@ -1707,10 +1730,12 @@ userDATOS.dataTableNOTICIAS3 = function(target,datos,searching = true) {
     });//FECHA
     columnDefs.push({"width": "7%",'targets': [3],'className': 'text-left text-uppercase'});//USUARIO
     columnDefs.push({"width": "15%", "targets": [4], "className": "text-left text-uppercase"});//UNIDAD DE ANALISIS
-    columnDefs.push({"width": "10%", "targets": [5], "className": "text-left text-uppercase"});//TIPO
-    columnDefs.push({"width": "10%", "targets": [6], "className": "text-left text-uppercase"});//MEDIO
-    columnDefs.push({"width": "15%", "targets": [7], "className": "text-left text-uppercase"});//SECCION
-    columnDefs.push({"width": "29%", "targets": [8], "className": "text-left"});//TITULO
+    columnDefs.push({"width": "15%", "targets": [5], "className": "text-left text-uppercase"});//TEMAS
+    columnDefs.push({"width": "15%", "targets": [6], "className": "text-left text-uppercase"});//ACTORES
+    columnDefs.push({"width": "10%", "targets": [7], "className": "text-left text-uppercase"});//TIPO
+    columnDefs.push({"width": "10%", "targets": [8], "className": "text-left text-uppercase"});//MEDIO
+    columnDefs.push({"width": "15%", "targets": [9], "className": "text-left text-uppercase"});//SECCION
+    columnDefs.push({"width": "29%", "targets": [10], "className": "text-left"});//TITULO
 
     columns = [
       {"data":"id","title": "ID"},
@@ -1718,6 +1743,8 @@ userDATOS.dataTableNOTICIAS3 = function(target,datos,searching = true) {
       {"data":"fecha_proceso","title": "F. PROCESO"},
       {"data":"usuario","title": "USUARIO"},
       {"data":"cliente","title": "U. ANÁLISIS"},
+      {"data":"tema","title": "TEMAS"},
+      {"data":"actor","title": "ACTORES"},
       {"data":"medio_tipo","title": "TIPO"},
       {"data":"medio","title": "MEDIO"},
       {"data":"seccion","title": "SECCIÓN"},
@@ -3044,9 +3071,9 @@ userDATOS.updateUnidad = function(e) {
                 html += '<div class="col-12" id="div_valoracion">';
                   if(valoracion === null)
                     html += '<div class="bg-dark text-white p-2 text-center text-uppercase">sin acción</div>';
-                  else if(valoracion > 2)
+                  else if(valoracion > 0)
                     html += '<div class="bg-success text-white p-2 text-center text-uppercase">positivo</div>';
-                  else if(valoracion <= 2 && valoracion >= 0)
+                  else if(valoracion == 0)
                     html += '<div class="bg-warning text-dark p-2 text-center text-uppercase">neutro</div>'
                   else  
                     html += '<div class="bg-danger p-2 text-center text-white text-uppercase">negativo</div>'

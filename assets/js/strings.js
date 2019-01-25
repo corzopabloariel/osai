@@ -84,6 +84,8 @@ const strings = {
             "<p class='text-center m-0' style='font-size:1.3em'>¿Está seguro de cerrar?<br><small>Perderá los avances</small></p>",
         ]
     },
+    graficoEditar : "<p class='text-center m-0' style='font-size:1.3em'>¿Está seguro de editar el gráfico?</p>",
+    graficoEliminar : "<p class='text-center m-0' style='font-size:1.3em'>¿Está seguro de eliminar el gráfico?</p>",
     cambiadoDatos : "Datos cambiados",
     usuario: {
         contrasela: "<p class='text-uppercase m-0 text-center' style='font-size:1.3em'>Configuración de <strong>usuario</strong></p>",

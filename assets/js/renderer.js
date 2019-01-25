@@ -15,6 +15,7 @@ if(userDATOS.verificar(1)) {
   const pyrusNoticias = new Pyrus("noticias",false);
   const pyrusNoticiasActor = new Pyrus("noticiasactor",false);
   const pyrusNoticiasCliente = new Pyrus("noticiascliente",false);
+  const pyrusNoticiasTema = new Pyrus("noticiastema",false);
   const pyrusNoticiasInstitucion = new Pyrus("noticiasinstitucion",false);
   const pyrusNoticiasProceso = new Pyrus("noticiasproceso",false);
   const pyrusInstitucion = new Pyrus("attr_institucion",false);
@@ -37,6 +38,7 @@ if(userDATOS.verificar(1)) {
   const pyrusDestaque = new Pyrus("attr_destaque",false);
 
   window.user = userDATOS.user();
+  window.filterNotificacion = ["sin_leer"];
   userDATOS.verificarNotificacion();
 
   if(window.usuario === undefined) {
@@ -132,6 +134,18 @@ if(userDATOS.verificar(1)) {
       userDATOS.listador("#attr_poder",pyrusPoder,true,14);
     }
   });
+  app.directive('dynamic', function ($compile) {
+      return {
+          restrict: 'A',
+          replace: true,
+          link: function (scope, ele, attrs) {
+              scope.$watch(attrs.dynamic, function (html) {
+                  ele.html(html);
+                  $compile(ele.contents())(scope);
+              });
+          }
+      };
+  });
   /** Rutas de la aplicación */
   app.config( function($routeProvider) {
     $routeProvider
@@ -195,6 +209,7 @@ if(userDATOS.verificar(1)) {
       templateUrl: 'assets/views/clipping.html',
       controller : 'clipping'
     })
+    .otherwise({ redirectTo: '/' });
   });
   /**
    * Carga principal de la aplicación
@@ -333,75 +348,75 @@ if(userDATOS.verificar(1)) {
       }
       
       clientes_osai = null;
-      userDATOS.busquedaTabla("osai_usuario", function(d) {
-        clientes_osai = d;
-      });//CLIENTES FINALES
-      let defaultValue = null;
-      let OBJ_clientes_osai = {};//CLIENTES FINALES <-- relacionado con --> UNIDAD DE ANALISIS
-      for(var i in clientes_osai) {
-        if(OBJ_clientes_osai[i] === undefined) {  
-          OBJ_clientes_osai[i] = "";
-          u = null;
-          userDATOS.busqueda({"value":clientes_osai[i]["id_cliente"],"tabla":"cliente"}, function(d) {
-            u = d; 
-          });
-          if(clientes_osai[i]["id_cliente"] == cliente.id)
-            defaultValue = i;
-          OBJ_clientes_osai[i] = clientes_osai[i]["user"] + " (" + u["nombre"] + ")";
-        }
-      }
-      //////////
-      $.MessageBox({
-        buttonDone  : strings.btn.pasar,
-        buttonFail  : strings.btn.cancelar,
-        message : strings.messege.pasar,
-        // input: select,
-        input   : { 
-          input_detalle  : {
-            type         : "texts",
-            label        : "Detalle (máx. 200 caracteres):",
-            title        : "Detalle de la notificación",
-            maxlength    : 200
-          },
-          select_tipoAlerta : {
-            type         : "select",
-            label        : "Seleccione tipo de alerta",
-            title        : "TIPO DE ALERTA",
-            options      : {1: "Amarilla", 2: "Naranja", 3: "Rojo"}
-          },
-          select_tipo : {
-            type         : "selects",
-            label        : "Seleccione Cliente final",
-            title        : "cliente final",
-            options      : OBJ_clientes_osai,
-            default      : 3
-          },
-        },
-        top     : "auto",
-        filterDone      : function(data){
-          if(data.input_detalle == "" || data.select_tipoAlerta === null || data.select_tipo.length == 0) {
-            userDATOS.notificacion(strings.faltan.datos,"error")
-            return false;
+      userDATOS.busquedaTabla("osai_usuario", function( clientes_osai ) {
+        let defaultValue = null;
+        let OBJ_clientes_osai = {};//CLIENTES FINALES <-- relacionado con --> UNIDAD DE ANALISIS
+        for(var i in clientes_osai) {
+          if(OBJ_clientes_osai[i] === undefined) {  
+            userDATOS.busqueda({"value":clientes_osai[i]["id_cliente"],"tabla":"cliente"}, function(u) {
+              if(!parseInt(u.todos)) {
+                OBJ_clientes_osai[i] = "";
+                if(clientes_osai[i]["id_cliente"] == cliente.id)
+                  defaultValue = i;
+                OBJ_clientes_osai[i] = clientes_osai[i]["user"] + " (" + u["nombre"] + ")";
+              }
+            });
           }
         }
-      }).done(function(data){
-        userDATOS.notificacion(strings.noticia.pasada);
-        $("#modalNoticia .btn-success,#modalNoticia .btn-danger").addClass("d-none");
-        for(var x in data.select_tipo) {
-          nivel = data.select_tipoAlerta;
-          mensaje = data.input_detalle;
-          id_usuario = window.user_id;//USUARIO de OSAI que generó esto
-          id_cliente = window.notificacionOBJ.id_cliente;//CLIENTE de OSAI
-          id_usuario_osai = data.select_tipo[x];//USUARIO de CLIENTE FINAL de OSAI
-          id_noticia = window.notificacionOBJ.id_noticia;//NOTICIA afectada
-          userDATOS.insertDatos("osai_notificacion",{"id_usuario":id_usuario,"id_noticia":id_noticia,"id_usuario_osai":id_usuario_osai,"mensaje": mensaje,"nivel": nivel,"estado": 1});
-        }
-        userDATOS.log(window.user_id,"Notificación pasada directamente al CLIENTE",0,window.noticiaNUEVA.id,"noticia");
-        userDATOS.log(window.user_id,"Notificación pasada directamente al CLIENTE",0,window.noticiaNUEVA.id_noticia,"noticias");
-        userDATOS.change(window.notificacionNUEVA,"notificacion","id_usuario",window.user_id,0,true);
-        userDATOS.change(window.notificacionNUEVA,"notificacion","pasado",1,0,true);
-        userDATOS.change(window.notificacionUsuario,"notificacion_usuario","pasado",1,0,true);
-      })
+        //////////
+        $.MessageBox({
+          buttonDone  : strings.btn.pasar,
+          buttonFail  : strings.btn.cancelar,
+          message : strings.messege.pasar,
+          // input: select,
+          input   : { 
+            input_detalle  : {
+              type         : "texts",
+              label        : "Detalle (máx. 200 caracteres):",
+              title        : "Detalle de la notificación",
+              maxlength    : 200
+            },
+            select_tipoAlerta : {
+              type         : "select",
+              label        : "Seleccione tipo de alerta",
+              title        : "TIPO DE ALERTA",
+              options      : {1: "Amarilla", 2: "Naranja", 3: "Rojo"}
+            },
+            select_tipo : {
+              type         : "selects",
+              label        : "Seleccione Cliente final",
+              title        : "cliente final",
+              options      : OBJ_clientes_osai,
+              default      : 3
+            },
+          },
+          top     : "auto",
+          filterDone      : function(data){
+            if(data.input_detalle == "" || data.select_tipoAlerta === null || data.select_tipo.length == 0) {
+              userDATOS.notificacion(strings.faltan.datos,"error")
+              return false;
+            }
+          }
+        }).done(function(data){
+          userDATOS.notificacion(strings.noticia.pasada);
+          $("#modalNoticia .btn-success,#modalNoticia .btn-danger").addClass("d-none");
+          for(var x in data.select_tipo) {
+            nivel = data.select_tipoAlerta;
+            mensaje = data.input_detalle;
+            id_usuario = window.user_id;//USUARIO de OSAI que generó esto
+            id_cliente = window.notificacionOBJ.id_cliente;//CLIENTE de OSAI
+            id_usuario_osai = data.select_tipo[x];//USUARIO de CLIENTE FINAL de OSAI
+            id_noticia = window.notificacionOBJ.id_noticia;//NOTICIA afectada
+            userDATOS.insertDatos("osai_notificacion",{"id_usuario":id_usuario,"id_noticia":id_noticia,"id_usuario_osai":id_usuario_osai,"mensaje": mensaje,"nivel": nivel,"estado": 1});
+          }
+          userDATOS.log(window.user_id,"Notificación pasada directamente al CLIENTE",0,window.noticiaNUEVA.id,"noticia");
+          userDATOS.log(window.user_id,"Notificación pasada directamente al CLIENTE",0,window.noticiaNUEVA.id_noticia,"noticias");
+          userDATOS.change(window.notificacionNUEVA,"notificacion","id_usuario",window.user_id,0,true);
+          userDATOS.change(window.notificacionNUEVA,"notificacion","pasado",1,0,true);
+          userDATOS.change(window.notificacionUsuario,"notificacion_usuario","pasado",1,0,true);
+        })
+      }, true);//CLIENTES FINALES
+      
     }
     /**
      * FUNCIÓN DESTINADA PARA VER LA NOTIFICACIÓN DE UNA NOTICIA NUEVA
@@ -594,6 +609,13 @@ if(userDATOS.verificar(1)) {
               pyrusNoticiasActor.guardar_1({"id":"nulo","id_noticia": accion.id,"id_actor": i,"data": window.ARR_actor[i]})
             for(var i in window.ARR_cliente) {//
               pyrusNoticiasCliente.guardar_1({"id":"nulo","id_noticia": accion.id,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+
+              for(var x in window.ARR_cliente[i]["tema"]) {
+                if(x == "texto") continue;
+                v = window.ARR_cliente[i]["tema"][x]["valor"];
+                id_tema = x.substring(9);
+                pyrusNoticiasTema.guardar_1({id: "nulo", id_noticia: accion.id, id_cliente: i, id_tema: id_tema, valor: v});
+              }
               //proceso
               obj_proceso["id_noticia"] = accion.id;
               obj_proceso["did_noticia"] = accion_not.id;
@@ -688,6 +710,13 @@ if(userDATOS.verificar(1)) {
                 pyrusNoticiasActor.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]})
               for(var i in window.ARR_cliente) {
                 pyrusNoticiasCliente.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+
+                for(var x in window.ARR_cliente[i]["tema"]) {
+                  if(x == "texto") continue;
+                  v = window.ARR_cliente[i]["tema"][x]["valor"];
+                  id_tema = x.substring(9);
+                  pyrusNoticiasTema.guardar_1({id: "nulo", id_noticia: accion.id, id_cliente: i, id_tema: id_tema, valor: v});
+                }
                 //proceso
                 obj_proceso["did"] = did;
                 obj_proceso["id_noticia"] = window.noticiaSELECCIONADA.id_noticia;
@@ -730,6 +759,12 @@ if(userDATOS.verificar(1)) {
               id_cliente = 0;
               for(var i in window.ARR_cliente) {
                 pyrusNoticiasCliente.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+                for(var x in window.ARR_cliente[i]["tema"]) {
+                  if(x == "texto") continue;
+                  v = window.ARR_cliente[i]["tema"][x]["valor"];
+                  id_tema = x.substring(9);
+                  pyrusNoticiasTema.guardar_1({id: "nulo", id_noticia: accion.id, id_cliente: i, id_tema: id_tema, valor: v});
+                }
                 //proceso
                 obj_proceso["id_noticia"] = window.noticiaSELECCIONADA.id_noticia;
                 obj_proceso["did_noticia"] = window.noticiaSELECCIONADA.id;
@@ -848,105 +883,78 @@ if(userDATOS.verificar(1)) {
 
     factory_simat.load("clipping");
 
-    selectMEDIOS = userDATOS.noticiasSELECT("clipping");
-
-    $scope.mediosSELECT = selectMEDIOS.medio;
-    $scope.unidadSELECT = selectMEDIOS.unidad;
+    userDATOS.noticiasSELECT("clipping", null, function(selectMEDIOS) {
+      $scope.mediosSELECT = selectMEDIOS.medio;
+      $scope.unidadSELECT = selectMEDIOS.unidad;
+      $scope.$digest();
+    });
     $(".select__2").select2();
 
     $("#btn_filtro").on("click",function() {
       let minDateFilter = $('#fecha_min').val();
       let maxDateFilter = $('#fecha_max').val();
       let medioFilter = $('#select_medioNOTICIA').val();
-      let medioTipoFilter = $('#select_medioTipoNOTICIA').val();
-      let tituloFilter = $('#titulo').val();
-      let seccionFilter = $('#select_seccionBUSCADOR').val();
       let unidadFilter = $("#select_unidadNOTICIA").val();
-      data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter),"unidadFilter":unidadFilter}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
+      data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"unidadFilter":unidadFilter}
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && unidadFilter == "") {
+        userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
+        return false;
       }
-      if(flag) {
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS3("#t_data",data)
-        },500)
-      } else userDATOS.notificacion(strings.faltan.datosBuqueda,"error");
+      if(minDateFilter != "" && maxDateFilter != "") {
+        if(dates.compare(dates.convert(maxDateFilter),dates.convert(minDateFilter)) < 0) {
+          userDATOS.notificacion(strings.error.fechas,"error");
+          return false;
+        }
+      }
+      tabla_noticia.destroy();
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS4("#t_data",data)
+      },500)
+      
     })
 
     $("#btn_limpiar").on("click",function() {
-      let minDateFilter = $('#fecha_min').val();
-      let maxDateFilter = $('#fecha_max').val();
-      let medioFilter = $('#select_medioNOTICIA').val();
-      let medioTipoFilter = $('#select_medioTipoNOTICIA').val();
-      let tituloFilter = $('#titulo').val();
-      let seccionFilter = $('#select_seccionBUSCADOR').val();
-      data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter)}
-      flag = false;
-      for(var i in data) {
-        if(data[i] != "") flag = true;
-      }
-      if(flag) {
+      $('#select_medioNOTICIA').val("");
+      $("#select_unidadNOTICIA").val("");
+      userDATOS.noticiasSELECT("clipping", null, function(selectMEDIOS) {
         $("#fecha_min").val("");
         $("#fecha_max").val("");
-        $("#titulo").val("");
-        selectMEDIOS = userDATOS.noticiasSELECT("procesar");
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
+        $scope.mediosSELECT = selectMEDIOS.medio;
+        $scope.unidadSELECT = selectMEDIOS.unidad;
+        $scope.$digest();
+      });
 
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-
-        $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccionBUSCADOR,#select_unidadNOTICIA").select2();
-
-        tabla_noticia.destroy();
-        $("#t_data").addClass("animate-flicker")
-        setTimeout(function() {
-          userDATOS.dataTableNOTICIAS3("#t_data",{"estado":2})
-        },500);
-      }
+      tabla_noticia.destroy();
+      $("#t_data").addClass("animate-flicker")
+      setTimeout(function() {
+        userDATOS.dataTableNOTICIAS4("#t_data",{"estado":2})
+      },500);
     })
 
     $("#select_medioNOTICIA").on("change",function() {
+      if($(this).val() == "") return false;
       medio = $("#select_medioNOTICIA").val();
       medioTipo = "";
       seccion = "";
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("clipping",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(unidad == "") {
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-      }
-      $("#select_unidadNOTICIA").select2();
+      userDATOS.noticiasSELECT("clipping",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad}, function(m) {
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        $scope.$digest();
+      });
     })
     $("#select_unidadNOTICIA").on("change",function() {
+      if($(this).val() == "") return false;
       medio = $("#select_medioNOTICIA").val();
       medioTipo = "";
       seccion = "";
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("clipping",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      $("#select_medioNOTICIA").select2()
+      userDATOS.noticiasSELECT("clipping",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        $scope.$digest();
+      });
     });
     scopeNoticias = function($scope,key,value) {
       $scope.$apply(function () {
@@ -1202,37 +1210,52 @@ if(userDATOS.verificar(1)) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     select = userDATOS.noticiasSELECT("procesadas");
     $scope.unidad = select.unidad;
-    $(".select__2").select2();
+    
+    graficos = {}
+    userDATOS.busquedaTabla("grafico",function(data) {
+      $scope.graficoTable = data;
+      for(var i in data)
+        graficos[i] = data[i].name;
+    });
+    $scope.graficoSelect = graficos;
+    graficos = {};
+    userDATOS.busquedaTabla("osai_grafico",function(data) { 
+      for(var i in data) {
+        graficos[i] = {};
+        graficos[i]["idOsaiGrafico"] = i;
+        graficos[i]["nombre"] = select.unidad[data[i]["id_usuario_osai"]];
+        graficos[i]["id"] = data[i]["id_usuario_osai"];
+        graficos[i]["grafico"] = ($scope.graficoSelect[data[i]["grafico"]] === undefined ? "-" : $scope.graficoSelect[data[i]["grafico"]]);
+        graficos[i]["idgrafico"] = data[i]["grafico"];
+        graficos[i]["titulo"] = data[i]["titulo"];
+        graficos[i]["descripcion"] = data[i]["descripcion"];
+      }
+    });
+    $scope.graficos = graficos;
 
     $(document).ready(function(){
-      window.localStorage.clear()
+      $(".select__2").select2();
+      window.localStorage.clear();
       $("tbody a").on("click",function(e) {
         e.preventDefault();
         href = $(this).attr("href");
         min = $("#fecha_min").val();
         max = $("#fecha_max").val();
         uni = $("#select_unidad").val();
-        if($(this).data("tipo") == "fecha_unidad") {
-          if(min == "" || max == "" || uni == "")
-            userDATOS.notificacion(strings.faltan.especifico[0],"error");
-          else {
-              window.localStorage.setItem("fecha_min", min);
-              window.localStorage.setItem("fecha_max", max);
-              window.localStorage.setItem("unidad", uni);
+        
+        if(min == "" || max == "" || uni == "")
+          userDATOS.notificacion(strings.faltan.especifico[0],"error");
+        else {
+          if(dates.compare(dates.convert(min),dates.convert(max)) == 1) {
+            userDATOS.notificacion(strings.error.fechas,"error");
+            return false;
+          }
+          window.localStorage.setItem("fecha_min", min);
+          window.localStorage.setItem("fecha_max", max);
+          window.localStorage.setItem("unidad", uni);
 
-              let win = window.open(href, '_blank');
-              win.focus();
-          }
-        } else {
-          if(min == "" || max == "")
-            userDATOS.notificacion(strings.faltan.especifico[1],"error");
-          else {
-              window.localStorage.setItem("fecha_min", min);
-              window.localStorage.setItem("fecha_max", max);
-              window.localStorage.setItem("version",$(this).data("version"));
-              let win = window.open(href, '_blank');
-              win.focus();
-          }
+          let win = window.open(href, '_blank');
+          win.focus();
         }
         return false;
       })
@@ -1245,25 +1268,400 @@ if(userDATOS.verificar(1)) {
      **
      * Se va a poder seleccionar por ACTOR
      */
+    $scope.submit = function(t) {
+      if(t.submitNG == -1) {//NUEVO
+        userDATOS.busqueda({value:formGrafico.select_cliente.value,tabla:"osai_grafico",column: "id_usuario_osai", retorno: 0},function(data) {
+          if(Object.keys(data).length == 0) {
+            userDATOS.log(window.user_id,$scope.graficos[t.submitNG]["grafico"] + " agregado - CLIENTE FINAL: " + $scope.graficos[t.submitNG]["nombre"],0,t.submitNG,"osai_grafico");
+            userDATOS.busqueda({value:formGrafico.select_grafico.value,tabla:"grafico"},function(grafico) {
+              userDATOS.insertDatos("osai_grafico",{
+                descripcion: formGrafico.descripcion.value,
+                titulo: formGrafico.titulo.value,
+                grafico: formGrafico.select_grafico.value,
+                id_usuario_osai: formGrafico.select_cliente.value,
+                image: grafico.image,
+                url: grafico.url
+              }, function(i) {
+                // i = 44
+                $scope.graficos[i] = {};
+                $scope.graficos[i]["idOsaiGrafico"] = i;
+                $scope.graficos[i]["nombre"] = select.unidad[formGrafico.select_cliente.value];
+                $scope.graficos[i]["id"] = formGrafico.select_cliente.value;
+                $scope.graficos[i]["grafico"] = ($scope.graficoSelect[formGrafico.select_grafico.value] === undefined ? "-" : $scope.graficoSelect[formGrafico.select_grafico.value]);
+                $scope.graficos[i]["idgrafico"] = formGrafico.select_grafico.value;
+                $scope.graficos[i]["titulo"] = formGrafico.titulo.value;
+                $scope.graficos[i]["descripcion"] = formGrafico.descripcion.value;
+                $scope.$digest();
+                
+                $("#select_grafico").val("").select2();
+                $("#select_cliente").val("").select2();
+                formGrafico.select_grafico.value = "";
+                formGrafico.select_cliente.value = "";
+                formGrafico.titulo.value = "";
+                formGrafico.descripcion.value = "";
+                
+                $("#btnGraficos").text("agregar");
+                $("#btnGraficos").attr("disabled",true);
+              });
+            }, true);
+          } else {
+            returnKey = -1;
+            $.each(data.data, function(key, g) {
+              if (g.grafico == formGrafico.select_grafico.value) {
+                returnKey = key;
+                return false; 
+              };   
+            });
+            if(returnKey < 0) userDATOS.notificacion("El usuario final ya tiene asociado ese gráfico");
+            else {
+              userDATOS.log(window.user_id,$scope.graficos[t.submitNG]["grafico"] + " agregado - CLIENTE FINAL: " + $scope.graficos[t.submitNG]["nombre"],0,t.submitNG,"osai_grafico");
+              userDATOS.busqueda({value:formGrafico.select_grafico.value,tabla:"grafico"},function(grafico) {
+                userDATOS.insertDatos("osai_grafico",{
+                  descripcion: formGrafico.descripcion.value,
+                  titulo: formGrafico.titulo.value,
+                  grafico: formGrafico.select_grafico.value,
+                  id_usuario_osai: formGrafico.select_cliente.value,
+                  image: grafico.image
+                },function(i) {
+                  $scope.graficos[i] = {};
+                  $scope.graficos[i]["idOsaiGrafico"] = i;
+                  $scope.graficos[i]["nombre"] = select.unidad[formGrafico.select_cliente.value];
+                  $scope.graficos[i]["id"] = formGrafico.select_cliente.value;
+                  $scope.graficos[i]["grafico"] = ($scope.graficoSelect[formGrafico.select_grafico.value] === undefined ? "-" : $scope.graficoSelect[formGrafico.select_grafico.value]);
+                  $scope.graficos[i]["idgrafico"] = formGrafico.select_grafico.value;
+                  $scope.graficos[i]["titulo"] = formGrafico.titulo.value;
+                  $scope.graficos[i]["descripcion"] = formGrafico.descripcion.value;
+                  $("#select_grafico").val("").select2();
+                  $("#select_cliente").val("").select2();
+                  formGrafico.select_grafico.value = "";
+                  formGrafico.select_cliente.value = "";
+                  formGrafico.titulo.value = "";
+                  formGrafico.descripcion.value = "";
+                  
+                  $("#btnGraficos").text("agregar");
+                  $("#btnGraficos").attr("disabled",true);
+                });
+              }, true);
+            }
+          }
+        }, true);
+        
+      } else {
+        $.MessageBox({
+          buttonDone  : strings.btn.si,
+          buttonFail  : strings.btn.no,
+          message     : strings.graficoEditar,
+        }).done(function(data, button){
+          userDATOS.log(window.user_id,"Datos del " + $scope.graficos[t.submitNG]["grafico"] + " editado - CLIENTE FINAL: " + $scope.graficos[t.submitNG]["nombre"],0,t.submitNG,"osai_grafico");
+          userDATOS.change(t.submitNG,"osai_grafico","titulo",formGrafico.titulo.value,0,true);
+          userDATOS.change(t.submitNG,"osai_grafico","descripcion",formGrafico.descripcion.value,0,true);
+
+          $scope.graficos[t.submitNG]["titulo"] = formGrafico.titulo.value;
+          $scope.graficos[t.submitNG]["descripcion"] = formGrafico.descripcion.value;
+          t.submitNG = -1;
+          $("#select_grafico").removeAttr("disabled");
+          $("#select_cliente").removeAttr("disabled");
+          $("#select_grafico").val("").select2();
+          $("#select_cliente").val("").select2();
+          formGrafico.select_grafico.value = "";
+          formGrafico.select_cliente.value = "";
+          formGrafico.titulo.value = "";
+          formGrafico.descripcion.value = "";
+          
+          $("#btnGraficos").text("agregar");
+          $("#btnGraficos").attr("disabled",true);
+          $scope.$digest();
+          window.btnNG.editNG = true;
+          $scope.edit(window.btnNG);
+        });
+      }
+    }
+    $scope.edit = function(t, c = null) {
+      // $scope.editNG = false;
+      if(t.editNG && c !== null) {
+        $scope.submitNG = c.idgrafico;
+        t.editNG = false;
+        formGrafico.select_grafico.value = c.idgrafico;
+        $("#select_grafico").attr("disabled",true);
+        $("#select_grafico").select2();
+        formGrafico.select_cliente.value = c.id;
+        $("#select_cliente").attr("disabled",true);
+        $("#select_cliente").select2();
+        formGrafico.titulo.value = c.titulo;
+        formGrafico.descripcion.value = c.descripcion;
+        $("#btnGraficos").text("editar");
+        $("#btnGraficos").removeAttr("disabled");
+        window.btnNG = t;
+      } else {
+        delete window["btnNG"];
+        $scope.submitNG = -1;
+        t.editNG = true;
+        $("#select_grafico").removeAttr("disabled");
+        $("#select_cliente").removeAttr("disabled");
+        $("#select_grafico").val("").select2();
+        $("#select_cliente").val("").select2();
+        formGrafico.select_grafico.value = "";
+        formGrafico.select_cliente.value = "";
+        formGrafico.titulo.value = "";
+        formGrafico.descripcion.value = "";
+        
+        $("#btnGraficos").text("agregar");
+        $("#btnGraficos").attr("disabled",true);
+        if(c === null)
+          $scope.$digest();
+      }
+    }
+    $scope.remove = function(t, id) {
+      $.MessageBox({//ACA
+        buttonDone  : strings.btn.si,
+        buttonFail  : strings.btn.no,
+        message     : strings.graficoEliminar,
+      }).done(function(data, button){
+        userDATOS.log(window.user_id," Grafico eliminado",0,id,"osai_grafico");
+        delete $scope.graficos[id];
+        userDATOS.change(id,"osai_grafico","elim",1);
+        $scope.$digest();
+      });
+    }
   });
   /**
    * Acciones de vista CLIENTES
-   * Solo accedido por usuarios nivel 1 y 2
+   * Consideraciones y posibles mejoras:
+   ** ----
+   * Actualmente el usuario con ID 12 es Agenda nacional, sin posiblidad de cambiar categoría - esto es
+   * para facilitar la codificación; pero, se debería poder elegir qué usuario tiene ese poder o tener
+   * más de una AGENDA NACIONAL.
+   * Para diferenciar un usuario normal de AGENDA, es por medio del flag "TODO" de la tabla CLIENTE
+   **
+   * MEJORAS:
+   * (*) Poder agregar una AGENDA
+   * (*) Nacional / Internacional (?)
    */
-  app.controller("clientes", function ($scope) {
+  app.controller("clientes", function ($scope,$rootScope) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     $(".nav_ul a[data-url='clientes']").addClass("active");
+    $scope.change = function(t) {
+      //   modal.find(".modal-title").text("AGENDA NACIONAL");
 
-    let agendas = null;
-    userDATOS.busqueda({"value":1,"tabla":"cliente","column":"todos","retorno":0}, function(d) {
-      agendas = d;
-    });
-    let htmlAgendaContenedor = "";
-    for(var i in agendas) {
-      htmlAgendaContenedor += "<p class='text-left m-0'>" + agendas[i]["nombre"] + "<i class='text-success ml-2 fas fa-check-circle'></i></p>";
+      //   htmlBody += `<label style="font-size:1.8em">Ingrese su clave del sistema</label>`;
+      //   htmlBody += `<input class="form-control" ng-model="passOsai" type="password" required/>`;
+      //   modal.find(".modal-body").html(htmlBody);
+      //   modal.find(".modal-footer").html(`<button ng-disabled="modal_form.$invalid" type="submit" class="btn btn primary text-uppercase">verificar</button>`);
+      //   $rootScope.$digest();
+      //   modal.modal("show");
+      // }
+      if(t == "user") {
+        htmlBody = `<h3 class="text-center">Validación</h3>`;
+        htmlBody += `<p class="mb-0">Proceso para cambiar usuario de <strong>AGENDA NACIONAL</strong>.</p>`
+        htmlBody += `<p class="">Ingrese su contraseña del sistema</p>`;
+        $.MessageBox({
+          buttonDone: "Continuar",
+          message: htmlBody,
+          input: {
+            pass : {
+              type: "password",
+              title: "Contraseña",
+              autotrim: true,
+            }
+          },
+          top: "auto",
+          filterDone: function(data){
+            if(data.pass == "") {
+              userDATOS.notificacion("Dato necesario","error")
+              return false;
+            }
+            user = null
+            userDATOS.busqueda({tabla:"usuario",value: window.user_id}, function(d) {
+              user = d;
+            });
+            if(md5(data.pass) != user.pass) {
+              userDATOS.notificacion("Contraseña incorrecta","error")
+              return false;
+            }
+            userDATOS.log(window.user_id,"En proceso de cambiar USUARIO de AGENDA NACIONAL",0,12,"usuario");
+          }
+        }).done(function(data, button){
+          htmlBody = `<h3 class="text-center">Agenda Nacional</h3>`;
+          htmlBody += `<p>Usuario actual ${window.usuarioAgenda}</p>`;
+          $.MessageBox({
+            buttonDone      : "Cambiar",
+            buttonFail      : "Cancelar",
+            message: htmlBody,
+            input: {
+              user : {
+                type: "text",
+                label: "Usuario nuevo",
+                title: "Usuario",
+                autotrim: true,
+              },
+              pass : {
+                type: "password",
+                label: "Contraseña del usuario de AGENDA NACIONAL",
+                title: "Contraseña",
+                autotrim: true,
+              }
+            },
+            top: "auto",
+            filterDone: function(dataB){
+              if(dataB.user == "" || dataB.pass == "") {
+                userDATOS.notificacion("Todos los datos son necesarios","error")
+                return false;
+              }
+              agenda = null;
+              userDATOS.busqueda({tabla: "osai_usuario", value: 12, column: "id_cliente"}, function(d) {
+                agenda = d;
+              });
+              if(md5(dataB.pass) != agenda.pass) {
+                userDATOS.notificacion("Contraseña incorrecta","error")
+                return false;
+              }
+              userDATOS.log(window.user_id,"Cambio de USUARIO de AGENDA NACIONAL",0,12,"usuario");
+            }
+          }).done(function(dataB,button) {
+            userDATOS.change(4,"osai_usuario","user",dataB.user);
+            userDATOS.notificacion("USUARIO cambiado");
+            userDATOS.busqueda({"value":1,"tabla":"cliente","column":"todos"}, function(agenda) {
+              let htmlAgendaContenedor = "";
+              htmlAgendaContenedor += `<p class="text-center">${agenda["nombre"]}<i class="text-success ml-2 fas fa-check-circle"></i></p>`;
+              userDATOS.busqueda({value: agenda.id, tabla: "osai_usuario", column: "id_cliente"}, function(oc) {
+                window.usuarioAgenda = oc["user"];
+                htmlAgendaContenedor += `<p class=""><strong class="mr-2">Usuario:</strong>${oc["user"]}</p>`;
+                htmlAgendaContenedor += `<p class="mb-0"><strong class="mr-2">Clave:</strong>${("*").repeat(parseInt(oc["tam"]))}</p>`;
+                htmlAgendaContenedor += `<hr/>`;
+                htmlAgendaContenedor += `<button ng-click="change('user')" class="btn btn-block btn-primary text-center">Cambiar nombre de usuario</button>`;
+                htmlAgendaContenedor += `<button ng-click="change('pass')" class="btn btn-block btn-dark mt-2 text-center">Cambiar clave</button>`;
+                $scope.htmlAgenda = htmlAgendaContenedor;
+                $scope.$digest();
+              });
+            });
+          });
+        });
+      } else {
+        htmlBody = `<h3 class="text-center">Validación</h3>`;
+        htmlBody += `<p class="mb-0">Proceso para cambiar contraseña de <strong>AGENDA NACIONAL</strong>.</p>`
+        htmlBody += `<p class="">Ingrese su contraseña del sistema</p>`;
+        $.MessageBox({
+          buttonDone: "Continuar",
+          message: htmlBody,
+          input: {
+            pass : {
+              type: "password",
+              title: "Contraseña",
+              autotrim: true,
+            }
+          },
+          top: "auto",
+          filterDone: function(data){
+            if(data.pass == "") {
+              userDATOS.notificacion("Dato necesario","error")
+              return false;
+            }
+            user = null
+            userDATOS.busqueda({tabla:"usuario",value: window.user_id}, function(d) {
+              user = d;
+            });
+            if(md5(data.pass) != user.pass) {
+              userDATOS.notificacion("Contraseña incorrecta","error")
+              return false;
+            }
+            userDATOS.log(window.user_id,"En proceso de cambiar CONTRASEÑA de AGENDA NACIONAL",0,12,"usuario");
+          }
+        }).done(function(data, button){
+          htmlBody = `<h3 class="text-center">Agenda Nacional</h3>`;
+          htmlBody += `<p>Usuario ${window.usuarioAgenda}</p>`;
+          $.MessageBox({
+            buttonDone      : "Cambiar",
+            buttonFail      : "Cancelar",
+            message: htmlBody,
+            input: {
+              pass : {
+                type: "password",
+                label: "Contraseña del usuario de AGENDA NACIONAL",
+                title: "Contraseña",
+                autotrim: true,
+              },
+              passNew : {
+                type: "password",
+                label: "Contraseña nueva",
+                title: "Contraseña",
+                autotrim: true,
+              },
+              passNewR : {
+                type: "password",
+                label: "Repita contraseña nueva",
+                title: "Contraseña",
+                autotrim: true,
+              }
+            },
+            top: "auto",
+            filterDone: function(dataB){
+              if(dataB.passNew == "" || dataB.passNewR == "" || dataB.pass == "") {
+                userDATOS.notificacion("Todos los datos son necesarios","error")
+                return false;
+              }
+              if(dataB.passNew != dataB.passNewR) {
+                userDATOS.notificacion("Las contraseñas no coinciden","error")
+                return false;
+              }
+              agenda = null;
+              userDATOS.busqueda({tabla: "osai_usuario", value: 12, column: "id_cliente"}, function(d) {
+                agenda = d;
+              });
+              if(md5(dataB.pass) != agenda.pass) {
+                userDATOS.notificacion("Contraseña incorrecta","error")
+                return false;
+              }
+              userDATOS.log(window.user_id,"Cambio de CONTRASEÑA de AGENDA NACIONAL",0,12,"usuario");
+            }
+          }).done(function(dataB,button) {
+            userDATOS.change(4,"osai_usuario","pass",md5(dataB.passNew));
+            userDATOS.change(4,"osai_usuario","tam",dataB.passNew.length);
+            userDATOS.notificacion("CONTRASEÑA cambiada");
+            userDATOS.busqueda({"value":1,"tabla":"cliente","column":"todos"}, function(agenda) {
+              let htmlAgendaContenedor = "";
+              htmlAgendaContenedor += `<p class="text-center">${agenda["nombre"]}<i class="text-success ml-2 fas fa-check-circle"></i></p>`;
+              userDATOS.busqueda({value: agenda.id, tabla: "osai_usuario", column: "id_cliente"}, function(oc) {
+                window.usuarioAgenda = oc["user"];
+                htmlAgendaContenedor += `<p class=""><strong class="mr-2">Usuario:</strong>${oc["user"]}</p>`;
+                htmlAgendaContenedor += `<p class="mb-0"><strong class="mr-2">Clave:</strong>${("*").repeat(parseInt(oc["tam"]))}</p>`;
+                htmlAgendaContenedor += `<hr/>`;
+                htmlAgendaContenedor += `<button ng-click="change('user')" class="btn btn-block btn-primary text-center">Cambiar nombre de usuario</button>`;
+                htmlAgendaContenedor += `<button ng-click="change('pass')" class="btn btn-block btn-dark mt-2 text-center">Cambiar clave</button>`;
+                $scope.htmlAgenda = htmlAgendaContenedor;
+                $scope.$digest();
+              });
+            });
+          });
+        });
+      }
     }
-    if(htmlAgendaContenedor == "") htmlAgendaContenedor = "<p class='text-center m-0 text-uppercase'>sin agendas</p>"
-    $scope.htmlAgenda = htmlAgendaContenedor;
+    userDATOS.busqueda({"value":1,"tabla":"cliente","column":"todos"}, function(agenda) {
+      let htmlAgendaContenedor = "";
+      if(agenda !== null) {
+        htmlAgendaContenedor += `<p class="text-center">${agenda["nombre"]}<i class="text-success ml-2 fas fa-check-circle"></i></p>`;
+        //BUSCAR
+        userDATOS.busqueda({value: agenda.id, tabla: "osai_usuario", column: "id_cliente"}, function(oc) {
+          if(oc !== null) {
+            window.usuarioAgenda = oc["user"];
+            htmlAgendaContenedor += `<p class=""><strong class="mr-2">Usuario:</strong>${oc["user"]}</p>`;
+            htmlAgendaContenedor += `<p class="mb-0"><strong class="mr-2">Clave:</strong>${("*").repeat(parseInt(oc["tam"]))}</p>`;
+            htmlAgendaContenedor += `<hr/>`;
+            htmlAgendaContenedor += `<button ng-click="change('user')" class="btn btn-block btn-primary text-center">Cambiar nombre de usuario</button>`;
+            htmlAgendaContenedor += `<button ng-click="change('pass')" class="btn btn-block btn-dark mt-2 text-center">Cambiar clave</button>`;
+            $scope.htmlAgenda = htmlAgendaContenedor;
+            $scope.$digest();
+          } else {
+            htmlAgendaContenedor += `<button class="btn btn-block btn-primary text-center">Agregar usuario</button>`;
+            $scope.htmlAgenda = htmlAgendaContenedor;
+            $scope.$digest();
+          }
+        }, true);
+      } else {
+        htmlAgendaContenedor = "<p class='text-center m-0 text-uppercase'>sin agendas</p>";
+        $scope.htmlAgenda = htmlAgendaContenedor;
+        $scope.$digest();
+      }
+    },true);
 
     userDATOS.listador("#t_clientes",pyrusCliente,false);
 
@@ -1826,14 +2224,17 @@ if(userDATOS.verificar(1)) {
     service_simat.noticias($scope);
     window.noticiasCHECKED = {};
 
-    selectMEDIOS = userDATOS.noticiasSELECT("relevo");
-    $scope.mediosSELECT = selectMEDIOS.medio;
-    $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
-    $scope.seccionSELECT = selectMEDIOS.seccion;
-    $scope.unidadSELECT = null;
+    userDATOS.noticiasSELECT("relevo",null, function(selectMEDIOS) {
+      $scope.mediosSELECT = selectMEDIOS.medio;
+      $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+      $scope.seccionSELECT = selectMEDIOS.seccion;
+      $scope.$digest();
+    });
+    
     userDATOS.busquedaTabla("cliente", function(d) {
       $scope.unidadSELECT = d;
-    });
+      $scope.$digest();
+    }, null, true);
     $(".select__2").select2();
 
     scopeNoticias = function($scope) {
@@ -1871,15 +2272,18 @@ if(userDATOS.verificar(1)) {
       //tabla_noticia.draw();
     });
     $("#btn_limpiar").on("click",function() {
-      $("#fecha_min").val("");
-      $("#fecha_max").val("");
-      $("#titulo").val("");
-      if($("#select_seccion").val().length == 0)
-        $("#select_seccion").empty().trigger("change");
-      if($("#select_medioTipoNOTICIA").val() != "")
-        $("#select_medioTipoNOTICIA").val("").trigger("change");
-      if($("#select_medioNOTICIA").val() != "")
-        $("#select_medioNOTICIA").val("").trigger("change");
+      $("#select_medioNOTICIA").val("");
+      $("#select_medioTipoNOTICIA").val("");
+      $("#select_seccion").val([]);
+      userDATOS.noticiasSELECT("relevo",null, function(selectMEDIOS) {
+        $("#fecha_min").val("");
+        $("#fecha_max").val("");
+        $("#titulo").val("");
+        $scope.mediosSELECT = selectMEDIOS.medio;
+        $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+        $scope.seccionSELECT = selectMEDIOS.seccion;
+        $scope.$digest();
+      });
 
       $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccion").select2();
       tabla_noticia.destroy();
@@ -1892,63 +2296,38 @@ if(userDATOS.verificar(1)) {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccion").val();
-      m = userDATOS.noticiasSELECT("relevo",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion})
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccion").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccion").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-      $("#select_medioTipoNOTICIA option[value=''],#select_seccion option[value='']").removeAttr("disabled");
-      $("#select_medioTipoNOTICIA,#select_seccion").select2()
+      userDATOS.noticiasSELECT("relevo",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion}, function(m) {
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion
+        $scope.$digest();
+      });
     })
     $("#select_medioTipoNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccion").val();
-      m = userDATOS.noticiasSELECT("relevo",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccion").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccion").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-      $("#select_medioNOTICIA option[value=''],#select_seccion option[value='']").removeAttr("disabled");
-      $("#select_medioNOTICIA,#select_seccion").select2()
+      userDATOS.noticiasSELECT("relevo",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        $scope.$digest();
+      });
     })
     $("#select_seccion").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccion").val();
-      m = userDATOS.noticiasSELECT("relevo",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      $("#select_medioNOTICIA option[value=''],#select_medioTipoNOTICIA option[value='']").removeAttr("disabled");
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA").select2()
-    })
+      userDATOS.noticiasSELECT("relevo",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        $scope.$digest();
+      });
+    });
 
     userDATOS.eliminarNOTICIA = function() {
       if(window.noticiasCHECKED == null) userDATOS.notificacion(strings.noticia.sinSeleccion,"error");
@@ -2046,17 +2425,20 @@ if(userDATOS.verificar(1)) {
     userDATOS.selectOption("select_periodista","periodista");
     userDATOS.selectOption("select_medioTipo","");
 
-    selectMEDIOS = userDATOS.noticiasSELECT("procesada");
-
-    $scope.mediosSELECT = selectMEDIOS.medio;
-    $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
-    $scope.seccionSELECT = selectMEDIOS.seccion;
-    $scope.unidadSELECT = selectMEDIOS.unidad;
+    userDATOS.noticiasSELECT("procesada", null, function(selectMEDIOS){
+      $scope.mediosSELECT = selectMEDIOS.medio;
+      $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+      $scope.seccionSELECT = selectMEDIOS.seccion;
+      $scope.unidadSELECT = selectMEDIOS.unidad;
+      $scope.temaSELECT = selectMEDIOS.tema;
+      $scope.actorSELECT = selectMEDIOS.actor;
+      $scope.$digest();
+    });
     $(".select__2").select2();
-    userDATOS.selectOption("select_medio","medio","medio");
-    userDATOS.selectOption("select_medioAlcance","medio_tipo");
-    userDATOS.selectOption("select_periodista","periodista");
-    userDATOS.selectOption("select_medioTipo","");
+    // userDATOS.selectOption("select_medio","medio","medio");
+    // userDATOS.selectOption("select_medioAlcance","medio_tipo");
+    // userDATOS.selectOption("select_periodista","periodista");
+    // userDATOS.selectOption("select_medioTipo","");
 
     $("#btn_filtro").on("click",function() {
       let minDateFilter = $('#fecha_min').val();
@@ -2066,8 +2448,10 @@ if(userDATOS.verificar(1)) {
       let tituloFilter = $('#titulo').val();
       let seccionFilter = $('#select_seccionBUSCADOR').val();
       let unidadFilter = $("#select_unidadNOTICIA").val();
-      data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter),"unidadFilter":unidadFilter}
-      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0 && unidadFilter == "") {
+      let temasFilter = $("#select_temas").val();
+      let actoresFilter = $("#select_actores").val();
+      data = {"estado":2,"minDateFilter":minDateFilter,"maxDateFilter":maxDateFilter,"medioFilter":medioFilter,"medioTipoFilter":medioTipoFilter,"tituloFilter":tituloFilter,"seccionFilter":JSON.stringify(seccionFilter),"unidadFilter":unidadFilter,"temasFilter":temasFilter,"actoresFilter":actoresFilter}
+      if(minDateFilter == "" && maxDateFilter == "" && medioFilter == "" && medioTipoFilter == "" && tituloFilter == "" && seccionFilter.length == 0 && unidadFilter == "" && temasFilter.length == 0 && actoresFilter.length == 0) {
         userDATOS.notificacion(strings.faltan.datosBusqueda,"error");
         return false;
       }
@@ -2086,17 +2470,24 @@ if(userDATOS.verificar(1)) {
     })
 
     $("#btn_limpiar").on("click",function() {
-      $("#fecha_min").val("");
-      $("#fecha_max").val("");
-      $("#titulo").val("");
-      if($("#select_seccionBUSCADOR").val().length == 0)
-        $("#select_seccionBUSCADOR").empty().trigger("change");
-      if($("#select_medioTipoNOTICIA").val() != "")
-        $("#select_medioTipoNOTICIA").val("").trigger("change");
-      if($("#select_medioNOTICIA").val() != "")
-        $("#select_medioNOTICIA").val("").trigger("change");
-
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccionBUSCADOR").select2();
+      $("#select_medioNOTICIA").val("");
+      $("#select_medioTipoNOTICIA").val("");
+      $("#select_seccionBUSCADOR").val([]);
+      $("#select_unidadNOTICIA").val("");
+      $("#select_temas").val([]);
+      $("#select_actores").val([]);
+      userDATOS.noticiasSELECT("procesada",null,function(selectMEDIOS) {
+        $("#fecha_min").val("");
+        $("#fecha_max").val("");
+        $("#titulo").val("");
+        $scope.mediosSELECT = selectMEDIOS.medio;
+        $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+        $scope.seccionSELECT = selectMEDIOS.seccion;
+        $scope.unidadSELECT = selectMEDIOS.unidad;
+        $scope.temaSELECT = selectMEDIOS.tema;
+        $scope.actorSELECT = selectMEDIOS.actor;
+        $scope.$digest();
+      });
       tabla_noticia.destroy();
       $("#t_data").addClass("animate-flicker")
       setTimeout(function() {
@@ -2109,106 +2500,128 @@ if(userDATOS.verificar(1)) {
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-
-      if(unidad == "") {
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-      }
-      $("#select_medioTipoNOTICIA,#select_seccionBUSCADOR,#select_unidadNOTICIA").select2();
-    })
+      temasFilter = $("#select_temas").val();
+      actoresFilter = $("#select_actores").val();
+      userDATOS.noticiasSELECT("procesada",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad,"temasFilter":temasFilter,"actoresFilter":actoresFilter}, function(m) {
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;    
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        if(temasFilter.length == 0)
+          $scope.temaSELECT = m.tema;
+        if(actoresFilter.length == 0)
+          $scope.actorSELECT = m.actor;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        $scope.$digest();
+      });
+    });
     $("#select_medioTipoNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-
-      if(unidad == "") {
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-      }
-      $("#select_medioNOTICIA,#select_seccionBUSCADOR,#select_unidadNOTICIA").select2()
+      temasFilter = $("#select_temas").val();
+      actoresFilter = $("#select_actores").val();
+      userDATOS.noticiasSELECT("procesada",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad,"temasFilter":temasFilter,"actoresFilter":actoresFilter}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        if(temasFilter.length == 0)
+          $scope.temaSELECT = m.tema;
+        if(actoresFilter.length == 0)
+          $scope.actorSELECT = m.actor;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        $scope.$digest();
+      });
     })
     $("#select_seccionBUSCADOR").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(unidad == "") {
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-      }
-
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_unidadNOTICIA").select2()
+      temasFilter = $("#select_temas").val();
+      actoresFilter = $("#select_actores").val();
+      userDATOS.noticiasSELECT("procesada",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad,"temasFilter":temasFilter,"actoresFilter":actoresFilter}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(temasFilter.length == 0)
+          $scope.temaSELECT = m.tema;
+        if(actoresFilter.length == 0)
+          $scope.actorSELECT = m.actor;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        $scope.$digest();
+      });
     });
     $("#select_unidadNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccionBUSCADOR").select2()
+      temasFilter = $("#select_temas").val();
+      actoresFilter = $("#select_actores").val();
+      userDATOS.noticiasSELECT("procesada",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad,"temasFilter":temasFilter,"actoresFilter":actoresFilter}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        if(temasFilter.length == 0)
+          $scope.temaSELECT = m.tema;
+        if(actoresFilter.length == 0)
+          $scope.actorSELECT = m.actor;
+        $scope.$digest();
+      });
+    });
+    $("#select_temas").on("change",function() {
+      medio = $("#select_medioNOTICIA").val();
+      medioTipo = $("#select_medioTipoNOTICIA").val();
+      seccion = $("#select_seccionBUSCADOR").val();
+      unidad = $("#select_unidadNOTICIA").val();
+      temasFilter = $("#select_temas").val();
+      actoresFilter = $("#select_actores").val();
+      userDATOS.noticiasSELECT("procesada",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad,"temasFilter":temasFilter,"actoresFilter":actoresFilter}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        // $scope.temaSELECT = m.tema;
+        if(actoresFilter.length == 0)
+          $scope.actorSELECT = m.actor;
+        $scope.$digest();
+      });
+    });
+    $("#select_actores").on("change",function() {
+      medio = $("#select_medioNOTICIA").val();
+      medioTipo = $("#select_medioTipoNOTICIA").val();
+      seccion = $("#select_seccionBUSCADOR").val();
+      unidad = $("#select_unidadNOTICIA").val();
+      temasFilter = $("#select_temas").val();
+      actoresFilter = $("#select_actores").val();
+      userDATOS.noticiasSELECT("procesada",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad,"temasFilter":temasFilter,"actoresFilter":actoresFilter}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        if(temasFilter.length == 0)
+          $scope.temaSELECT = m.tema;
+        // $scope.actorSELECT = m.actor;
+        $scope.$digest();
+      });
     });
     scopeNoticias = function($scope,key,value) {
       $scope.$apply(function () {
@@ -2226,6 +2639,7 @@ if(userDATOS.verificar(1)) {
       let proceso = [];
       let procesos = null;
       let msg = "";
+      userDATOS.notificacion("Trayendo datos necesarios. Espere","info",false);
       userDATOS.busqueda({"value":row.id,"tabla":"noticia"}, function(noticia) {
 
         if(parseInt(noticia.estado_num) == 3) {
@@ -2285,35 +2699,14 @@ if(userDATOS.verificar(1)) {
               id_usuario = window.user_id;//USUARIO de OSAI que generó esto
               
               setTimeout(function() {
-              //   data.forEach(cliente => {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
-              //     aux = {};
-              //     aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
-              //     aux["id_usuario_osai"] = cliente;
-              //     /** 
-              //      * Si se encuentra dentro del ARRAY proceso, significa que la noticia que se proceso
-              //      * va dirigida al usuario seleccionado -> Se agrega el flag tipo_aviso = 1
-              //      */
-              //     if(proceso.includes(cliente))
-              //       aux["tipo_aviso"] = 1;
-                  
-              //     userDATOS.insertDatos("osai_cliente",aux,function(id_osai_cliente) {
-              //       userDATOS.log(window.user_id,"NOTICIA publicada",0,id_osai_cliente,"osai_cliente");
-              //     },true);
-              //     userDATOS.insertDatos("osai_notificacion",
-              //       {"id_usuario":id_usuario,
-              //       "id_noticia":noticia.id,
-              //       "id_usuario_osai":cliente,
-              //       "mensaje": data.input_detalle,
-              //       "nivel": 0,
-              //       "estado": 1});
-              //   });
 
-                selectMEDIOS = userDATOS.noticiasSELECT("procesada");
+                userDATOS.noticiasSELECT("procesada", null, function(selectMEDIOS) {
+                  angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
+                  angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
+                  angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
+                  angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
+                });
                 tabla_noticia.draw();
-                angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
-                angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
-                angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
-                angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
                 scopeNoticias(angular.element($(".submenu")).scope(),"procesadas",-1);
               },500);
             });
@@ -2966,12 +3359,13 @@ if(userDATOS.verificar(1)) {
 
     factory_simat.load("noticias3");
 
-    selectMEDIOS = userDATOS.noticiasSELECT("procesar");
-
-    $scope.mediosSELECT = selectMEDIOS.medio;
-    $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
-    $scope.seccionSELECT = selectMEDIOS.seccion;
-    $scope.unidadSELECT = selectMEDIOS.unidad;
+    userDATOS.noticiasSELECT("procesar", null, function(selectMEDIOS) {
+      $scope.mediosSELECT = selectMEDIOS.medio;
+      $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+      $scope.seccionSELECT = selectMEDIOS.seccion;
+      $scope.unidadSELECT = selectMEDIOS.unidad;
+      $scope.$digest();
+    });
     $(".select__2").select2();
 
     userDATOS.selectOption("select_medio","medio","medio");
@@ -3016,20 +3410,20 @@ if(userDATOS.verificar(1)) {
       //tabla_noticia.draw();
     })
     $("#btn_limpiar").on("click",function() {
-      $("#fecha_min").val("");
-      $("#fecha_max").val("");
-      $("#titulo").val("");
-
-      
-      if($("#select_seccionBUSCADOR").val().length == 0)
-        $("#select_seccionBUSCADOR").empty().trigger("change");
-      if($("#select_unidadNOTICIA").val().length == 0)
-        $("#select_unidadNOTICIA").empty().trigger("change");
-        
-      if($("#select_medioTipoNOTICIA").val() != "")
-        $("#select_medioTipoNOTICIA").val("").trigger("change");
-      if($("#select_medioNOTICIA").val() != "")
-        $("#select_medioNOTICIA").val("").trigger("change");
+      $("#select_medioNOTICIA").val("");
+      $("#select_medioTipoNOTICIA").val("");
+      $("#select_seccionBUSCADOR").val([]);
+      $("#select_unidadNOTICIA").val("");
+      userDATOS.noticiasSELECT("procesar", null, function(selectMEDIOS) {
+        $("#fecha_min").val("");
+        $("#fecha_max").val("");
+        $("#titulo").val("");
+        $scope.mediosSELECT = selectMEDIOS.medio;
+        $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+        $scope.seccionSELECT = selectMEDIOS.seccion;
+        $scope.unidadSELECT = selectMEDIOS.unidad;
+        $scope.$digest();
+      });
 
       tabla_noticia.destroy();
       $("#t_data").html("");
@@ -3043,106 +3437,60 @@ if(userDATOS.verificar(1)) {
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-
-      if(unidad == "") {
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-      }
-      $("#select_medioTipoNOTICIA,#select_seccionBUSCADOR,#select_unidadNOTICIA").select2();
-    })
+      userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad}, function(m) {
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        $scope.$digest();
+      });
+    });
     $("#select_medioTipoNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-
-      if(unidad == "") {
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-      }
-      $("#select_medioNOTICIA,#select_seccionBUSCADOR,#select_unidadNOTICIA").select2()
+      userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        $scope.$digest();
+      });
     })
     $("#select_seccionBUSCADOR").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(unidad == "") {
-        $("#select_unidadNOTICIA").html("<option value=''></option>");
-        for(var i in m.unidad)
-          $("#select_unidadNOTICIA").append("<option value='" + i + "'>" + m.unidad[i] + "</option>");
-      }
-
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_unidadNOTICIA").select2()
+      userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(unidad == "")
+          $scope.unidadSELECT = m.unidad;
+        $scope.$digest();
+      });
     });
     $("#select_unidadNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccionBUSCADOR").val();
       unidad = $("#select_unidadNOTICIA").val();
-      m = userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccionBUSCADOR").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccionBUSCADOR").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccionBUSCADOR").select2()
+      userDATOS.noticiasSELECT("procesar",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        $scope.$digest();
+      });
     });
 
     userDATOS.submit = function(t) {
@@ -3554,11 +3902,12 @@ if(userDATOS.verificar(1)) {
 
     service_simat.noticias($scope);
 
-    selectMEDIOS = userDATOS.noticiasSELECT();
-    $scope.mediosSELECT = selectMEDIOS.medio;
-    $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
-    $scope.seccionSELECT = selectMEDIOS.seccion;
-
+    userDATOS.noticiasSELECT("",null, function(selectMEDIOS) {
+      $scope.mediosSELECT = selectMEDIOS.medio;
+      $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+      $scope.seccionSELECT = selectMEDIOS.seccion;
+      $scope.$digest();
+    });
     $(".select__2").select2()
     factory_simat.load("noticias");
 
@@ -3589,18 +3938,18 @@ if(userDATOS.verificar(1)) {
       },500);
     });
     $("#btn_limpiar").on("click",function() {
-      $("#fecha_min").val("");
-      $("#fecha_max").val("");
-      $("#titulo").val("");
-      if($("#select_seccion").val().length == 0)
-        $("#select_seccion").empty().trigger("change");
-      if($("#select_medioTipoNOTICIA").val() != "")
-        $("#select_medioTipoNOTICIA").val("").trigger("change");
-      if($("#select_medioNOTICIA").val() != "")
-        $("#select_medioNOTICIA").val("").trigger("change");
-
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA,#select_seccion").select2();
-      
+      $("#select_medioNOTICIA").val("");
+      $("#select_medioTipoNOTICIA").val("");
+      $("#select_seccion").val([]);
+      userDATOS.noticiasSELECT("",null, function(selectMEDIOS) {
+        $("#fecha_min").val("");
+        $("#fecha_max").val("");
+        $("#titulo").val("");
+        $scope.mediosSELECT = selectMEDIOS.medio;
+        $scope.mediostipoSELECT = selectMEDIOS.medio_tipo;
+        $scope.seccionSELECT = selectMEDIOS.seccion;
+        $scope.$digest();
+      });
       tabla_noticia.destroy();
       $("#t_data").html("");
       $("#t_data").addClass("animate-flicker");
@@ -3612,63 +3961,38 @@ if(userDATOS.verificar(1)) {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccion").val();
-      m = userDATOS.noticiasSELECT("noticia",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion})
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccion").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccion").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-      $("#select_medioTipoNOTICIA option[value=''],#select_seccion option[value='']").removeAttr("disabled");
-      $("#select_medioTipoNOTICIA,#select_seccion").select2()
-    })
+      userDATOS.noticiasSELECT("noticia",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion}, function(m) {
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        $scope.$digest();
+      });
+    });
     $("#select_medioTipoNOTICIA").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccion").val();
-      m = userDATOS.noticiasSELECT("noticia",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(seccion.length == 0) {
-        $("#select_seccion").html("<option value=''></option>");
-        for(var i in m.seccion)
-          $("#select_seccion").append("<option value='" + i + "'>" + m.seccion[i] + "</option>");
-      }
-      $("#select_medioNOTICIA option[value=''],#select_seccion option[value='']").removeAttr("disabled");
-      $("#select_medioNOTICIA,#select_seccion").select2()
-    })
+      userDATOS.noticiasSELECT("noticia",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(seccion.length == 0)
+          $scope.seccionSELECT = m.seccion;
+        $scope.$digest();
+      });
+    });
     $("#select_seccion").on("change",function() {
       medio = $("#select_medioNOTICIA").val();
       medioTipo = $("#select_medioTipoNOTICIA").val();
       seccion = $("#select_seccion").val();
-      m = userDATOS.noticiasSELECT("noticia",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion})
-
-      if(medio == "") {
-        $("#select_medioNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio)
-          $("#select_medioNOTICIA").append("<option value='" + i + "'>" + m.medio[i] + "</option>");
-      }
-
-      if(medioTipo == "") {
-        $("#select_medioTipoNOTICIA").html("<option value=''></option>");
-        for(var i in m.medio_tipo)
-          $("#select_medioTipoNOTICIA").append("<option value='" + i + "'>" + m.medio_tipo[i] + "</option>");
-      }
-
-      $("#select_medioNOTICIA option[value=''],#select_medioTipoNOTICIA option[value='']").removeAttr("disabled");
-      $("#select_medioNOTICIA,#select_medioTipoNOTICIA").select2()
-    })
+      userDATOS.noticiasSELECT("noticia",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion}, function(m) {
+        if(medio == "")
+          $scope.mediosSELECT = m.medio;
+        if(medioTipo == "")
+          $scope.mediostipoSELECT = m.medio_tipo;
+        $scope.$digest();
+      });
+    });
     //$("#div").addClass("d-none");
   });
 } else window.location = "index.html";
@@ -3850,7 +4174,10 @@ $(document).ready(function() {
   $("#tabla_notificacion_viejas").on("scroll", function() {
     var ele = document.getElementById('tabla_notificacion_viejas');
     if(ele.scrollHeight - ele.scrollTop === ele.clientHeight) {
-       userDATOS.verificarNotificacion("#tabla_notificacion_viejas",1);
+      if(window["scroll_notificacion_vieja"] === undefined) {
+        window["scroll_notificacion_vieja"] = 1;
+        userDATOS.verificarNotificacion("#tabla_notificacion_viejas",1,false);
+      }
     }
   });
  $("#tabla_notificacion").on("scroll", function() {

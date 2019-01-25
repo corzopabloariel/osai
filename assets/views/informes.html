@@ -1,98 +1,156 @@
-<div class="container text-dark">
-  <fieldset class="w-50 mx-auto" style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
-    <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">informes del sistema</legend>
-    <div class="card shadow-sm bg-white text-dark rounded-0 mt-2">
-      <div class="card-body">
-        <div class="row">
-          <div class="col-4">
-            <h3 class="m-0 text-center">Desde</h3>
-          </div>
-          <div class="col-4">
-            <h3 class="m-0 text-center">Hasta</h3>
-          </div>
-          <div class="col-4">
-            <h3 class="m-0 text-center">U. Análisis</h3>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-4">
-            <input type="date" class="form-control rounded-0" id="fecha_min" value="">
-          </div>
-          <div class="col-4">
-            <input type="date" class="form-control rounded-0" id="fecha_max" value="">
-          </div>
-          <div class="col-4 d-flex flex-column align-items-center">
-            <div class="w-100">
-              <div class="input-group w-100">
-                <select class="custom-select w-100 select__2" name="select_unidad" id="select_unidad" style="" data-placeholder="Seleccione">
-                  <option value=""></option>
-                  <option ng-repeat="(id,u) in unidad" value="{{id}}">{{u}}</option>
-                </select>
+<div class="container-fluid text-dark">
+  <div class="row">
+    <div class="col-6">
+      <fieldset class="" style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+        <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">informes del sistema</legend>
+        <div class="card shadow-sm bg-white text-dark rounded-0 mt-2">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-4">
+                <h3 class="m-0 text-center">Desde</h3>
+              </div>
+              <div class="col-4">
+                <h3 class="m-0 text-center">Hasta</h3>
+              </div>
+              <div class="col-4">
+                <h3 class="m-0 text-center">U. Análisis</h3>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-4">
+                <input type="date" class="form-control rounded-0" id="fecha_min" value="">
+              </div>
+              <div class="col-4">
+                <input type="date" class="form-control rounded-0" id="fecha_max" value="">
+              </div>
+              <div class="col-4 d-flex flex-column align-items-center">
+                <div class="w-100">
+                  <div class="input-group w-100">
+                    <select class="custom-select w-100 select__2" name="select_unidad" id="select_unidad" style="" data-placeholder="Seleccione">
+                      <option value=""></option>
+                      <option ng-repeat="(id,u) in unidad" value="{{id}}">{{u}}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12">
+                <table class="table m-0">
+                  <thead>
+                    <th>Enlace</th>
+                    <th>Descripción</th>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="(id,grafico) in graficoTable">
+                      <td><a data-tipo="" href="http://93.188.164.27/{{ grafico.url }}" target="_blank">{{ grafico.name }}</a></td>
+                      <td>{{ grafico.description }}</td>
+                    </tr>
+                    <!--<tr>
+                      <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 1</a></td>
+                      <td>Actores agrupados por atributos</td>
+                    </tr>
+                    <tr>
+                      <td><a data-version="2" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 2</a></td>
+                      <td>Actores agrupados por oposición / oficialismo</td>
+                    </tr>
+                    <tr>
+                      <td><a data-version="4" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 4</a></td>
+                      <td>Actores agrupados por partido</td>
+                    </tr>
+                    <tr>
+                      <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_2.html" target="_blank">Gráfico 2</a></td>
+                      <td>Por medio - Anillo de barras</td>
+                    </tr>
+                    <tr>
+                      <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_3.html" target="_blank">Gráfico 3</a></td>
+                      <td>Actores agrupados por favorabilidad y tema</td>
+                    </tr>
+                    <tr>
+                      <td><a data-tipo="fecha" href="http://93.188.164.27/informes/grafico_4.php" target="_blank">Gráfico 4</a></td>
+                      <td>Vista de actores (referidos y emisores)</td>
+                    </tr>
+                    <tr>
+                      <td><a data-tipo="fecha" href="http://93.188.164.27/informes/grafico_5.php" target="_blank">Gráfico 5</a></td>
+                      <td>Comparación de temas entre partidos</td>
+                    </tr>
+                    <tr>
+                      <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=1" target="_blank">Gráfico 6 - vista 1</a></td>
+                      <td>Temas de noticias contemplando favorabilidad</td>
+                    </tr>
+                    <tr>
+                      <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=2" target="_blank">Gráfico 6 - vista 2</a></td>
+                      <td>Mención de actores con favorabilidad</td>
+                    </tr>
+                    <tr>
+                      <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=3" target="_blank">Gráfico 6 - vista 3</a></td>
+                      <td>Mención de instituciones con favorabilidad</td>
+                    </tr>
+                    <tr>
+                      <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=4" target="_blank">Gráfico 6 - vista 4</a></td>
+                      <td>Cantidad de noticias con su favorabilidad</td>
+                    </tr>
+                    <tr>
+                      <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=5" target="_blank">Gráfico 6 - vista 5</a></td>
+                      <td>Medios con su favorabilidad</td>
+                    </tr>-->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         </div>
-        <div class="row mt-3">
-          <div class="col-12">
-            <table class="table m-0">
-              <thead>
-                <th>Enlace</th>
-                <th>Descripción</th>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 1</a></td>
-                  <td>Actores agrupados por atributos</td>
-                </tr>
-                <tr>
-                  <td><a data-version="2" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 2</a></td>
-                  <td>Actores agrupados por oposición / oficialismo</td>
-                </tr>
-                <tr>
-                  <td><a data-version="4" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_1.html" target="_blank">Gráfico 1 - vista 4</a></td>
-                  <td>Actores agrupados por partido</td>
-                </tr>
-                <tr>
-                  <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_2.html" target="_blank">Gráfico 2</a></td>
-                  <td>Por medio - Anillo de barras</td>
-                </tr>
-                <tr>
-                  <td><a data-version="1" data-tipo="fecha" href="http://93.188.164.27/informes/grafico_3.html" target="_blank">Gráfico 3</a></td>
-                  <td>Actores agrupados por favorabilidad y tema</td>
-                </tr>
-                <tr>
-                  <td><a data-tipo="fecha" href="http://93.188.164.27/informes/grafico_4.php" target="_blank">Gráfico 4</a></td>
-                  <td>Vista de actores (referidos y emisores)</td>
-                </tr>
-                <tr>
-                  <td><a data-tipo="fecha" href="http://93.188.164.27/informes/grafico_5.php" target="_blank">Gráfico 5</a></td>
-                  <td>Comparación de temas entre partidos</td>
-                </tr>
-                <tr>
-                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=1" target="_blank">Gráfico 6 - vista 1</a></td>
-                  <td>Temas de noticias contemplando favorabilidad</td>
-                </tr>
-                <tr>
-                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=2" target="_blank">Gráfico 6 - vista 2</a></td>
-                  <td>Mención de actores con favorabilidad</td>
-                </tr>
-                <tr>
-                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=3" target="_blank">Gráfico 6 - vista 3</a></td>
-                  <td>Mención de instituciones con favorabilidad</td>
-                </tr>
-                <tr>
-                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=4" target="_blank">Gráfico 6 - vista 4</a></td>
-                  <td>Cantidad de noticias con su favorabilidad</td>
-                </tr>
-                <tr>
-                  <td><a data-tipo="fecha_unidad" href="http://93.188.164.27/informes/grafico_6.php?v=5" target="_blank">Gráfico 6 - vista 5</a></td>
-                  <td>Medios con su favorabilidad</td>
-                </tr>
-              </tbody>
-            </table>
+      </fieldset>
+    </div>
+    <div class="col-6">
+      <fieldset class="" style="display: block; padding-top: 0.35em; padding-left: 0.75em; padding-right: 0.75em; border-top: 2px groove;">
+        <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;">gráficos en clientes</legend>
+        <div class="card shadow-sm bg-white text-dark rounded-0 mt-2">
+          <div class="card-body">
+            <form novalidate ng-init="submitNG = -1" name="formGrafico" ng-submit="submit(this);" onsubmit="event.preventDefault();">
+              <div class="row">
+                <div class="col-4 d-flex flex-column align-items-center">
+                  <div class="w-100">
+                    <div class="input-group w-100">
+                      <select class="custom-select w-100 select__2" ng-name="select_cliente" ng-model="formData.select_cliente" name="select_cliente" id="select_cliente" data-placeholder="Cliente final" data-allow-clear="true" required>
+                        <option value=""></option>
+                        <option ng-repeat="(id,u) in unidad" ng-if="id != 12" value="{{id}}">{{u}}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-4 d-flex flex-column align-items-center">
+                  <div class="w-100">
+                    <div class="input-group w-100">
+                      <select class="custom-select w-100 select__2" ng-name="select_grafico" ng-model="formData.select_grafico" name="select_grafico" id="select_grafico" data-placeholder="Graficos" data-allow-clear="true" requerid>
+                        <option value=""></option>
+                        <option ng-repeat="(id,grafico) in graficoSelect" value="{{ id }}">{{ grafico }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <input class="form-control" ng-name="titulo" ng-model="formData.titulo" id="titulo" type="text" placeholder="TÍTULO DEL GRÁFICO" required/>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-8">
+                  <textarea class="form-control" ng-name="descripcion" ng-model="formData.descripcion" id="descripcion" placeholder="Descripción (200)" required></textarea>
+                </div>
+                <div class="col-4 d-flex align-items-center">
+                  <button ng-disabled="formGrafico.$invalid" id="btnGraficos" type="submit" class="btn btn-lg btn-block w-100 text-center bg-primary text-white text-uppercase">agregar</button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+        <ul class="list-group mt-3" ng-model="cliente" ng-repeat="(id,cliente) in graficos">
+          <li class="list-group-item" style="font-size: 1.3em;">
+            <span class="d-block"><strong>{{ cliente.nombre}}</strong> | {{ cliente.titulo}} ({{ cliente.grafico}})<span class="float-right"><i ng-click="edit( this, cliente )" ng-init="editNG = true;" ng-class="editNG ? 'fas fa-pencil-alt' : 'fas fa-times'" class="cursor-pointer mr-2"></i><i ng-click="remove( this, id );" class="fas fa-trash-alt cursor-pointer text-danger"></i></span></span>
+            <span>{{ cliente.descripcion }}</span>
+          </li>
+        </ul>
+      </fieldset>
     </div>
-  </fieldset>
+  </div>
 </div>

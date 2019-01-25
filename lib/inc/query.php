@@ -173,6 +173,7 @@ switch ($_POST["accion"]) {
     mysqli_close($mysqli);
     break;
   case 'insert':
+    // print_r($_POST["data"]);
     $aux = R::xdispense($_POST["tabla"]);
     foreach($_POST["data"] AS $k => $v)
       $aux[$k] = $v;
@@ -340,11 +341,13 @@ switch ($_POST["accion"]) {
     $sql = "SELECT ";
       $sql .= "(";
         $sql .= "(SELECT count(*) FROM notificacion AS n ";
+          $sql .= "INNER JOIN noticia ON (noticia.id = n.id_noticia AND noticia.elim = 0) ";
           $sql .= "LEFT OUTER JOIN notificacion_usuario AS nu ON ";
           $sql .= "(n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0) ";
         $sql .= "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]} AND nu.id IS NULL)";
         $sql .= " + ";
         $sql .= "(SELECT count(*) FROM notificacion AS n ";
+          $sql .= "INNER JOIN noticia ON (noticia.id = n.id_noticia AND noticia.elim = 0) ";
           $sql .= "INNER JOIN notificacion_usuario AS nu ON ";
           $sql .= "(n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0 AND nu.visto = 0) ";
         $sql .= "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]})";
@@ -384,11 +387,13 @@ switch ($_POST["accion"]) {
     $sql = "SELECT ";
       $sql .= "(";
         $sql .= "(SELECT count(*) FROM notificacion AS n ";
+          $sql .= "INNER JOIN noticia ON (noticia.id = n.id_noticia AND noticia.elim = 0) ";
           $sql .= "LEFT OUTER JOIN notificacion_usuario AS nu ON ";
           $sql .= "(n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0) ";
         $sql .= "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]} AND nu.id IS NULL)";
         $sql .= " + ";
         $sql .= "(SELECT count(*) FROM notificacion AS n ";
+          $sql .= "INNER JOIN noticia ON (noticia.id = n.id_noticia AND noticia.elim = 0) ";
           $sql .= "INNER JOIN notificacion_usuario AS nu ON ";
           $sql .= "(n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0 AND nu.visto = 0) ";
         $sql .= "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]})";
@@ -412,10 +417,12 @@ switch ($_POST["accion"]) {
       $sql .= "nu.procesar ";
     $sql .= "FROM notificacion AS n ";
     if(empty($_POST["filter"])) {
-      $inner = "LEFT JOIN notificacion_usuario AS nu ON (n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0) ";
+      $inner = "INNER JOIN noticia ON (noticia.id = n.id_noticia AND noticia.elim = 0) ";
+      $inner .= "LEFT JOIN notificacion_usuario AS nu ON (n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0) ";
       $where = "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]}";
     } else {
-      $inner = "LEFT JOIN notificacion_usuario AS nu ON (n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0) ";
+      $inner = "INNER JOIN noticia ON (noticia.id = n.id_noticia AND noticia.elim = 0) ";
+      $inner .= "LEFT JOIN notificacion_usuario AS nu ON (n.id = nu.id_notificacion AND nu.id_usuario = {$_SESSION["user_id"]} AND nu.elim = 0) ";
       if(count($_POST["filter"]) == 4) {
         $where = "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]}";
       } else {
@@ -430,8 +437,10 @@ switch ($_POST["accion"]) {
           if(!empty($where)) $where .= " AND n.procesar = 0";
         }
         if (in_array("sin_leer", $_POST["filter"])) {
-          if(empty($where)) $where = "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]} AND nu.visto IS NULL";
-          else $where .= " OR n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]} AND nu.visto IS NULL";
+          if(empty($where))
+            $where = "WHERE n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]} AND coalesce(nu.visto, 0) = 0";
+          else
+            $where .= " OR n.elim = 0 AND n.nivel >= {$_SESSION["user_lvl"]} AND coalesce(nu.visto, 0) = 0";
         } else {
           // if(empty($where)) $where .= " AND n.procesar = 0";
         }

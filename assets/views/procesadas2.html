@@ -196,8 +196,21 @@
               <div class="col-12">
                 <fieldset class="p-2" style="border: 2px groove;">
                   <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;"><i class="fas fa-terminal"></i></legend>
-                  <input data-toggle="tooltip" data-placement="bottom" title="Título / Cuerpo de la noticia" disabled="true"
-                    type="text" class="form-control rounded-0" id="titulo" placeholder="TÍTULO / CUERPO" value="">
+                  <div class="row">
+                    <div class="col-4">
+                      <input data-toggle="tooltip" data-placement="bottom" title="Título / Cuerpo de la noticia" disabled="true" type="text" class="form-control rounded-0" id="titulo" placeholder="TÍTULO / CUERPO" value="">
+                    </div>
+                    <div class="col-4 input-group">
+                      <select class="custom-select w-100 select__2" name="select_temas" id="select_temas" data-allow-clear="true" data-placeholder="TEMAS">
+                        <option value=""></option>
+                      </select>
+                    </div>
+                    <div class="col-4 input-group">
+                      <select class="custom-select w-100 select__2" name="select_actores" id="select_actores" data-allow-clear="true" data-placeholder="ACTORES">
+                        <option value=""></option>
+                      </select>
+                    </div>
+                  </div>
                 </fieldset>
               </div>
             </div>
@@ -220,8 +233,7 @@
   <!-- <TABLA> -->
   <div class="card shadow-sm bg-white rounded-0">
     <div class="card-body">
-      <table class="animate-flicker table mb-0 table-hover table-sm table-striped w-100" id="t_data" data-tipo="1"
-        datatable="ng">
+      <table class="animate-flicker table mb-0 table-hover table-sm table-striped w-100 display nowrap" id="t_data" data-tipo="1" datatable="ng">
         
       </table>
       <div><div class="h"></div><div class="b"></div><div class="f"></div></div>

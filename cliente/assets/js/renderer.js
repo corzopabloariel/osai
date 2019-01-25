@@ -39,7 +39,7 @@ if(userDATOS.verificar(1)) {
   /**
    * Carga principal de entidades
    */
-  app.controller('jsonController', ['$scope', '$http', '$timeout', function($scope, $http, $timeout) {
+  app.controller('jsonController', ['$rootScope', '$scope', '$location', '$http', '$timeout', function($rootScope, $scope, $location, $http, $timeout) {
     $("#user_name").text(session.user);
 
     $scope.$on('$viewContentLoaded', function(){
@@ -47,6 +47,13 @@ if(userDATOS.verificar(1)) {
         $('[data-toggle="tooltip"]').tooltip();
       });
     });
+
+    $scope.direccion = function(dir) {
+      console.log(dir);
+      console.log($location.path())
+      $location.path(dir);
+      $scope.$apply();
+    }
   }]);
   /**
    * Acciones de vista HOME
@@ -59,83 +66,112 @@ if(userDATOS.verificar(1)) {
     userDATOS.mostrar = function(append = false) {
       if(append) $("#cargando").show();
       userDATOS.busqueda_paginado({"values":{"id_usuario_osai":session.id_cliente},"entidad":"osai_cliente","name":"index"},function(data) {
+        console.log(data)
         let html = "";
         let html_seccion = "";
         let OBJ_tipo = {"0": "Noticia recomenda"};
         if(data.data !== null) {
           $.each( data.data, function( key, value ) {
             userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
-              if(ARR_secciones[noticia.data.id_seccion] === undefined) {
-                ARR_secciones[noticia.data.id_seccion] = {};
-                ARR_secciones[noticia.data.id_seccion]["nombre"] = "";
-                ARR_secciones[noticia.data.id_seccion]["cantidad"] = 0;
-                if(noticia.data.id_seccion == 1) ARR_secciones[noticia.data.id_seccion]["nombre"] = "SIN SECCIÓN";
-                else {
-                  userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion) {
-                    ARR_secciones[noticia.data.id_seccion]["nombre"] = seccion.data.nombre;
-                  });
-                }
-              }
-              if(ARR_medios[noticia.data.id_medio] === undefined) {
+              userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
                 userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
-                  ARR_medios[noticia.data.id_medio] = {};
-                  ARR_medios[noticia.data.id_medio]["nombre"] = medio.data.medio;
-                  ARR_medios[noticia.data.id_medio]["cantidad"] = 0;
-                  ARR_medios[noticia.data.id_medio]["image"] = medio.data.image;
-                });
-              }
-              ARR_medios[noticia.data.id_medio]["cantidad"] ++;
-              ARR_secciones[noticia.data.id_seccion]["cantidad"] ++;
-              seccion = ARR_secciones[noticia.data.id_seccion]["nombre"];
-              ////--------------------
-              date = value["autofecha"];
-              tipo = value["tipo_aviso"];
-              url = noticia.data.url;
-              image = ARR_medios[noticia.data.id_medio]["image"];
-              body = noticia.data.cuerpo;
-              titulo = noticia.data.titulo;
-              texto = $(body).text();
-              texto = texto.trim();
-              subtexto = texto.substring(0,200) + " [...]";
+                  image = medio.data.image;
+                  seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                  date = value["autofecha"];
+                  tipo = value["tipo_aviso"];
+                  url = noticia.data.url;
+                  body = noticia.data.cuerpo;
+                  titulo = noticia.data.titulo;
+                  texto = $(body).text();
+                  texto = texto.trim();
+                  subtexto = texto.substring(0,200) + " [...]";
+                  console.log(subtexto)
+                  //----------------
+                  if(OBJ_tipo[tipo] === undefined) {//NOTICIA PROPIA
+                    data = data = {
+                      "idUnidad": session.id_cliente,
+                      "idNoticia": noticia.data.id
+                    };
+                    userDATOS.ajax("verProceso",data,true,function(valores) {
+                      valoracion = 0;
+                      noticiasCliente = valores.data.noticiasCliente;
+                      for(var x in noticiasCliente.valoracion)
+                        valoracion += parseFloat(noticiasCliente.valoracion[x]["valoracion"]);
+                      if(valoracion > 0)
+                        span = "<span class='ml-2 badge badge-success'>POSITIVO</span>";
+                      else if(valoracion == 0)
+                        span = "<span class='ml-2 badge badge-warning'>NEUTRO</span>";
+                      else
+                        span = "<span class='ml-2 badge badge-danger'>NEGATIVO</span>";
+                      
+                        html = '<div class="card rounded-0 position-relative">';
+                          html += '<div class="card-body p-3">';
+                            html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
+                            html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + span + '</h5>';
+                            html += '<p class="card-text">' + subtexto + '</p>';
+                            html += '<hr/>';
+                            html += '<p class="card-text text-truncate">';
+                              html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+
+                              if(url !== null) 
+                                html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                            html += '</p>';
+                          html += '</div>';
+                        html += '</div>';
+
+                        if(!append) {
+                          if($("#section_body").find(".loading").length) {
+                            $("#section_body").addClass("card-columns");
+                            $("#section_body").html("");
+                          }
+                          $("#section_body").append(html);
+                        } else {
+                          $("#cargando").hide();
+                          $("#section_body").append(html);
+                        }
+                        $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                    });
+                  } else {
+                    html = '<div class="card rounded-0 position-relative">';
+                      html += '<div class="card-header p-3 text-uppercase" style="font-size: .7em;">';
+                        html += '<p class="m-0"><i class="fas fa-asterisk text-warning"></i> ' + OBJ_tipo[tipo] + '</p>';
+                      html += '</div>';
+                      
+                      html += '<div class="card-body p-3">';
+                        html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
+                        html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + '</h5>';
+                        html += '<p class="card-text">' + subtexto + '</p>';
+                        html += '<hr/>';
+                        html += '<p class="card-text text-truncate">';
+                          html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                          if(OBJ_tipo[tipo] !== undefined)
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="recomendado#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+
+                          if(url !== null) 
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                        html += '</p>';
+                      html += '</div>';
+                    html += '</div>';
+
+                    if(!append) {
+                      if($("#section_body").find(".loading").length) {
+                        $("#section_body").addClass("card-columns");
+                        $("#section_body").html("");
+                      }
+                      $("#section_body").append(html);
+                    } else {
+                      $("#cargando").hide();
+                      $("#section_body").append(html);
+                    }
+                    $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                  }
+                }, true);
+              }, true);
                 
-              html += '<div class="card rounded-0 position-relative">';
-                if(OBJ_tipo[tipo] !== undefined) {
-                  html += '<div class="card-header p-3 text-uppercase" style="font-size: .7em;">';
-                    html += '<p class="m-0"><i class="fas fa-asterisk text-warning"></i> ' + OBJ_tipo[tipo] + '</p>';
-                  html += '</div>';
-                }
-                html += '<div class="card-body p-3">';
-                  html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
-                  html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + '</h5>';
-                  html += '<p class="card-text">' + subtexto + '</p>';
-                // html += '</div>';
-                  html += '<hr/>';
-                // html += '<div class="card-footer text-muted">';
-                  html += '<p class="card-text text-truncate">';
-                    html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                    if(OBJ_tipo[tipo] !== undefined)
-                      html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="recomendado#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
-                    else
-                      html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
-
-                    if(url !== null) 
-                      html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                    html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                  html += '</p>';
-                html += '</div>';
-              html += '</div>';
-
-              if(!append) {
-                if($("#section_body").find(".loading").length) {
-                  $("#section_body").addClass("card-columns");
-                  $("#section_body").html("");
-                }
-                $("#section_body").html(html);
-              } else {
-                $("#cargando").hide();
-                $("#section_body").append(html);
-              }
-              $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+              ////--------------------
               window["scroll"] = undefined;
             }, true);
           });
@@ -144,46 +180,50 @@ if(userDATOS.verificar(1)) {
     }
     userDATOS.mostrar();
 	
-	userDATOS.transfererDatosAGraficoUnMes = function(url){
-		var w = window.open(url,'_blank');
-		// obtengo la unidad de analisis desde userDATOS
-		s = userDATOS.session();
-		ua = s.id_cliente;
-		// obtengo la fecha
-		var today = new Date();
-		var dd = today.getDate();
-		var mm = today.getMonth()+1; //January is 0!
-		var yyyy = today.getFullYear();
-		if(dd<10) dd = '0'+dd
-		if(mm<10) mm = '0'+mm
-		str_today = yyyy + '-' + mm + '-' + dd;
-		// resto un mes
-		today.setMonth(today.getMonth() -1 );
-		var dd = today.getDate();
-		var mm = today.getMonth()+1; //January is 0!
-		var yyyy = today.getFullYear();
-		if(dd<10) dd = '0'+dd
-		if(mm<10) mm = '0'+mm
-		str_lastmonth = yyyy + '-' + mm + '-' + dd;
-		
-		var parametros = {'desde':str_lastmonth, 'hasta':str_today, 'ua':ua};
-		w.variables = parametros;
-	};
+    userDATOS.transfererDatosAGraficoUnMes = function(url){
+      
+      // obtengo la unidad de analisis desde userDATOS
+      s = userDATOS.session();
+      ua = s.id_cliente;
+      // obtengo la fecha
+      var today = new Date();
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      if(dd<10) dd = '0'+dd
+      if(mm<10) mm = '0'+mm
+      str_today = yyyy + '-' + mm + '-' + dd;
+      // resto un mes
+      today.setMonth(today.getMonth() -1 );
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      if(dd<10) dd = '0'+dd
+      if(mm<10) mm = '0'+mm
+      str_lastmonth = yyyy + '-' + mm + '-' + dd;
+      
+      var parametros = {"desde":str_lastmonth, "hasta":str_today, "ua":ua};
+      window.parametros = parametros;
+      window.open(url,'blank');
+      // w.variables = window.parametros;
+      localStorage.setItem("parametros", JSON.stringify(window.parametros));
+    };
 
     userDATOS.busqueda({"value":session.id_cliente,"entidad":"osai_grafico","column":"id_usuario_osai","retorno":0},function(data) {
       html = "";
       for(var i in data.data) {
         html += '<div class="card rounded-0 position-relative">';
           if(data.data[i]["image"] !== null)
-            html += '<img src="' + data.data[i]["image"] + '" class="w-100 border-0 bg-light card-img-top"/>';
+            html += '<img src="' + data.data[i]["image"] + '"  onError="this.src=\'../assets/images/no-img.png\'" class="w-100 border-0 bg-light card-img-top"/>';
           html += '<div class="card-body">';
             html += '<h5 class="card-title mb-0">' + data.data[i]["titulo"] + '</h5>';
             html += '<p class="card-text">' + data.data[i]["descripcion"] + '</p>';
             // html += '<a onclick="event.preventDefault()" target="blank" href="grafico#' + i + '" class="btn btn-primary">Ver gráfico</a>'
-            html += '<a onclick="userDATOS.transfererDatosAGraficoUnMes(\'' + data.data[i]['url'] + '\')" href="#' + i + '" class="btn btn-primary">Ver gráfico</a>';
+            html += '<a onclick="event.preventDefault(); userDATOS.transfererDatosAGraficoUnMes(\'' + data.data[i]['url'] + '\')" href="#' + i + '" class="btn btn-primary">Ver gráfico</a>';
           html += '</div>';
         html += '</div>';
       }
+      if(window.innerWidth <= 768) $("#knowledgegraphcontent").addClass("card-columns")
       $("#knowledgegraphcontent").html(html);
     }, true);
     function ejecutarGrafico(){
@@ -239,90 +279,130 @@ if(userDATOS.verificar(1)) {
             // $("#section_body").addClass("card-columns");
             $.each( data.data, function( key, value ) {
               userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
-                if(ARR_secciones[noticia.data.id_seccion] === undefined) {
-                  ARR_secciones[noticia.data.id_seccion] = {};
-                  ARR_secciones[noticia.data.id_seccion]["nombre"] = "";
-                  ARR_secciones[noticia.data.id_seccion]["cantidad"] = 0;
-                  if(noticia.data.id_seccion == 1) ARR_secciones[noticia.data.id_seccion]["nombre"] = "SIN SECCIÓN";
-                  else {
-                    userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion) {
-                      ARR_secciones[noticia.data.id_seccion]["nombre"] = seccion.data.nombre
-                    });
-                  }
-                }
-                if(ARR_medios[noticia.data.id_medio] === undefined) {
+                userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
                   userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
-                    ARR_medios[noticia.data.id_medio] = {};
-                    ARR_medios[noticia.data.id_medio]["nombre"] = medio.data.medio;
-                    ARR_medios[noticia.data.id_medio]["cantidad"] = 0;
-                    ARR_medios[noticia.data.id_medio]["image"] = medio.data.image;
-                  });
-                }
-                ARR_medios[noticia.data.id_medio]["cantidad"] ++;
-                ARR_secciones[noticia.data.id_seccion]["cantidad"] ++;
-                seccion = ARR_secciones[noticia.data.id_seccion]["nombre"];
-                ////--------------------
-                date = value["autofecha"];
-                tipo = value["tipo_aviso"];
-                url = noticia.data.url;
-                image = ARR_medios[noticia.data.id_medio]["image"];
-                body = noticia.data.cuerpo;
-                titulo = noticia.data.titulo;
-                texto = $(body).text();
-                texto = texto.trim();
-                subtexto = texto.substring(0,200) + " [...]";
+                    image = medio.data.image;
+                    seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                    date = value["autofecha"];
+                    tipo = value["tipo_aviso"];
+                    url = noticia.data.url;
+                    
+                    body = noticia.data.cuerpo;
+                    titulo = noticia.data.titulo;
+                    texto = $(body).text();
+                    texto = texto.trim();
+                    subtexto = texto.substring(0,200) + " [...]";
+                    if(seccion_.data === null) {
+                      if(ARR_secciones[1] === undefined) {
+                        ARR_secciones[1] = [];
+                        ARR_secciones[1]["nombre"] = seccion;
+                        ARR_secciones[1]["cantidad"] = 0;
+                      }
+                      ARR_secciones[1]["cantidad"] ++;
+                    } else {
+                      if(ARR_secciones[seccion_.data.id] === undefined) {
+                        ARR_secciones[seccion_.data.id] = [];
+                        ARR_secciones[seccion_.data.id]["nombre"] = seccion;
+                        ARR_secciones[seccion_.data.id]["cantidad"] = 0;
+                      }
+                      ARR_secciones[seccion_.data.id]["cantidad"] ++;
+                    }
+                    if(ARR_medios[medio.data.id] === undefined) {
+                      ARR_medios[medio.data.id] = [];
+                      ARR_medios[medio.data.id]["nombre"] = medio.data.medio;
+                      ARR_medios[medio.data.id]["cantidad"] = 0;
+                    }
+                    ARR_medios[medio.data.id]["cantidad"] ++;
+                    
+                    data = data = {
+                      "idUnidad": session.id_cliente,
+                      "idNoticia": noticia.data.id
+                    };
+                    userDATOS.ajax("verProceso",data,true,function(valores) {
+                      valoracion = 0;
+                      noticiasCliente = valores.data.noticiasCliente;
+                      for(var x in noticiasCliente.valoracion)
+                        valoracion += parseFloat(noticiasCliente.valoracion[x]["valoracion"]);
+                      if(valoracion > 0)
+                        span = "<span class='ml-2 badge badge-success'>POSITIVO</span>";
+                      else if(valoracion == 0)
+                        span = "<span class='ml-2 badge badge-warning'>NEUTRO</span>";
+                      else
+                        span = "<span class='ml-2 badge badge-danger'>NEGATIVO</span>";
+                      
+                        html = '<div class="card rounded-0 position-relative">';
+                          html += '<div class="card-body p-3">';
+                            html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
+                            html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + span + '</h5>';
+                            html += '<p class="card-text">' + subtexto + '</p>';
+                            html += '<hr/>';
+                            html += '<p class="card-text text-truncate">';
+                              html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
 
-                html = '<div class="card rounded-0 position-relative">';
-                  html += '<div class="card-body p-3">';
-                    html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="float-left mr-2 mt-2 mb-2" style="height:24px; "/>';
-                    html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
-                    html += '<p class="card-text">' + subtexto + '</p>';
-                    html += '<hr/>';
-                    html += '<p class="card-text text-truncate">';
-                      html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                      html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-file-alt mr-1"></i>proceso</a></small>';
-                      if(url !== null)
-                        html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                      html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                    html += '</p>';
-                  html += '</div>';
-                html += '</div>';
-                if(!append) {
-                  if($("#section_body").find(".loading").length) {
-                    htmlBody = "";
-                    htmlBody += "<div class='row'>";
-                      htmlBody += "<div class='col-12 col-lg-3'>";
-                        htmlBody += "<div class='row'>";
-                          htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
-                            htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-primary" data-toggle="collapse" data-target="#ulSeccion">secciones<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
-                            htmlBody += "<ul id='ulSeccion' class='list-group collapse show'></ul>";
-                          htmlBody += "</div>";
-                          htmlBody += '<div class="w-100 pb-2 mb-2 d-none d-lg-block d-xl-none d-xl-block d-block d-sm-none"></div>';
-                          htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
-                            htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-success" data-toggle="collapse" data-target="#ulMedio">medios<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
-                            htmlBody += "<ul id='ulMedio' class='list-group collapse show'></ul>";
-                          htmlBody += "</div>";
-                        htmlBody += "</div>";
-                      htmlBody += "</div>";
-                      htmlBody += '<div class="w-100 border-bottom pb-3 mb-3 d-lg-none d-xl-none"></div>';
-                      htmlBody += "<div class='col-12 col-lg-9 card-columns'></div>";
-                    htmlBody += "</div>";
-                    $("#section_body").html(htmlBody);
-                  }
-                  $("#section_body").find("> .row > div:last-child()").html(html);
-                } else {
-                  $("#cargando").hide();
-                  $("#section_body").find("> .row > div:last-child()").append(html);
-                }
-                $("#section_body").find('[data-toggle="tooltip"]').tooltip();
-                $.each( ARR_secciones, function( k, v ) {
-                  if(!$("#ulSeccion").find("li[data-id='" + k + "']").length)
-                    $("#ulSeccion").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-primary badge-pill">' + v.cantidad + '</span></li>');
-                });
-                $.each( ARR_medios, function( k, v ) {
-                  if(!$("#ulMedio").find("li[data-id='" + k + "']").length)
-                    $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
-                });
+                              if(url !== null) 
+                                html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                            html += '</p>';
+                          html += '</div>';
+                        html += '</div>';
+
+                        if(!append) {
+                          if($("#section_body").find(".loading").length) {
+                            htmlBody = "";
+                            htmlBody += "<div class='row'>";
+                              htmlBody += "<div class='col-12 col-lg-3'>";
+                                htmlBody += "<div class='row'>";
+                                  htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
+                                    htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-primary" data-toggle="collapse" data-target="#ulSeccion">secciones<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
+                                    htmlBody += "<ul id='ulSeccion' class='list-group collapse show'></ul>";
+                                  htmlBody += "</div>";
+                                  htmlBody += '<div class="w-100 pb-2 mb-2 d-none d-lg-block d-xl-none d-xl-block d-block d-sm-none"></div>';
+                                  htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
+                                    htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-success" data-toggle="collapse" data-target="#ulMedio">medios<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
+                                    htmlBody += "<ul id='ulMedio' class='list-group collapse show'></ul>";
+                                  htmlBody += "</div>";
+                                htmlBody += "</div>";
+                              htmlBody += "</div>";
+                              htmlBody += '<div class="w-100 border-bottom pb-3 mb-3 d-lg-none d-xl-none"></div>';
+                              htmlBody += "<div class='col-12 col-lg-9 card-columns'></div>";
+                            htmlBody += "</div>";
+                            $("#section_body").html(htmlBody);
+                          }
+                          $("#section_body").find("> .row > div:last-child()").html(html);
+                        } else {
+                          $("#cargando").hide();
+                          $("#section_body").find("> .row > div:last-child()").append(html);
+                        }
+                        $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                        $.each( ARR_secciones, function( k, v ) {
+                          if(!$("#ulSeccion").find("li[data-id='" + k + "']").length)
+                            $("#ulSeccion").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-primary badge-pill">' + v.cantidad + '</span></li>');
+                        });
+                        $.each( ARR_medios, function( k, v ) {
+                          if(!$("#ulMedio").find("li[data-id='" + k + "']").length)
+                            $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
+                        });
+                    });
+                    // html = "";
+                    // html = '<div class="card rounded-0 position-relative">';
+                    //   html += '<div class="card-body p-3">';
+                    //     html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="float-left mr-2 mt-2 mb-2" style="height:24px; "/>';
+                    //     html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
+                    //     html += '<p class="card-text">' + subtexto + '</p>';
+                    //     html += '<hr/>';
+                    //     html += '<p class="card-text text-truncate">';
+                    //       html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                    //       html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-file-alt mr-1"></i>proceso</a></small>';
+                    //       if(url !== null)
+                    //         html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                    //       html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                    //     html += '</p>';
+                    //   html += '</div>';
+                    // html += '</div>';
+                    
+                  });
+                }, true);
                 window["scroll"] = undefined;
               },true);
             });
@@ -566,102 +646,106 @@ if(userDATOS.verificar(1)) {
           } else {
             $.each( data.data, function( key, value ) {
               userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
-                userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
-                  if(ARR_secciones[noticia.data.id_seccion] === undefined) {
-                    ARR_secciones[noticia.data.id_seccion] = {};
-                    ARR_secciones[noticia.data.id_seccion]["nombre"] = "";
-                    ARR_secciones[noticia.data.id_seccion]["cantidad"] = 0;
-                    ARR_secciones[noticia.data.id_seccion]["medio"] = noticia.data.id_medio;
-                    if(noticia.data.id_seccion == 1) ARR_secciones[noticia.data.id_seccion]["nombre"] = "SIN SECCIÓN";
-                    else {
-                      userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion) {
-                        ARR_secciones[noticia.data.id_seccion]["nombre"] = seccion.data.nombre;
-                      });
-                    }
-                  }
-                  if(ARR_medios[noticia.data.id_medio] === undefined) {
-                    ARR_medios[noticia.data.id_medio] = {};
-                    ARR_medios[noticia.data.id_medio]["nombre"] = medio.data.medio;
-                    ARR_medios[noticia.data.id_medio]["cantidad"] = 0;
-                    ARR_medios[noticia.data.id_medio]["secciones"] = [];
-                  }
-                  ARR_secciones[noticia.data.id_seccion]["cantidad"] ++;
-                  ARR_medios[noticia.data.id_medio]["cantidad"] ++;
-                  seccion = ARR_secciones[noticia.data.id_seccion]["nombre"];
-                  ////--------------------
-                  date = value["autofecha"];
-                  tipo = value["tipo_aviso"];
-                  url = noticia.data.url;
-                  image = medio.data.image;
-                  body = noticia.data.cuerpo;
-                  titulo = noticia.data.titulo;
-                  try {
-                    texto = $(body).text(); 
-                  } catch (error) {
-                    texto = body;
-                  }
-                  texto = texto.trim();
-                  if(texto.length > 200)
-                    subtexto = texto.substring(0,200) + " [...]";
-                  else
-                    subtexto = texto;
+                userDATOS.busqueda({"value":noticia.data.id_medio,"entidad":"medio"},function(medio) {
+                  userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
+                    seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                    date = value["autofecha"];
+                    tipo = value["tipo_aviso"];
+                    url = noticia.data.url;
+                    image = medio.data.image;
+                    body = noticia.data.cuerpo;
+                    titulo = noticia.data.titulo;
 
-                  html = '<div class="card rounded-0 position-relative">';
-                    html += '<div class="card-body p-3">';
-                      html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto mb-2" style="height:24px; "/>';
-                      html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
-                      html += '<p class="card-text">' + subtexto + '</p>';
-                      html += '<hr/>';
-                      html += '<p class="card-text text-truncate">';
-                        html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                        html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a data-id="' + value["id"] + '" href="agenda#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
-                        if(url !== null)
-                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                        html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                      html += '</p>';
+                    if(seccion_.data === null) {
+                      if(ARR_secciones[1] === undefined) {
+                        ARR_secciones[1] = [];
+                        ARR_secciones[1]["nombre"] = seccion;
+                        ARR_secciones[1]["cantidad"] = 0;
+                      }
+                      ARR_secciones[1]["cantidad"] ++;
+                    } else {
+                      if(ARR_secciones[seccion_.data.id] === undefined) {
+                        ARR_secciones[seccion_.data.id] = [];
+                        ARR_secciones[seccion_.data.id]["nombre"] = seccion;
+                        ARR_secciones[seccion_.data.id]["cantidad"] = 0;
+                      }
+                      ARR_secciones[seccion_.data.id]["cantidad"] ++;
+                    }
+                    if(ARR_medios[medio.data.id] === undefined) {
+                      ARR_medios[medio.data.id] = [];
+                      ARR_medios[medio.data.id]["nombre"] = medio.data.medio;
+                      ARR_medios[medio.data.id]["cantidad"] = 0;
+                    }
+                    ARR_medios[medio.data.id]["cantidad"] ++;
+
+                    try {
+                      texto = $(body).text(); 
+                    } catch (error) {
+                      texto = body;
+                    }
+                    texto = texto.trim();
+                    if(texto.length > 200)
+                      subtexto = texto.substring(0,200) + " [...]";
+                    else
+                      subtexto = texto;
+
+                    html = '<div class="card rounded-0 position-relative">';
+                      html += '<div class="card-body p-3">';
+                        html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto mb-2" style="height:24px; "/>';
+                        html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
+                        html += '<p class="card-text">' + subtexto + '</p>';
+                        html += '<hr/>';
+                        html += '<p class="card-text text-truncate">';
+                          html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a data-id="' + value["id"] + '" href="agenda#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+                          if(url !== null)
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                        html += '</p>';
+                      html += '</div>';
                     html += '</div>';
-                  html += '</div>';
-                  if(!append) {
-                    if($("#section_body").find(".loading").length) {
-                      htmlBody = "";
-                      htmlBody += "<div class='row'>";
-                        htmlBody += "<div class='col-12 col-lg-3'>";
-                          htmlBody += "<div class='row'>";
-                            htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
-                              htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-primary" data-toggle="collapse" data-target="#ulSeccion">secciones<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
-                              htmlBody += "<ul id='ulSeccion' class='list-group collapse show'></ul>";
-                            htmlBody += "</div>";
-                            htmlBody += '<div class="w-100 pb-2 mb-2 d-none d-lg-block d-xl-none d-xl-block d-block d-sm-none"></div>';
-                            htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
-                              htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-success" data-toggle="collapse" data-target="#ulMedio">medios<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
-                              htmlBody += "<ul id='ulMedio' class='list-group collapse show'></ul>";
+                    if(!append) {
+                      if($("#section_body").find(".loading").length) {
+                        htmlBody = "";
+                        htmlBody += "<div class='row'>";
+                          htmlBody += "<div class='col-12 col-lg-3'>";
+                            htmlBody += "<div class='row'>";
+                              htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
+                                htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-primary" data-toggle="collapse" data-target="#ulSeccion">secciones<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
+                                htmlBody += "<ul id='ulSeccion' class='list-group collapse show'></ul>";
+                              htmlBody += "</div>";
+                              htmlBody += '<div class="w-100 pb-2 mb-2 d-none d-lg-block d-xl-none d-xl-block d-block d-sm-none"></div>';
+                              htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
+                                htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-success" data-toggle="collapse" data-target="#ulMedio">medios<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
+                                htmlBody += "<ul id='ulMedio' class='list-group collapse show'></ul>";
+                              htmlBody += "</div>";
                             htmlBody += "</div>";
                           htmlBody += "</div>";
+                          htmlBody += '<div class="w-100 border-bottom pb-3 mb-3 d-lg-none d-xl-none"></div>';
+                          htmlBody += "<div class='col-12 col-lg-9 card-columns'></div>";
                         htmlBody += "</div>";
-                        htmlBody += '<div class="w-100 border-bottom pb-3 mb-3 d-lg-none d-xl-none"></div>';
-                        htmlBody += "<div class='col-12 col-lg-9 card-columns'></div>";
-                      htmlBody += "</div>";
-                      $("#section_body").html(htmlBody);
+                        $("#section_body").html(htmlBody);
+                      }
+                      $("#section_body").find("> .row > div:last-child()").append(html);
+                    } else {
+                      $("#cargando").hide();
+                      $("#section_body").find("> .row > div:last-child()").append(html);
                     }
-                    $("#section_body").find("> .row > div:last-child()").append(html);
-                  } else {
-                    $("#cargando").hide();
-                    $("#section_body").find("> .row > div:last-child()").append(html);
-                  }
-                  $.each( ARR_secciones, function( k, v ) {
-                    if($("#ulSeccion").find("li[data-id='" + k + "']").length)
-                      $("#ulSeccion").find("li[data-id='" + k + "'] span:last-child()").text(v.cantidad);
-                    else {
-                      $("#ulSeccion").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center"><span class="text-truncate">' + v.nombre + '</span><span class="badge badge-primary badge-pill">' + v.cantidad + '</span></li>');
-                    }
-                  });
-                  $.each( ARR_medios, function( k, v ) {
-                    if($("#ulMedio").find("li[data-id='" + k + "']").length)
-                      $("#ulMedio").find("li[data-id='" + k + "'] span:last-child()").text(v.cantidad);
-                    else
-                      $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center"><span class="text-truncate">' + v.nombre + '</span><span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
-                  });
-                  $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                    $.each( ARR_secciones, function( k, v ) {
+                      if($("#ulSeccion").find("li[data-id='" + k + "']").length)
+                        $("#ulSeccion").find("li[data-id='" + k + "'] span:last-child()").text(v.cantidad);
+                      else {
+                        $("#ulSeccion").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center"><span class="text-truncate">' + v.nombre + '</span><span class="badge badge-primary badge-pill">' + v.cantidad + '</span></li>');
+                      }
+                    });
+                    $.each( ARR_medios, function( k, v ) {
+                      if($("#ulMedio").find("li[data-id='" + k + "']").length)
+                        $("#ulMedio").find("li[data-id='" + k + "'] span:last-child()").text(v.cantidad);
+                      else
+                        $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center"><span class="text-truncate">' + v.nombre + '</span><span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
+                    });
+                    $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                  }, true);
                 });
                 window["scroll"] = undefined;
               },true);
@@ -896,78 +980,60 @@ if(userDATOS.verificar(1)) {
             // $("#section_body").addClass("card-columns");
             $.each( data.data, function( key, value ) {
               userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
-                if(ARR_secciones[noticia.data.id_seccion] === undefined) {
-                  ARR_secciones[noticia.data.id_seccion] = {};
-                  ARR_secciones[noticia.data.id_seccion]["nombre"] = "";
-                  ARR_secciones[noticia.data.id_seccion]["cantidad"] = 0;
-                  if(noticia.data.id_seccion == 1) ARR_secciones[noticia.data.id_seccion]["nombre"] = "SIN SECCIÓN";
-                  else {
-                    userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion) {
-                      ARR_secciones[noticia.data.id_seccion]["nombre"] = seccion.data.nombre;
-                    });
-                  }
-                }
-                if(ARR_medios[noticia.data.id_medio] === undefined) {
+                userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
                   userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
-                    ARR_medios[noticia.data.id_medio] = {};
-                    ARR_medios[noticia.data.id_medio]["nombre"] = medio.data.medio;
-                    ARR_medios[noticia.data.id_medio]["cantidad"] = 0;
-                    ARR_medios[noticia.data.id_medio]["image"] = medio.data.image;
-                  });
-                }
-                ARR_medios[noticia.data.id_medio]["cantidad"] ++;
-                ARR_secciones[noticia.data.id_seccion]["cantidad"] ++;
-                seccion = ARR_secciones[noticia.data.id_seccion]["nombre"];
-                ////--------------------
-                estado = value["estado"];
-                date = value["autofecha"];
-                leido = value["leido"];
-                nivel = value["nivel"];
-                mensaje = value["mensaje"];
-                url = noticia.data.url;
-                image = ARR_medios[noticia.data.id_medio]["image"];
-                body = noticia.data.cuerpo;
-                titulo = noticia.data.titulo;
-                texto = $(body).text();
-                texto = texto.trim();
-                subtexto = texto.substring(0,200) + " [...]";
-
-                html = '<div ' + (((parseInt(leido) == 1 && parseInt(nivel) != 0) || parseInt(nivel) == 0) ? 'style="opacity:.6;"' : '') + ' class="card rounded-0 position-relative ' + bg_color[nivel] + '">';
-                  html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="card-img-top p-2 bg-white rounded-0"/>';
-                  html += '<div class="card-body p-3">';
-                    html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
-                    html += '<p class="card-text">' + mensaje + '</p>';
-                    html += '<p class="card-text d-none">' + subtexto + '</p>';
-                    html += '<hr/>';
-                    html += '<p class="card-text text-truncate">';
-                      html += '<small class="info-oculta border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                      if(parseInt(nivel) == 0)
-                        html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="border-right pr-2 mr-2"><a style="color:inherit;" href="noticia#' + value["id_noticia"] + '" data-link="interno"><i class="fas fa-file-alt mr-1"></i>proceso</a></small>';
-                      else
-                        html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="border-right pr-2 mr-2"><a data-id="' + value["id"] + '" style="color:inherit;" href="ver#' + value["id_noticia"] + '" data-link="interno"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
-                      if(url !== null)
-                        html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="border-right pr-2 mr-2"><a data-link="externo" style="color:inherit;" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                      html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                    html += '</p>';
-                  html += '</div>';
-                  if(parseInt(leido) == 0 && parseInt(nivel) != 0) {
-                    html += '<div class="card-footer text-center text-uppercase">';
-                      html += 'sin leer'
+                    seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                    image = medio.data.image;
+                    estado = value["estado"];
+                    date = value["autofecha"];
+                    leido = value["leido"];
+                    nivel = value["nivel"];
+                    mensaje = value["mensaje"];
+                    url = noticia.data.url;
+                    body = noticia.data.cuerpo;
+                    titulo = noticia.data.titulo;
+                    texto = $(body).text();
+                    texto = texto.trim();
+                    subtexto = texto.substring(0,200) + " [...]";
+                    html = '<div ' + (((parseInt(leido) == 1 && parseInt(nivel) != 0) || parseInt(nivel) == 0) ? 'style="opacity:.6;"' : '') + ' class="card rounded-0 position-relative ' + bg_color[nivel] + '">';
+                      html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="card-img-top p-2 bg-white rounded-0"/>';
+                      html += '<div class="card-body p-3">';
+                        html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
+                        html += '<p class="card-text">' + mensaje + '</p>';
+                        html += '<p class="card-text d-none">' + subtexto + '</p>';
+                        html += '<hr/>';
+                        html += '<p class="card-text text-truncate">';
+                          html += '<small class="info-oculta border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                          if(parseInt(nivel) == 0)
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="border-right pr-2 mr-2"><a style="color:inherit;" href="noticia#' + value["id_noticia"] + '" data-link="interno"><i class="fas fa-file-alt mr-1"></i>proceso</a></small>';
+                          else
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="border-right pr-2 mr-2"><a data-id="' + value["id"] + '" style="color:inherit;" href="ver#' + value["id_noticia"] + '" data-link="interno"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+                          if(url !== null)
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="border-right pr-2 mr-2"><a data-link="externo" style="color:inherit;" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                        html += '</p>';
+                      html += '</div>';
+                      if(parseInt(leido) == 0 && parseInt(nivel) != 0) {
+                        html += '<div class="card-footer text-center text-uppercase">';
+                          html += 'sin leer'
+                        html += '</div>';
+                      }
                     html += '</div>';
-                  }
-                html += '</div>';
-                if(!append) {
-                  if($("#section_body").find(".loading").length) {
-                    $("#section_body").html("");
-                    if(window.innerWidth >= 992)
-                      $("#section_body").addClass("card-columns");
-                  }
-                  $("#section_body").append(html);
-                } else {
-                  $("#cargando").hide();
-                  $("#section_body").append(html);
-                }
-                $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                    if(!append) {
+                      if($("#section_body").find(".loading").length) {
+                        $("#section_body").html("");
+                        if(window.innerWidth >= 992)
+                          $("#section_body").addClass("card-columns");
+                      }
+                      $("#section_body").append(html);
+                    } else {
+                      $("#cargando").hide();
+                      $("#section_body").append(html);
+                    }
+                    $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                  }, true);
+                }, true);
+                ////--------------------
                 window["scroll"] = undefined;
               },true);
             });
@@ -1206,4 +1272,32 @@ $(document).ready(function() {
   		return false;
     });
   });
+
+  
+  /**
+   * Eventos del SERVIDOR
+   */
+  window.evtSource = new EventSource("lib/server.php");
+  window.evtSource.onopen = function(e) {
+    console.log("CONEXIÓN establecida");
+  };
+  window.evtSource.onmessage = function(e) {};
+  window.evtSource.addEventListener('notificacion', notificacionEVENT);
+
+  function notificacionEVENT(e) {
+    let aux = userDATOS.parseJSON(e.data);
+    let notificacion = $("#dropdownMenu").closest("li");
+    let cantidad = notificacion.find("> div > span").text();
+    if(cantidad == 0)
+      notificacion.find("> div > span").toggleClass("badge-secondary").toggleClass("badge-danger");
+    cantidad = parseInt(cantidad) + 1;
+    notificacion.find("> div > span").text(cantidad);
+
+    mensaje = aux.mensaje;
+    mensaje += '<span class="text-truncate d-block">' + aux["mensajeBD"] + '</span>';
+    if(notificacion.find("> div ul li.nada").length) 
+      notificacion.find("> div ul").html('<li onclick="userDATOS.alerta(this);" data-id="' + e.lastEventId + '" class="list-group-item rounded-0 border-0">' + mensaje + '</li>');
+    else
+      notificacion.find("> div ul").append('<li onclick="userDATOS.alerta(this);" data-id="' + e.lastEventId + '" class="list-group-item rounded-0 border-0">' + mensaje + '</li>');
+  }
 });

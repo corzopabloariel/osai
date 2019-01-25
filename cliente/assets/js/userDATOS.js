@@ -252,6 +252,10 @@ userDATOS.noticiaProcesoClose = function() {
   $("body").removeAttr("style");
   $("#section_body").find('[data-toggle="tooltip"]').tooltip();
 }
+/** */
+userDATOS.alerta = function(t) {
+  angular.element("*[ng-controller=\"jsonController\"]").scope().direccion("/notificaciones")
+}
 /**
  * Función para traer proceso de una noticia
  * @param id INT -> id de UNIDAD DE ANÁLISIS o AGENDA NACIONAL
@@ -304,19 +308,17 @@ userDATOS.verProceso = function(t,id,idNoticia) {
             }
           html += '</div>';
           html += '<div class="w-100 d-block d-sm-none pb-3 mb-3  border-bottom border-white"></div>';
-          html += '<div class="col-12 col-lg-6">';
-            html += '<h3 class="text-uppercase text-white">valoración</h3>';
-            html += '<ul class="list-group">';
-            for(var x in noticiasCliente.valoracion) {
-              span = "";
-              if(parseFloat(noticiasCliente.valoracion[x]["valoracion"]) > 0)
-                span += "<span class='badge badge-success'>POSITIVO</span>";
-              if(parseFloat(noticiasCliente.valoracion[x]["valoracion"]) == 0)
-                span += "<span class='badge badge-warning'>NEUTRO</span>";
-              if(parseFloat(noticiasCliente.valoracion[x]["valoracion"]) < 0)
-                span += "<span class='badge badge-danger'>NEGATIVO</span>";
-              html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span class="text-truncate">' + noticiasCliente.valoracion[x]["nombre"] + '</span>' + span + '</li>';
-            }
+          html += '<div class="col-12 col-lg-6 d-flex justify-content-center align-items-center">';
+            valoracion = 0;
+            for(var x in noticiasCliente.valoracion)
+              valoracion += parseFloat(noticiasCliente.valoracion[x]["valoracion"]);
+            if(valoracion > 0)
+              span = "<span class='badge badge-success'>POSITIVO</span>";
+            else if(valoracion == 0)
+              span = "<span class='badge badge-warning'>NEUTRO</span>";
+            else
+              span = "<span class='badge badge-danger'>NEGATIVO</span>";
+            html += '<h3 class="text-uppercase text-white text-center mb-0">valoración<br/>' + span + '</h3>';
             html += '</ul>';
           html += '</div>';
         html += '</div>';

@@ -34,6 +34,7 @@ select[name='select_tipoAlerta'] option:last-child { background-color: #dc3545; 
 .dataTable.fixedHeader-floating { width: auto !important; margin-top: 0 !important; }
 .dataTables_filter label { margin: 0; display: block; }
 .dataTables_filter input { display: block; width: 100%; height: calc(2.25rem + 2px); padding: .375rem .75rem; font-size: 1rem; line-height: 1.5; color: #495057; background-color: #fff; background-clip: padding-box; border: 1px solid #343a40; border-radius: 0; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; color: #495057; }
+table.dataTable.dtr-inline.collapsed>tbody>tr[role="row"]>td:first-child:before, table.dataTable.dtr-inline.collapsed>tbody>tr[role="row"]>th:first-child:before { top: calc(50% - 7px); }
 .selected { background-color: #007bff !important; color: #fff; }
 .typeahead.dropdown-menu { right: 10px !important; left: auto !important; overflow-x: hidden !important; }
 .messagebox_content_inputs select { width: 100%; padding: .5em; }

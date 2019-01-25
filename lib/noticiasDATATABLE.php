@@ -36,6 +36,8 @@ $medio_tipo = R::findAll("medio_tipo","elim = 0");
 $cliente = R::findAll("cliente","elim = 0");
 $cliente_final = R::findAll("osai_usuario","elim = 0");
 $usuario = R::findAll("usuario","elim = 0");
+$tema = R::findAll("attr_temas","elim = 0");
+$actor = R::findAll("actor","elim = 0");
 /////////////
 $relevos = R::findAll("noticiarelevo","elim = 0");
 $procesos = R::findAll("proceso","elim = 0");
@@ -107,9 +109,11 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
 } else if(!isset($params["moderado"]) && isset($params["estado"])) {//NOTICIAS PROCESADAS
   $where_condition .= "AND n.estado IN (2,6) AND n.relevado = 1 ";
   $attr .= ",GROUP_CONCAT(p.id_cliente) AS cliente";
+  $attr .= ",GROUP_CONCAT(na.id_actor) AS actor";
+  $attr .= ",GROUP_CONCAT(nt.id_tema) AS tema";
   $attr .= ",u.id AS usuario";
   $attr .= ",p.autofecha AS fecha_proceso";
-  $group .= "n.id";
+  $group .= "n.id, p.id_cliente";
   if($_SESSION['user_lvl'] <= 2) {
     if(isset($params["unidadFilter"]) && !empty($params["unidadFilter"]))
       $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia AND p.id_cliente = {$params["unidadFilter"]})";
@@ -126,6 +130,28 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
     $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia AND p.id_usuario = {$_SESSION["user_id"]}) ";
     $inner .= "INNER JOIN usuario AS u ON (u.elim = 0 AND u.id = p.id_usuario AND p.id_usuario = {$_SESSION["user_id"]}) ";
   }
+
+  if(isset($params["temasFilter"]) && !empty($params["temasFilter"])) {
+    $temas = $params["temasFilter"];
+    $temasIN = "";
+    for($i = 0; $i < count($temas); $i ++) {
+      if($temasIN != "") $temasIN .= ",";
+      $temasIN .= $temas[$i];
+    }
+    $inner .= "INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0 AND nt.id_tema IN ({$temasIN}))";
+  } else
+    $inner .= "INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0)";
+  if(isset($params["actoresFilter"]) && !empty($params["actoresFilter"])) {
+    $actores = $params["actoresFilter"];
+    $actoresIN = "";
+      for($i = 0; $i < count($actores); $i ++) {
+        if($actoresIN != "") $actoresIN .= ",";
+        $actoresIN .= $actores[$i];
+      }
+      $inner .= "INNER JOIN noticiasactor AS na ON (na.id_noticia = n.id AND na.elim = 0 AND na.id_actor IN ({$actoresIN})) ";
+  } else
+    $inner .= "INNER JOIN noticiasactor AS na ON (na.id_noticia = n.id AND na.elim = 0) ";
+  
 } else if(isset($params["clipping"])) {
   $idAgendaNacional = 12;
   $where_condition .= "AND n.estado IN (3,4,5) ";//ESTADOS DISPONIBLES
@@ -161,7 +187,7 @@ if($flag) {
     $recordsTotal = $_SESSION["total"];
 }
 
-$Adatos = separarPOR($mysqli,$sqlVISTA,["medio","medio_tipo","seccion","cliente","usuario","cliente_final"]);
+$Adatos = separarPOR($mysqli,$sqlVISTA,["medio","medio_tipo","seccion","cliente","usuario","cliente_final","tema","actor"]);
 
 $Adatos["estado"] = Array();
 $Adatos["estado"][] = "SIN PROCESAR";//0
@@ -191,8 +217,8 @@ if($queryRecords = $mysqli->query($sqlVISTA)) {
         $noticia["cliente"] = "";
         foreach($clientes AS $a) {
           if(empty($a)) continue;
-
-          $noticia["cliente"] .= "<p class='m-0'>{$Adatos["cliente"][$a]}</p>";
+          if(strpos($noticia["cliente"], "<p class='m-0'>{$Adatos["cliente"][$a]}</p>") === false)
+            $noticia["cliente"] .= "<p class='m-0'>{$Adatos["cliente"][$a]}</p>";
         }
       }
     }
@@ -206,8 +232,38 @@ if($queryRecords = $mysqli->query($sqlVISTA)) {
         $noticia["cliente_final"] = "";
         foreach($clientes AS $a) {
           if(empty($a)) continue;
-
-          $noticia["cliente_final"] .= "<p class='m-0'>{$Adatos["cliente_final"][$a]}</p>";
+          if(strpos($noticia["cliente_final"], "<p class='m-0'>{$Adatos["cliente_final"][$a]}</p>") === false)
+            $noticia["cliente_final"] .= "<p class='m-0'>{$Adatos["cliente_final"][$a]}</p>";
+        }
+      }
+    }
+    if(isset($noticia["tema"])) {
+      if(strpos($noticia["tema"],",") === false) {
+        if($noticia["tema"] == "") continue;
+        $c = $noticia["tema"];
+        $noticia["tema"] = "<p class='m-0'>{$Adatos["tema"][$c]}</p>";
+      } else {
+        $temas = explode(",",$noticia["tema"]);
+        $noticia["tema"] = "";
+        foreach($temas AS $a) {
+          if(empty($a)) continue;
+          if(strpos($noticia["tema"], "<p class='m-0'>{$Adatos["tema"][$a]}</p>") === false)
+            $noticia["tema"] .= "<p class='m-0'>{$Adatos["tema"][$a]}</p>";
+        }
+      }
+    }
+    if(isset($noticia["actor"])) {
+      if(strpos($noticia["actor"],",") === false) {
+        if($noticia["actor"] == "") continue;
+        $c = $noticia["actor"];
+        $noticia["actor"] = "<p class='m-0'>{$Adatos["actor"][$c]}</p>";
+      } else {
+        $actores = explode(",",$noticia["actor"]);
+        $noticia["actor"] = "";
+        foreach($actores AS $a) {
+          if(empty($a)) continue;
+          if(strpos($noticia["actor"], "<p class='m-0'>{$Adatos["actor"][$a]}</p>") === false)
+            $noticia["actor"] .= "<p class='m-0'>{$Adatos["actor"][$a]}</p>";
         }
       }
     }
@@ -221,14 +277,20 @@ function total($mysqli,$sql) {
   return mysqli_num_rows($mysqli->query($sql));
 }
 function separarPOR($mysqli,$sql,$Aelementos) {
-  global $medio,$seccion,$medio_tipo,$cliente,$cliente_final,$usuario;
+  global $medio,$seccion,$medio_tipo,$cliente,$cliente_final,$usuario, $tema, $actor;
   $A = Array();
   $A["medio"] = Array();
   $A["seccion"] = Array();
   $A["medio_tipo"] = Array();
   $A["cliente"] = Array();
   $A["cliente_final"] = Array();
+  $A["tema"] = Array();
+  $A["actor"] = Array();
 
+  $A["actor"]["column"] = "nombre";
+  $A["actor"]["no"] = "SIN ACTOR";
+  $A["tema"]["column"] = "nombre";
+  $A["tema"]["no"] = "SIN TEMA";
   $A["medio"]["column"] = "medio";
   $A["medio"]["no"] = "SIN MEDIO";
   $A["seccion"]["column"] = "nombre";
@@ -252,13 +314,16 @@ function separarPOR($mysqli,$sql,$Aelementos) {
         if(!isset($noticia[$e])) continue;
         $aux = $$e;
         if(!isset($Adatos[$e][$noticia[$e]])) {
-          if($e == "cliente" || $e == "cliente_final") {
-            $clientes = explode(",",$noticia[$e]);
-            foreach($clientes AS $a) {
+          if($e == "cliente" || $e == "cliente_final" || $e == "tema" || $e == "actor") {
+            $groupConcat = explode(",",$noticia[$e]);
+            foreach($groupConcat AS $a) {
               if($a == "") continue;
               if(isset($aux[$a])) {
                 if(!isset($Adatos[$e][$a])) {
-                  $Adatos[$e][$a] = $aux[$a][$A[$e]["column"]];
+                  if($e == "actor")
+                    $Adatos[$e][$a] = "{$aux[$a][$A[$e]["column"]]} {$aux[$a]["apellido"]}";
+                  else
+                    $Adatos[$e][$a] = $aux[$a][$A[$e]["column"]];
                 }
               } else $Adatos[$e][$a] = $A[$e]["no"];
             }
