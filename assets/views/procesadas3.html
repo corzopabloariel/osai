@@ -191,20 +191,22 @@
             </div>
             <div class="row">
               <div class="col-12">
-                <fieldset class="p-2" style="border: 2px groove;">
+                 <fieldset class="p-2" style="border: 2px groove;">
                   <legend class="text-uppercase" style="width: auto; padding: 0 .5em; margin: 0;"><i class="fas fa-terminal"></i></legend>
                   <div class="row">
                     <div class="col-4">
-                      <input data-toggle="tooltip" data-placement="bottom" title="Título / Cuerpo de la noticia" disabled="true" type="text" class="form-control rounded-0" id="titulo" placeholder="TÍTULO / CUERPO" value="">
+                      <input disabled="true" data-toggle="tooltip" data-placement="bottom" title="Título / Cuerpo de la noticia" disabled="true" type="text" class="form-control rounded-0" id="titulo" placeholder="TÍTULO / CUERPO" value="">
                     </div>
-                    <div class="col-4 input-group">
-                      <select class="custom-select w-100 select__2" name="select_temas" id="select_temas" data-allow-clear="true" data-placeholder="TEMAS">
+                    <div class="col-4 input-group" data-toggle="tooltip" data-placement="bottom" title="Temas">
+                      <select disabled="true" class="custom-select w-100 select__2" name="select_temas[]" multiple id="select_temas" data-allow-clear="true" data-placeholder="TEMAS">
                         <option value=""></option>
+                        <option ng-repeat="(id,tema) in temaSELECT" value="{{id}}">{{tema}}</option>
                       </select>
                     </div>
-                    <div class="col-4 input-group">
-                      <select class="custom-select w-100 select__2" name="select_actores" id="select_actores" data-allow-clear="true" data-placeholder="ACTORES">
+                    <div class="col-4 input-group" data-toggle="tooltip" data-placement="bottom" title="Actores">
+                      <select disabled="true" class="custom-select w-100 select__2" name="select_actores[]" multiple id="select_actores" data-allow-clear="true" data-placeholder="ACTORES">
                         <option value=""></option>
+                        <option ng-repeat="(id,actor) in actorSELECT" value="{{id}}">{{actor}}</option>
                       </select>
                     </div>
                   </div>

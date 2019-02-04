@@ -243,6 +243,11 @@ const ENTIDAD = {
 				'NECESARIO': 0,
 				'RELACION': {'TABLA':'medio_tipo','ATTR':'id'}
  		 	},
+			'color': {
+				'TIPO': 'TP_COLOR',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0
+			},
 			'elim':     {
 				'TIPO': 'TP_BOLEANO',
 				'VISIBILIDAD': 'TP_BANDERA',
@@ -251,11 +256,11 @@ const ENTIDAD = {
 		},
 		'VISIBLE': {"TEXTO": "/medio/","ATTR":["medio"]},
 		'UNIQUE': ['medio'],
-		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'medio':{'TIPO':'normal'},'id_medio_tipo':{'TIPO':'normal'}},
+		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'medio':{'TIPO':'normal'},'id_medio_tipo':{'TIPO':'normal'},'color':{'TIPO':'normal'}},
 		'GUARDADO':	'SIMPLE',
 		'FORM': [
 			{'id':'/id/','medio': '<div class="col col-12">/medio/</div>'},
-			{'id_medio_tipo':'<div class="col col-12">/id_medio_tipo/</div>'},
+			{'id_medio_tipo':'<div class="col col-6">/id_medio_tipo/</div>','color':'<div class="col col-6">/color/</div>'},
 		],
 		'NOMBRE': 'Medio'
 	},
@@ -319,6 +324,11 @@ const ENTIDAD = {
 				'NECESARIO': 1,
 				'ALIGN': 'text-right'
       		},
+			'color': {
+				'TIPO': 'TP_COLOR',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0
+			},
 			'elim': {
 				'TIPO': 'TP_BOLEANO',
 				'VISIBILIDAD': 'TP_BANDERA',
@@ -327,12 +337,12 @@ const ENTIDAD = {
 		},
 		'VISIBLE': {"TEXTO": "/id_medio/ - /lugar/: /referencia/","ATTR":["id_medio","lugar","referencia"]},
 		'UNIQUE': ['id_medio','lugar','destaque'],
-		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'id_medio':{'TIPO':'normal'},'lugar':{'TIPO':'normal'},'destaque':{'TIPO':'normal'},'referencia':{'TIPO':'normal'}},
+		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'id_medio':{'TIPO':'normal'},'lugar':{'TIPO':'normal'},'destaque':{'TIPO':'normal'},'referencia':{'TIPO':'normal'},'color':{'TIPO':'normal'}},
 		'GUARDADO':	'SIMPLE',
 		'FORM': [
 			{'id':'/id/','id_medio': '<div class="col col-12">/id_medio/</div>'},
 			{'lugar':'<div class="col col-6">/lugar/</div>','destaque': '<div class="col col-6">/destaque/</div>'},
-			{'referencia': '<div class="col col-12">/referencia/</div>'},
+			{'referencia': '<div class="col col-6">/referencia/</div>','color': '<div class="col col-6">/color/</div>'},
 		],
 		'NOMBRE': 'Destaque'
 	},
@@ -1266,7 +1276,12 @@ const ENTIDAD = {
  									 'TIPO': 'TP_STRING',
  									 'VISIBILIDAD': 'TP_VISIBLE',
  									 'NECESARIO': 1
- 		 },
+		  },
+		  'color': {
+				'TIPO': 'TP_COLOR',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0
+		  },
  		 'elim':     {
  									'TIPO': 'TP_BOLEANO',
  									'VISIBILIDAD': 'TP_BANDERA',
@@ -1278,7 +1293,8 @@ const ENTIDAD = {
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
  	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
+			 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
+			 {'color': '<div class="col col-12">/color/</div>'}
  	 ],
  	 'NOMBRE':			'Tema'
   },
@@ -1431,6 +1447,11 @@ const ENTIDAD = {
  									 'VISIBILIDAD': 'TP_VISIBLE',
  									 'NECESARIO': 1
  		 },
+			'color': {
+				'TIPO': 'TP_COLOR',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0
+			},
  		 'elim':     {
  									'TIPO': 'TP_BOLEANO',
  									'VISIBILIDAD': 'TP_BANDERA',
@@ -1439,10 +1460,10 @@ const ENTIDAD = {
  	 },
 	 'VISIBLE': {"TEXTO": "/nombre/","ATTR":["nombre"]},
 	 'UNIQUE':	['nombre'],
-	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
+	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'},'color':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
  	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
+ 									 {'id':'/id/','nombre': '<div class="col col-6">/nombre/</div>','color': '<div class="col col-6">/color/</div>'},
  	 ],
  	 'NOMBRE':			'Partido político'
   },

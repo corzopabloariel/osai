@@ -98,10 +98,28 @@ class PYRUS_ACTION{
         response(200,'ok ' . $entidad, PYRUS_DB::get_value_paginado($d));
     }
     /**
+     * Retorna un archivo del local en Base64
+     */
+    public static function base64($d) {
+        $path = "../{$d["src"]}";
+        $type = pathinfo($path, PATHINFO_EXTENSION);
+        // echo file_get_contents($path);
+        $data = base64_encode(file_get_contents($path));
+        
+        response(200,"Base64", "data:image/{$type};base64,{$data}");
+    }
+    /**
      * 
      */
     public static function agenda($d) {
         response(200,'ok agenda nacional', PYRUS_DB::get_agenda($d));
+    }
+    /** 
+     * Función para búsqueda de unidades de análisis involucradas en una noticia
+     * Es una copia de lo que se encuentra en OSAI noticiainformes.php
+     */
+    public static function unidades() {
+        response(200,'ok unidades de análisis', PYRUS_DB::unidades());
     }
     /** */
     public static function notificacionMedios($d) {

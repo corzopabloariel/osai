@@ -204,7 +204,7 @@ if(userDATOS.verificar(1)) {
       
       var parametros = {"desde":str_lastmonth, "hasta":str_today, "ua":ua};
       window.parametros = parametros;
-      window.open(url,'blank');
+      window.open(`../${url}`,'blank');
       // w.variables = window.parametros;
       localStorage.setItem("parametros", JSON.stringify(window.parametros));
     };

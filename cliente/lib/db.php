@@ -24,7 +24,132 @@ class PYRUS_DB {
   static function get_registros($e){
       return R::count($e,"elim = 0");
   }
+  /** */
+  static function unidades() {
+    $attr = $where_condition = $inner = $group = "";
+    $sqlVISTA = "";
+    ///////////
+    $attr .= "n.id,";
+    $attr .= "n.titulo,";
+    $attr .= "n.fecha,";
+    $attr .= "n.estado,";
+    $attr .= "n.id_seccion AS seccion,";
+    $attr .= "n.id_medio AS medio,";
+    $attr .= "n.id_medio_tipo AS medio_tipo";
+    ////////////
+    $where_condition .=	"WHERE n.elim = 0 AND n.titulo != '' ";
 
+    $where_condition .= "AND n.estado IN (2,6) AND n.relevado = 1 ";
+    $attr .= ",GROUP_CONCAT(p.id_cliente) AS cliente";
+    // $attr .= ",u.id AS usuario";
+    $group .= "n.id";
+    $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia) ";
+    $inner .= "INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0) ";
+    $inner .= "INNER JOIN noticiasactor AS na ON (na.id_noticia = n.id AND na.elim = 0) ";
+    
+    $sqlVISTA .= "SELECT {$attr} FROM noticia AS n ";
+    $sqlVISTA .= "{$inner} {$where_condition} " . (!empty($group) ? "GROUP BY {$group} " : "");
+
+    $A_elementos = self::separarPOR(self::$mysqli,$sqlVISTA,["medio","medio_tipo","seccion","cliente","cliente_final","tema","actor"]);
+    if(count($A_elementos["cliente"])) $A_elementos["unidad"] = $A_elementos["cliente"];
+    if(count($A_elementos["cliente_final"]) > 0) $A_elementos["unidad"] = $A_elementos["cliente_final"];
+
+    asort($A_elementos["medio"]);
+    asort($A_elementos["medio_tipo"]);
+    asort($A_elementos["seccion"]);
+    asort($A_elementos["tema"]);
+    asort($A_elementos["actor"]);
+
+    return $A_elementos;
+  }
+  //--------- FUNCIONES
+  static function separarPOR($mysqli,$sql,$Aelementos) {
+    $seccion = R::findAll("seccion","elim = 0");
+    $medio = R::findAll("medio","elim = 0");
+    $medio_tipo = R::findAll("medio_tipo","elim = 0");
+    $cliente = R::findAll("cliente","elim = 0");
+    $cliente_final = R::findAll("osai_usuario","elim = 0");
+    $usuario = R::findAll("usuario","elim = 0");
+    $tema = R::findAll("attr_temas","elim = 0");
+    $actor = R::findAll("actor","elim = 0");
+    // global $medio,$seccion,$medio_tipo,$cliente,$cliente_final,$usuario,$tema,$actor;
+    $A = Array();
+    $A["medio"] = Array();
+    $A["seccion"] = Array();
+    $A["medio_tipo"] = Array();
+    $A["cliente"] = Array();
+    $A["cliente_final"] = Array();
+    $A["tema"] = Array();
+    $A["actor"] = Array();
+
+    $A["actor"]["column"] = "nombre";
+    $A["actor"]["no"] = "SIN ACTOR";
+    $A["tema"]["column"] = "nombre";
+    $A["tema"]["no"] = "SIN TEMA";
+    $A["medio"]["column"] = "medio";
+    $A["medio"]["no"] = "SIN MEDIO";
+    $A["seccion"]["column"] = "nombre";
+    $A["seccion"]["no"] = "SIN SECCIÓN";
+    $A["medio_tipo"]["column"] = "nombre";
+    $A["medio_tipo"]["no"] = "SIN TIPO DE MEDIO";
+
+    $A["cliente"]["column"] = "nombre";
+    $A["cliente"]["no"] = "SIN CLIENTE";
+    $A["cliente_final"]["column"] = "user";
+    $A["cliente_final"]["no"] = "SIN CLIENTE";
+    $Adatos = Array();
+    foreach($Aelementos AS $e) $Adatos[$e] = Array();
+    
+    if($queryRecords = $mysqli->query($sql)) {
+      while($noticia = $queryRecords->fetch_assoc()) {
+        foreach($Aelementos AS $e) {
+          if(!isset($noticia[$e])) continue;
+          $aux = $$e;
+          if(!isset($Adatos[$e][$noticia[$e]])) {
+            switch($e) {
+              case "cliente":
+              case "cliente_final":
+              case "tema":
+              case "actor":
+                $groupConcat = explode(",",$noticia[$e]);
+                foreach($groupConcat AS $a) {
+                  if(empty($a)) continue;
+                  if(isset($aux[$a])) {
+                    if(!isset($Adatos[$e][$a])) {
+                      if($e == "actor")
+                        $Adatos[$e][$a] = "{$aux[$a][$A[$e]["column"]]} {$aux[$a]["apellido"]}";
+                      else
+                        $Adatos[$e][$a] = $aux[$a][$A[$e]["column"]];
+                    }
+                  } else {
+                    $Adatos[$e][$a] = $A[$e]["no"];
+                  }
+                }
+                break;
+              case "seccion":
+                if(isset($aux[$noticia[$e]])) {
+                  if(!isset($Adatos[$e][$noticia[$e]])) {
+                    $medioSTR = $medio[$aux[$noticia[$e]]["id_medio"]];
+                    $Adatos[$e][$noticia[$e]] = "{$medioSTR["medio"]} / {$aux[$noticia[$e]][$A[$e]["column"]]}";
+                  }
+                } else $Adatos[$e][$noticia[$e]] = $A[$e]["no"];
+                break;
+              default:
+                if(isset($aux[$noticia[$e]])) {
+                  if(!isset($Adatos[$e][$noticia[$e]]))
+                    $Adatos[$e][$noticia[$e]] = $aux[$noticia[$e]][$A[$e]["column"]];
+                } else {
+                  $Adatos[$e][$noticia[$e]] = $A[$e]["no"];
+                }
+            }
+          }
+        }
+
+      }
+      $queryRecords->close();
+    }
+    return $Adatos;
+  }
   /**
    * Trae un elemento de una entidad dada
    *

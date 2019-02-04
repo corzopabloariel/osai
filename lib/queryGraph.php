@@ -348,13 +348,468 @@ function grafico_1_3( $desde, $hasta, $ua ){
 		'grafico' => $objeto
 		// ,'temas' => $temas
 		];
+}
+
+// TEMAS POR FAVORABILIDAD
+function grafico_2( $desde, $hasta, $ua ){
+	// falta filtrar fecha
+	/*$query = "select noticiastema.id_tema, noticiastema.valor, count(noticiastema.id_tema) as cantidad "
+		. " from noticiastema where noticiastema.id_cliente = " . $ua . " "
+		. " group by noticiastema.id_tema, noticiastema.valor order by id_tema DESC"; *** OLD QUERY **/
+	$query = "select noticiastema.id_tema, noticiastema.valor, count(noticiastema.id_tema) as cantidad from noticiastema 
+		inner join proceso on noticiastema.id_noticia = proceso.id_noticia inner join noticia on noticia.id = proceso.id_noticia 
+		where proceso.id_cliente = " . $ua . " and proceso.elim = 0 and noticia.fecha BETWEEN '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59' 
+		group by noticiastema.id_tema, noticiastema.valor order by cantidad desc";
 	
+	// el grafico de barras es igual a la tabla
+	$main = R::getAll($query);
+	// como ya viene acomodado, le mando los conjuntos de a tres
+	$todo = [];
+	$uno = [0,0,0];
+	$id_current = -1;
+	$matrix = []; // contiene a todos
+	$arr_id_aux = []; // contiene los indices, posicional a matrix
+	$arr_temas = []; // el combinado para enviar
+	$arr_temas_name = []; // es posicional, 
+	$arr_temas_id = []; // es posicional, 
+	foreach($main as $k=>$v){
+		$pos = array_search($v['id_tema'],$arr_id_aux);
+		if($pos !== false){
+			$matrix[ $pos ]['valoracion'][ intval($v['valor']) + 1 ] = intval( $v['cantidad'] );
+			$matrix[ $pos ]['total'] += intval( $v['cantidad'] );
+		}
+		else{
+			$nombre = R::findOne('attr_temas','id LIKE ?',[ $v['id_tema'] ])['nombre'];
+			if( is_null($nombre) ) $nombre = 'TEMA SIN NOMBRE';
+			$id_tema = $v['id_tema'];
+			//creo el array
+			$uno = [0,0,0];
+			$uno[ intval($v['valor']) + 1 ] = intval( $v['cantidad'] );
+			$matrix[] = [
+				'nombre' => $nombre,
+				'id' => $id_tema,
+				'valoracion' => $uno,
+				'total' => $v['cantidad']
+			];
+			$arr_id_aux[] = $id_tema;
+		}
+	}
+	// ordeno la matrix
+	usort($matrix, function($a, $b) {
+		return $b['total'] - $a['total'];
+		});
+	// lo parto en 3 para el grafico
+	$grafico = [ [], [], [] ];
+	$arr_temas = [];
+	foreach($matrix as $k=>$v){
+		$grafico[0][] = $v['valoracion'][0];
+		$grafico[1][] = $v['valoracion'][1];
+		$grafico[2][] = $v['valoracion'][2];
+		$arr_temas[] = [
+			'nombre' => $v['nombre'],
+			'id' => $v['id']
+			];
+	}
+	
+	return [
+		'temas_nombres' => $arr_temas	,
+		'grafico' => $grafico,
+		'tabla' => $matrix
+		];
+}
+
+function grafico_2_queryUrl($desde, $hasta, $ua, $id){
+	$query = "select noticia.id,  noticiastema.valor, noticia.titulo, noticia.id_medio, noticia.url from noticiastema 
+		inner join proceso on noticiastema.id_noticia = proceso.id_noticia inner join noticia on noticia.id = proceso.id_noticia 
+		where proceso.id_cliente = " . $ua . " and noticiastema.id_tema = " . $id . " and noticia.fecha BETWEEN '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59' 
+		 order by id_tema";
+	$main = R::getAll($query);
+	$arr_todo = [];
+	$columnas = [
+		(object) ['title' =>'id' ],
+		(object) ['title' => 'valoracion'],
+		(object) ['title' => 'titulo'],
+		(object) ['title' => 'medio'],
+		(object) ['title' => 'link'] ];
+	foreach($main as $k=>$v){
+		// obtengo el valor
+		$valor = "";
+		if( $v['valor'] == -1 ) $valor = "<i class='fas fa-arrow-alt-circle-down text-danger'></i> negativo";
+		if( $v['valor'] == 0 ) $valor = "<i class='fas fa-minus-circle text-warning'></i> neutro";
+		if( $v['valor'] == 1 ) $valor = "<i class='fas fa-arrow-alt-circle-up text-success'></i> positivo";
+		$medio = R::findOne('medio','id LIKE ?',[ $v['id_medio'] ])['medio'];
+		$arr_todo[] = [
+			$v['id'],
+			$valor,
+			"<span class='text-truncate d-block' style='width:450px;'>{$v['titulo']}</span>",
+			$medio,
+			( $v['url'] == null ) ? '<i class="fas fa-unlink text-danger"></i>' : "<a style='text-decoration:none;' class='text-primary' href='{$v['url']}' target='blank'><i class='fas fa-external-link-alt'></i></a>"
+		];
+	}
+	return [
+		'columnas' => $columnas,
+		'filas' => $arr_todo
+		];
+}
+
+// ACTORES POR FAVORABILIDAD
+function grafico_2_2( $desde, $hasta, $ua ){
+	// traigo todas las noticias en esee rango de fechas
+	$query = "select noticiasactor.id_actor, noticiasactor.data from noticiasactor 
+		inner join proceso on noticiasactor.id_noticia = proceso.id_noticia 
+		inner join noticia on noticia.id = proceso.id_noticia 
+		where 
+			proceso.id_cliente = " . $ua . " 
+			and proceso.elim = 0 
+			and noticia.fecha BETWEEN '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59'";
+	
+	$main = R::getAll($query);
+	$matrix = []; // contiene a todos
+	$arr_id_aux = []; // contiene los indices, posicional a matrix
+	foreach($main as $k=>$v){
+		$pos = array_search($v['id_actor'],$arr_id_aux);
+		// obtengo la valoracion
+		$data = json_decode( str_replace("'",'"',$v['data']),true);
+		// si no tiene clave frm_valor, no lo introduzco
+		if(! array_key_exists('frm_valor',$data) )
+			continue; // TODO: ACA PONER QUIENES NO TIENEN FRM_VALOR PARA MOSTRAR
+
+		if($pos !== false){
+			$matrix[ $pos ]['valoracion'][ intval($data['frm_valor']) + 1 ] += 1; // sumo uno
+			$matrix[ $pos ]['total'] += 1; // sumo 1
+		}
+		else{
+			$actor = R::findOne('actor','id LIKE ?',[ $v['id_actor'] ]);
+			if( is_null($actor) ) $nombre = 'ACTOR SIN NOMBRE';
+			else $nombre = $actor['nombre'] . " " . $actor['apellido'];
+			//creo el array
+			$uno = [0,0,0];
+			$uno[ intval($data['frm_valor']) + 1 ] = 1; // es el primero
+			$matrix[] = [
+				'nombre' => $nombre,
+				'id' => $v['id_actor'],
+				'valoracion' => $uno,
+				'total' => 1 // es el primero que se hace
+			];
+			$arr_id_aux[] = $v['id_actor'];
+		}
+	}
+	
+	// ordeno la matrix
+	usort($matrix, function($a, $b) {
+		return $b['total'] - $a['total'];
+		});
+	// lo parto en 3 para el grafico
+	$grafico = [ [], [], [] ];
+	$arr_actores = [];
+	foreach($matrix as $k=>$v){
+		$grafico[0][] = $v['valoracion'][0];
+		$grafico[1][] = $v['valoracion'][1];
+		$grafico[2][] = $v['valoracion'][2];
+		$arr_actores[] = [
+			'nombre' => $v['nombre'],
+			'id' => $v['id']
+			];
+	}
+	
+	return [
+		'actores_posicional' => $arr_actores,
+		'tabla' => $matrix,
+		'grafico' => $grafico
+		];
+}
+
+function grafico_2_2_queryUrl( $desde, $hasta, $ua, $id){
+	$query = "select noticia.id, noticiasactor.data, noticia.titulo, noticia.id_medio, noticia.url from noticiasactor 
+		inner join proceso on noticiasactor.id_noticia = proceso.id_noticia 
+		inner join noticia on noticia.id = proceso.id_noticia 
+		where 
+			proceso.id_cliente = " . $ua . " 
+			and proceso.elim = 0 
+            and noticiasactor.id_actor = " . $id . "
+			and noticia.fecha BETWEEN '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59'";
+	
+	$main = R::getAll($query);
+	$arr_todo = [];
+	$columnas = [
+		(object) ['title' =>'id' ],
+		(object) ['title' => 'valoracion'],
+		(object) ['title' => 'titulo'],
+		(object) ['title' => 'medio'],
+		(object) ['title' => 'link'] ];
+	foreach($main as $k=>$v){
+		// obtengo el valor
+		$data = json_decode( str_replace("'",'"',$v['data']),true);
+		// si no existe frm_valor, voy por el siguiente
+		if(! array_key_exists('frm_valor',$data) ) continue;
+		$valor = "";
+		if( $data['frm_valor'] == -1 ) $valor = "<i class='fas fa-arrow-alt-circle-down text-danger'></i> negativo";
+		if( $data['frm_valor'] == 0 ) $valor = "<i class='fas fa-minus-circle text-warning'></i> neutro";
+		if( $data['frm_valor'] == 1 ) $valor = "<i class='fas fa-arrow-alt-circle-up text-success'></i> positivo";
+		$medio = R::findOne('medio','id LIKE ?',[ $v['id_medio'] ])['medio'];
+		$arr_todo[] = [
+			$v['id'],
+			$valor,
+			"<span class='text-truncate d-block' style='width:450px;'>{$v['titulo']}</span>",
+			$medio,
+			( $v['url'] == null ) ? '<i class="fas fa-unlink text-danger"></i>' : "<a style='text-decoration:none;' class='text-primary' href='{$v['url']}' target='blank'><i class='fas fa-external-link-alt'></i></a>"
+		];
+	}
+	return [
+		'columnas' => $columnas,
+		'filas' => $arr_todo
+		];
+}
+
+// INSTITUCIONES POR FAVORABILIDAD
+function grafico_2_3( $desde, $hasta, $ua ){
+	// traigo todas las noticias en esee rango de fechas
+	$query = "select noticiasinstitucion.id_institucion, noticiasinstitucion.data from noticiasinstitucion
+		inner join proceso on noticiasinstitucion.id_noticia = proceso.id_noticia 
+		inner join noticia on noticia.id = proceso.id_noticia 
+		where 
+			proceso.id_cliente = " . $ua . "
+			and proceso.elim = 0 
+			and noticia.fecha BETWEEN '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59'";
+	
+	$main = R::getAll($query);
+	$matrix = []; // contiene a todos
+	$arr_id_aux = []; // contiene los indices, posicional a matrix
+	foreach($main as $k=>$v){
+		$pos = array_search($v['id_institucion'],$arr_id_aux);
+		// obtengo la valoracion
+		$data = json_decode( str_replace("'",'"',$v['data']),true);
+		// si no tiene clave frm_valor, no lo introduzco
+		if(! array_key_exists('frm_valor',$data) )
+			continue; // TODO: ACA PONER QUIENES NO TIENEN FRM_VALOR PARA MOSTRAR
+
+		if($pos !== false){
+			$matrix[ $pos ]['valoracion'][ intval($data['frm_valor']) + 1 ] += 1; // sumo uno
+			$matrix[ $pos ]['total'] += 1; // sumo 1
+		}
+		else{
+			$institucion = R::findOne('attr_institucion','id LIKE ?',[ $v['id_institucion'] ]);
+			if( is_null($institucion) ) $nombre = 'INSTITUCION SIN NOMBRE';
+			else $nombre = $institucion['nombre'];
+			//creo el array
+			$uno = [0,0,0];
+			$uno[ intval($data['frm_valor']) + 1 ] = 1; // es el primero
+			$matrix[] = [
+				'nombre' => $nombre,
+				'id' => $v['id_institucion'],
+				'valoracion' => $uno,
+				'total' => 1 // es el primero que se hace
+			];
+			$arr_id_aux[] = $v['id_institucion'];
+		}
+	}
+	
+	// ordeno la matrix
+	usort($matrix, function($a, $b) {
+		return $b['total'] - $a['total'];
+		});
+	// lo parto en 3 para el grafico
+	$grafico = [ [], [], [] ];
+	$arr_instituciones = [];
+	foreach($matrix as $k=>$v){
+		$grafico[0][] = $v['valoracion'][0];
+		$grafico[1][] = $v['valoracion'][1];
+		$grafico[2][] = $v['valoracion'][2];
+		$arr_instituciones[] = [
+			'nombre' => $v['nombre'],
+			'id' => $v['id']
+			];
+	}
+	
+	return [
+		'instituciones_posicional' => $arr_instituciones,
+		'tabla' => $matrix,
+		'grafico' => $grafico
+		];
+}
+
+function grafico_2_3_queryUrl( $desde, $hasta, $ua, $id){
+	$query = "select noticia.id, noticiasinstitucion.data, noticia.titulo, noticia.id_medio, noticia.url from noticiasinstitucion 
+		inner join proceso on noticiasinstitucion.id_noticia = proceso.id_noticia 
+		inner join noticia on noticia.id = proceso.id_noticia 
+		where 
+			proceso.id_cliente = " . $ua . " 
+			and proceso.elim = 0 
+            and noticiasinstitucion.id_institucion = " . $id . "
+			and noticia.fecha BETWEEN '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59'";
+	
+	$main = R::getAll($query);
+	$arr_todo = [];
+	$columnas = [
+		(object) ['title' =>'id' ],
+		(object) ['title' => 'valoracion'],
+		(object) ['title' => 'titulo'],
+		(object) ['title' => 'medio'],
+		(object) ['title' => 'link'] ];
+	foreach($main as $k=>$v){
+		// obtengo el valor
+		$data = json_decode( str_replace("'",'"',$v['data']),true);
+		// si no existe frm_valor, voy por el siguiente
+		if(! array_key_exists('frm_valor',$data) ) continue;
+		$valor = "";
+		if( $data['frm_valor'] == -1 ) $valor = "<i class='fas fa-arrow-alt-circle-down text-danger'></i> negativo";
+		if( $data['frm_valor'] == 0 ) $valor = "<i class='fas fa-minus-circle text-warning'></i> neutro";
+		if( $data['frm_valor'] == 1 ) $valor = "<i class='fas fa-arrow-alt-circle-up text-success'></i> positivo";
+		$medio = R::findOne('medio','id LIKE ?',[ $v['id_medio'] ])['medio'];
+		$arr_todo[] = [
+			$v['id'],
+			$valor,
+			"<span class='text-truncate d-block' style='width:450px;'>{$v['titulo']}</span>",
+			$medio,
+			( $v['url'] == null ) ? '<i class="fas fa-unlink text-danger"></i>' : "<a style='text-decoration:none;' class='text-primary' href='{$v['url']}' target='blank'><i class='fas fa-external-link-alt'></i></a>"
+		];
+	}
+	return [
+		'columnas' => $columnas,
+		'filas' => $arr_todo
+		];
+}
+
+	// MEDIOS POR CANTIDAD
+function grafico_3( $desde, $hasta, $ua){
+	$query = "select noticia.id_medio, count(*) 
+			as cantidad from noticia inner join proceso on 
+			noticia.id = proceso.id_noticia 
+			where proceso.id_cliente = " . $ua . " and
+			proceso.elim = 0 and
+			noticia.fecha between '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59'
+			group by id_medio order by cantidad DESC";
+	
+	$main = R::getAll($query);
+	$todo = [];
+	foreach($main as $k=>$v){
+		$nombre = R::findOne('medio','id LIKE ?',[ $v['id_medio'] ])['medio'];
+		if( is_null($nombre) ) $nombre = 'MEDIO SIN NOMBRE';
+		$todo[] = [
+			'label' => $nombre,
+			'value' => intval( $v['cantidad'] ),
+			'color' =>  '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT) // color random
+			];
+	}
+	return [
+		'grafico' => $todo
+		];
+	
+}
+function grafico_4( $desde, $hasta, $ua) {
+	$query = "SELECT n.id, n.id_medio AS medio, np.data, nt.id_tema AS tema, nt.valor FROM `noticia` AS n
+		INNER JOIN proceso AS p ON (p.id_cliente = {$ua} AND p.id_noticia = n.id AND p.elim = 0)
+		INNER JOIN noticiasproceso AS np ON (np.id_noticia = n.id AND np.elim = 0)
+		INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0)
+		WHERE n.fecha BETWEEN '{$desde} 00:00:00' AND '{$hasta} 23:59:59' AND n.elim = 0";
+
+	$main = R::getAll($query);
+  	$A_elementos = [];
+	  //medio-destaque-temas-valoracion,X
+	$color = ["#ffc107","#28a745","#dc3545","#DEDEDE"];//COLORES BÁSICOS
+	$color["medio"] = [];
+	$color["tema"] = [];
+	$color["destaque"] = [];
+	
+	foreach($main as $k => $v) {
+		$data = str_replace("'",'"',$v['data']);
+		$data = json_decode($data);
+		$valoracion = "Neutro//#ffc107";
+		if($v["valor"] == 1) $valoracion = "Positivo//#28a745";
+		if($v["valor"] == 0) $valoracion = "Negativo//#dc3545";
+		if(empty($data->select_destaque)) $destaqueNombre = "Sin destaque//#DEDEDE";
+		else {
+			$destaque = R::findOne('medio_destaque','id = ? AND elim = ?',[ $data->select_destaque,0 ]);
+			$destaqueNombre = "{$destaque["lugar"]}";
+			if (!empty($destaque["destaque"])) $destaqueNombre .= ", {$destaque["destaque"]}";
+			if (!is_null($destaque["color"])) {
+				if( !isset($color["destaque"][$destaque["id"]]) ) {
+					if(!in_array($destaque["color"],$color))
+						$color[] = $destaque["color"];
+					$color["destaque"][$destaque["id"]] = $destaque["color"];
+				}
+			} else {
+				do {
+					$aux = bgColor();
+				} while(in_array($aux,$color));
+				if( !isset($color["destaque"][$destaque["id"]]) ) {
+					$color[] = $aux;
+					$color["destaque"][$destaque["id"]] = $aux;
+				}
+			} 
+			$destaqueNombre .= "//{$color["destaque"][$destaque["id"]]}";
+		}
+
+		$medioR = R::findOne('medio','id LIKE ? AND elim = ?',[ $v['medio'],0 ]);
+		$medio = $medioR["medio"];
+		if( is_null($medio) ) $medio = 'Sin medio//#DEDEDE';
+		else {
+			if(!is_null($medioR["color"])) {
+				if( !isset($color["medio"][$medioR["id"]]) ) {
+					if(!in_array($medioR["color"],$color))
+						$color[] = $medioR["color"];
+					$color["medio"][$medioR["id"]] = $medioR["color"];
+				}
+			} else {
+				do {
+					$aux = bgColor();
+				} while(in_array($aux,$color));
+				if( !isset($color["medio"][$medioR["id"]]) ) {
+					$color[] = $aux;
+					$color["medio"][$medioR["id"]] = $aux;
+				}
+			}
+			$medio .= "//{$color["medio"][$medioR["id"]]}";
+		}
+		$temaR = R::findOne('attr_temas','id = ? AND elim = ?',[ $v['tema'],0 ]);
+		$tema = $temaR['nombre'];
+		if( is_null($tema) ) $tema = 'Sin tema//#DEDEDE';
+		else {
+			if(!is_null($temaR["color"])) {
+				if( !isset($color["tema"][$temaR["id"]]) ) {
+					if(!in_array($temaR["color"],$color))
+						$color[] = $temaR["color"];
+					$color["tema"][$temaR["id"]] = $temaR["color"];
+				}
+			} else {
+				do {
+					$aux = bgColor();
+				} while(in_array($aux,$color));
+				if( !isset($color["tema"][$temaR["id"]]) ) {
+					$color[] = $aux;
+					$color["tema"][$temaR["id"]] = $aux;
+				}
+			}
+			$tema .= "//{$color["tema"][$temaR["id"]]}";
+		}
+    	$A_elementos[] = "{$medio}__:__{$destaqueNombre}__:__{$tema}__:__{$valoracion}";
+	}
+	$data = [];
+	$aux = array_count_values($A_elementos);
+	foreach ($aux as $key => $value) {
+		$data[] = "{$key},{$value}";
+	}
+	return [
+		'grafico' => $data
+	];
+
 }
 
 
 if($grafico == 'grafico_1') echo json_encode( grafico_1( $desde, $hasta, $ua ) );
 if($grafico == 'grafico_1_2') echo json_encode( grafico_1_2( $desde, $hasta, $ua ) );
 if($grafico == 'grafico_1_3') echo json_encode( grafico_1_3( $desde, $hasta, $ua ) );
+if($grafico == 'grafico_2') echo json_encode( grafico_2( $desde, $hasta, $ua ) );
+if($grafico == 'grafico_2_2') echo json_encode( grafico_2_2( $desde, $hasta, $ua ) );
+if($grafico == 'grafico_2_3') echo json_encode( grafico_2_3( $desde, $hasta, $ua ) );
+if($grafico == 'grafico_3') echo json_encode( grafico_3( $desde, $hasta, $ua ) );
+if($grafico == 'grafico_4') echo json_encode( grafico_4( $desde, $hasta, $ua ) );
+// subquerys
+if( isset( $_GET['id'] ) ){
+	if($grafico == 'grafico_2_url') echo json_encode( grafico_2_queryUrl( $desde, $hasta, $ua, $_GET['id'] ) );
+	if($grafico == 'grafico_2_2_url') echo json_encode( grafico_2_2_queryUrl( $desde, $hasta, $ua, $_GET['id']) );
+	if($grafico == 'grafico_2_3_url') echo json_encode( grafico_2_3_queryUrl( $desde, $hasta, $ua, $_GET['id']) );
+}
 
 /*echo json_encode(
 	[
@@ -364,3 +819,8 @@ if($grafico == 'grafico_1_3') echo json_encode( grafico_1_3( $desde, $hasta, $ua
 		// 'colores_cantidad' => $colores_cantidad // numero a modular por crc32(temas)
 	]
 );*/
+
+function bgColor() {
+	$color = dechex(rand(0x000000, 0xDDDDDD));
+	return "#{$color}";
+}

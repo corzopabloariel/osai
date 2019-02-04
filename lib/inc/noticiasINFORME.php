@@ -243,31 +243,41 @@ function separarPOR($mysqli,$sql,$Aelementos) {
         if(!isset($noticia[$e])) continue;
         $aux = $$e;
         if(!isset($Adatos[$e][$noticia[$e]])) {
-          if($e == "cliente" || $e == "tema" || $e == "actor") {
-            $groupConcat = explode(",",$noticia[$e]);
-            foreach($groupConcat AS $a) {
-              if(empty($a)) continue;
-              if(isset($aux[$a])) {
-                if(!isset($Adatos[$e][$a])) {
-                  if($e == "actor")
-                    $Adatos[$e][$a] = "{$aux[$a][$A[$e]["column"]]} {$aux[$a]["apellido"]}";
-                  else
-                    $Adatos[$e][$a] = $aux[$a][$A[$e]["column"]];
+          switch($e) {
+            case "cliente":
+            case "cliente_final":
+            case "tema":
+            case "actor":
+              $groupConcat = explode(",",$noticia[$e]);
+              foreach($groupConcat AS $a) {
+                if(empty($a)) continue;
+                if(isset($aux[$a])) {
+                  if(!isset($Adatos[$e][$a])) {
+                    if($e == "actor")
+                      $Adatos[$e][$a] = "{$aux[$a][$A[$e]["column"]]} {$aux[$a]["apellido"]}";
+                    else
+                      $Adatos[$e][$a] = $aux[$a][$A[$e]["column"]];
+                  }
+                } else {
+                  $Adatos[$e][$a] = $A[$e]["no"];
                 }
-              } else $Adatos[$e][$a] = $A[$e]["no"];
-            }
-          } if($e == "seccion") {
-            if(isset($aux[$noticia[$e]])) {
-              if(!isset($Adatos[$e][$noticia[$e]])) {
-                $medioSTR = $medio[$aux[$noticia[$e]]["id_medio"]];
-                $Adatos[$e][$noticia[$e]] = "{$medioSTR["medio"]} / {$aux[$noticia[$e]][$A[$e]["column"]]}";
               }
-            } else $Adatos[$e][$noticia[$e]] = $A[$e]["no"];
-          } else {
-            if(isset($aux[$noticia[$e]])) {
-              if(!isset($Adatos[$e][$noticia[$e]]))
-                $Adatos[$e][$noticia[$e]] = $aux[$noticia[$e]][$A[$e]["column"]];
-            } else $Adatos[$e][$noticia[$e]] = $A[$e]["no"];
+              break;
+            case "seccion":
+              if(isset($aux[$noticia[$e]])) {
+                if(!isset($Adatos[$e][$noticia[$e]])) {
+                  $medioSTR = $medio[$aux[$noticia[$e]]["id_medio"]];
+                  $Adatos[$e][$noticia[$e]] = "{$medioSTR["medio"]} / {$aux[$noticia[$e]][$A[$e]["column"]]}";
+                }
+              } else $Adatos[$e][$noticia[$e]] = $A[$e]["no"];
+              break;
+            default:
+              if(isset($aux[$noticia[$e]])) {
+                if(!isset($Adatos[$e][$noticia[$e]]))
+                  $Adatos[$e][$noticia[$e]] = $aux[$noticia[$e]][$A[$e]["column"]];
+              } else {
+                $Adatos[$e][$noticia[$e]] = $A[$e]["no"];
+              }
           }
         }
       }

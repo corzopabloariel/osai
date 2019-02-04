@@ -1084,12 +1084,14 @@ if(userDATOS.verificar(1)) {
                 "estado": 1});
             }
 
-            selectMEDIOS = userDATOS.noticiasSELECT("clipping");
             tabla_noticia.draw();
-            angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
-            angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
-            angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
-            angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
+            userDATOS.noticiasSELECT("clipping", null, function(selectMEDIOS) {
+              angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
+              angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
+              angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
+              angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
+              angular.element($(".submenu")).scope().$digest();
+            });
           },500);
         });
       },true);
@@ -1208,9 +1210,24 @@ if(userDATOS.verificar(1)) {
    */
   app.controller("informes", function ($scope) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
-    select = userDATOS.noticiasSELECT("procesadas");
-    $scope.unidad = select.unidad;
-    
+    userDATOS.noticiasSELECT("procesadas", null, function(select) {
+      graficos = {};
+      userDATOS.busquedaTabla("osai_grafico",function(data) { 
+        for(var i in data) {
+          graficos[i] = {};
+          graficos[i]["idOsaiGrafico"] = i;
+          graficos[i]["nombre"] = select.unidad[data[i]["id_usuario_osai"]];
+          graficos[i]["id"] = data[i]["id_usuario_osai"];
+          graficos[i]["grafico"] = ($scope.graficoSelect[data[i]["grafico"]] === undefined ? "-" : $scope.graficoSelect[data[i]["grafico"]]);
+          graficos[i]["idgrafico"] = data[i]["grafico"];
+          graficos[i]["titulo"] = data[i]["titulo"];
+          graficos[i]["descripcion"] = data[i]["descripcion"];
+        }
+      });
+      $scope.graficos = graficos;
+
+      $scope.$digest();
+    });
     graficos = {}
     userDATOS.busquedaTabla("grafico",function(data) {
       $scope.graficoTable = data;
@@ -1218,20 +1235,7 @@ if(userDATOS.verificar(1)) {
         graficos[i] = data[i].name;
     });
     $scope.graficoSelect = graficos;
-    graficos = {};
-    userDATOS.busquedaTabla("osai_grafico",function(data) { 
-      for(var i in data) {
-        graficos[i] = {};
-        graficos[i]["idOsaiGrafico"] = i;
-        graficos[i]["nombre"] = select.unidad[data[i]["id_usuario_osai"]];
-        graficos[i]["id"] = data[i]["id_usuario_osai"];
-        graficos[i]["grafico"] = ($scope.graficoSelect[data[i]["grafico"]] === undefined ? "-" : $scope.graficoSelect[data[i]["grafico"]]);
-        graficos[i]["idgrafico"] = data[i]["grafico"];
-        graficos[i]["titulo"] = data[i]["titulo"];
-        graficos[i]["descripcion"] = data[i]["descripcion"];
-      }
-    });
-    $scope.graficos = graficos;
+    
 
     $(document).ready(function(){
       $(".select__2").select2();
@@ -1239,24 +1243,24 @@ if(userDATOS.verificar(1)) {
       $("tbody a").on("click",function(e) {
         e.preventDefault();
         href = $(this).attr("href");
-        min = $("#fecha_min").val();
-        max = $("#fecha_max").val();
-        uni = $("#select_unidad").val();
+        // min = $("#fecha_min").val();
+        // max = $("#fecha_max").val();
+        // uni = $("#select_unidad").val();
         
-        if(min == "" || max == "" || uni == "")
-          userDATOS.notificacion(strings.faltan.especifico[0],"error");
-        else {
-          if(dates.compare(dates.convert(min),dates.convert(max)) == 1) {
-            userDATOS.notificacion(strings.error.fechas,"error");
-            return false;
-          }
-          window.localStorage.setItem("fecha_min", min);
-          window.localStorage.setItem("fecha_max", max);
-          window.localStorage.setItem("unidad", uni);
+        // if(min == "" || max == "" || uni == "")
+        //   userDATOS.notificacion(strings.faltan.especifico[0],"error");
+        // else {
+        //   if(dates.compare(dates.convert(min),dates.convert(max)) == 1) {
+        //     userDATOS.notificacion(strings.error.fechas,"error");
+        //     return false;
+        //   }
+        //   window.localStorage.setItem("fecha_min", min);
+        //   window.localStorage.setItem("fecha_max", max);
+        //   window.localStorage.setItem("unidad", uni);
 
           let win = window.open(href, '_blank');
           win.focus();
-        }
+        
         return false;
       })
     })

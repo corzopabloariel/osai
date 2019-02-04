@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es-ES">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+		<title>OSAI ::: Gráfico 1</title>
+		
+		<link rel="stylesheet" href="../../assets/css/bootstrap.css">
+		<link rel="stylesheet" href="../../assets/css/lobibox.css">
+		<link rel="stylesheet" href="/cliente/assets/grafico1/client.css">
+	</head>
+    <body class="post-template-default single single-post postid-1270 single-format-standard layout-boxed two_col_left two-columns singular cookies-not-set">
+
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-9" id="knowledgegraphcontent">
+
+			</div>
+			<div class="p-3 bg-light border-left col-3 position-fixed h-100" style="top:0; right:0; overflow-y: auto;" id="colores_temas">
+				<div> 
+					<div class="form-group">
+						<label for="desde">Fecha Inicio</label>
+						<input class="form-control" type="date" id="desde">
+					</div>
+					<div class="form-group">
+						<label for="hasta">Fecha Hasta</label>
+						<input class="form-control" type="date" id="hasta">
+					</div>
+					<div class="form-group">
+						<label for="ua">Unidad de análisis</label>
+						<select class="form-control" id="ua">
+							<!-- <option value="12">Agenda Nacional</option> -->
+						</select>
+					</div>
+					<button class="btn btn-block btn-primary text-uppercase" type="button" onclick="javascript:ejecutarDeNuevo();">ejecutar</button>
+					<div>
+					<a href="#" id="descargar" onclick="javascript:descargarCSV();">Descargar CSV</a>
+					</div>
+				</div>
+				<table class="table mb-0 mt-2" id='tabla_temas_colores'></table>
+			</div>
+		</div>
+	</div>
+	<script src="http://oss.sheetjs.com/js-xlsx/tests/shim.js"></script>
+	<script src="http://oss.sheetjs.com/js-xlsx/tests/xlsx.full.min.js"></script>
+	<script src="/cliente/assets/grafico1/d3.min.js"></script>
+	<script src="/cliente/assets/grafico1/jquery.min.js"></script>
+	<script type="text/javascript" src="../../assets/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../assets/js/lobibox.js"></script>
+	<script src="/cliente/assets/js/toolbox.js"></script>
+	<script type="text/javascript" src="/cliente/assets/js/userDATOS.js"></script>
+	<script src="/cliente/assets/grafico1/client.js"></script>
+	<script type="text/javascript">
+		
+		// aca se declara que grafico es del otro lado 
+		grafico = 'grafico_1';
+		
+		// parametros = JSON.parse(localStorage.getItem("parametros"));
+		// $("#desde").val(parametros.desde);
+		// $("#hasta").val(parametros.hasta);
+		// userDATOS.busqueda({ value: parametros.ua, entidad: "cliente" }, function (data) { 
+		// 	$("#ua").append("<option value='" + data.data.id + "'>" + data.data.nombre + "</option>");
+		// });
+		userDATOS.unidades(function (selects) {
+			for(var i in selects.data.unidad)
+				$("#ua").append(`<option value="${i}">${selects.data.unidad[i]}</option>`);
+		}, true);
+		// https://stackoverflow.com/questions/11023144
+		function addHexColor(c1, c2) {
+			var hexStr = (parseInt(c1, 16) + parseInt(c2, 16)).toString(16);
+			while (hexStr.length < 6) { hexStr = '0' + hexStr; } // Zero pad.
+			return hexStr;
+		}
+
+
+		function initGrafico(desde_, hasta_, ua_) {
+			// vacio la tabla con el contenido
+			var table = document.getElementById("tabla_temas_colores");
+			table.innerHTML = "";
+
+			$.get(
+				"/lib/queryGraph.php?desde=" + desde_ + "&hasta=" + hasta_ + "&ua=" + ua_ + "&grafico=" + grafico,
+				function (data) {
+					// le envio al grafico el dato
+					window.recibo = JSON.parse(data);
+					// asigno un codigo de color para cada tema, posicionalmente, por lo que
+					// debo controlar que no haya mas temas que colores y si es el caso aviso
+					if (recibo.temas.lenght > window.paleta_de_colores.lenght)
+						console.log("AVISO: hay menos colores que temas para colorear ");
+
+					color_actor_i = "f00000";
+
+					for (var x in recibo.grafico.children) {
+						// por cada actor, consigo un tono de Rojo
+						recibo.grafico.children[x].weight = "#" + color_actor_i;
+						// agrego un tono
+						color_actor_i = addHexColor(color_actor_i, "000010");
+						// itero sobre cada hijo (tema)
+						for(var z in recibo.grafico.children[x].children){
+							recibo.grafico.children[x].children[z].name = recibo.temas[ recibo.grafico.children[x].children[z].tema ] + ' (' + recibo.grafico.children[x].children[z].tema_cantidad + ')';
+							recibo.grafico.children[x].children[z].weight = paleta_de_colores[ recibo.grafico.children[x].children[z].tema ];
+						}
+					}
+
+					demoGraph(window.recibo.grafico);
+
+					var table = document.getElementById("tabla_temas_colores");
+					i = 0;
+					// cargo los colores con el mismo mecanismo
+					c = d3.scale.linear().domain([0, 0, window.paleta_de_colores.lenght]).interpolate(d3.interpolateHsl).range(window.paleta_de_colores);
+					for (var p in window.recibo.temas) {
+						// Create an empty <tr> element and add it to the 1st position of the table:
+						var row = table.insertRow(i);
+
+						// Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+						var cell1 = row.insertCell(0);
+						var cell2 = row.insertCell(1);
+
+
+						// Add some text to the new cells:
+						cell1.style.backgroundColor = window.paleta_de_colores[p];
+						// cell1.innerHTML = "NEW CELL1"; // COLOR DE FONDO
+						cell2.innerHTML = window.recibo.temas[p];
+					}
+					
+					// hago el archivo descargable
+					window.csv = "";
+					for(var x in window.recibo.tabla){
+						for(var y in window.recibo.tabla[x]){
+							window.csv += window.recibo.tabla[x][y] + ";";
+						}
+						window.csv += "\n";
+					}
+				});
+		}
+
+		function descargarCSV(){
+			var downloadLink = document.getElementById("descargar");
+			var blob = new Blob(["\ufeff", window.csv]);
+			var url = URL.createObjectURL(blob);
+			downloadLink.href = url;
+			downloadLink.download = "data.csv";
+
+			document.body.appendChild(downloadLink);
+			downloadLink.click();
+			document.body.removeChild(downloadLink);
+		}
+
+		function ejecutarDeNuevo() {
+			desde = document.getElementById("desde").value;
+			hasta = document.getElementById("hasta").value;
+			ua = document.getElementById("ua").value;
+			if (desde == "" || hasta == "") {
+				userDATOS.notificacion("Falta fechas", "error");
+				return false;
+			}
+			if(dates.compare(dates.convert(hasta), dates.convert(desde)) < 0) {
+				userDATOS.notificacion("La fecha de INICIO no puede superar el HASTA", "error");
+				return false;
+			}
+			initGrafico(desde, hasta, ua);
+		}
+
+		$(document).ready(function () {
+			// tomo lo que me enviaron
+			// var p = window.opener.parametros;
+			// initGrafico(parametros.desde, parametros.hasta, parametros.ua);
+		});
+
+		/*	$.get("/lib/queryGraph.php?desde=2018-11-28&hasta=2018-12-29&ua=12",
+				function ( data ){
+					// le envio al grafico el dato
+					window.recibo = JSON.parse( data );
+					demoGraph( window.recibo.grafico );
+				});
+		*/
+
+	</script>	
+</body>
+
+</html>

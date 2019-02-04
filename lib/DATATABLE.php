@@ -94,6 +94,11 @@ if($entidad != "cliente") {
                 $tabla["__{$k}__"] = $value;
             }
 
+            if(isset($tabla["color"])) {
+                if(!is_null($tabla["color"]))
+                    $tabla["color"] = "<span class='d-block w-100' style='background-color:{$tabla["color"]}; height:14px;'></span>";
+            }
+
             foreach($A_arrays AS $k => $v) {
                 $tabla[$k] = json_decode($tabla[$k]);
             }

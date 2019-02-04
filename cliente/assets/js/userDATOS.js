@@ -70,13 +70,24 @@ userDATOS.ajax = function(action,data,asy,callBackOK) {
      async: asy,
      data: { "accion": action, "data": data }
   }).done(function(msg) {
-    if(data.paginado !== undefined) {
-      if(Object.keys(msg.data).length == 0)
-        window[data.paginado_name] --;
+    if(data !== null) {
+      if(data.paginado !== undefined) {
+        if(Object.keys(msg.data).length == 0)
+          window[data.paginado_name] --;
+      }
     }
     callBackOK.call(this,msg);
   });
 }
+/** */
+userDATOS.encodeBase64 = function( src ) {
+    let _r = null;
+    userDATOS.ajax("base64", {src : src }, false, function(data) {
+        _r = data.data;
+    });
+    return _r;
+}
+const imgLoading = userDATOS.encodeBase64("../assets/images/loading.gif", "gif");
 /**
  * Función para la navegación en la aplicación
  */
@@ -124,6 +135,12 @@ userDATOS.busqueda_paginado = function(values, callBackOK, asy = false) {
     "paginado_name": "name_" + name
   }
   userDATOS.ajax("search_paginado",data,asy,callBackOK);
+}
+/**
+ * Función para búsqueda de UNIDADES DE ANÁLISIS
+ */
+userDATOS.unidades = function(callBackOK, asy = false) {
+  userDATOS.ajax("unidades",null,asy,callBackOK);
 }
 /**
  * Función para traer todos los medios involucrados

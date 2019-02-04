@@ -216,6 +216,9 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 				case 'TP_ENTERO':
 					return this.inputString(OBJ_elemento,"frm_" + TAG_nombre,"number",STR_class,OBJ_funcion);
 				break;
+				case 'TP_COLOR':
+					return this.inputString(OBJ_elemento,"frm_" + TAG_nombre,"color",STR_class,OBJ_funcion);
+				break;
 				case 'TP_STRING':
 					return this.inputString(OBJ_elemento,"frm_" + TAG_nombre,"text",STR_class,OBJ_funcion);
 				break;
