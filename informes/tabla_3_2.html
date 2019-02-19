@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr" ng-app="app" ng-controller="jsonController">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>OSAI ::: Tabla</title>
+    
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.18/af-2.3.2/b-1.5.4/b-colvis-1.5.4/b-html5-1.5.4/b-print-1.5.4/cr-1.5.0/fc-3.2.5/fh-3.1.4/kt-2.5.0/r-2.2.2/datatables.min.css" />
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.css"/>
+	<style>
+		table thead th { text-transform: uppercase; }
+	</style>
+<!-- 
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+<link rel="stylesheet" href="http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+<script src="http://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script> -->
+</head>
+
+<body class="bg-light">
+    <!-- MODAL -->
+    <div class="modal fade bd-example-modal-xl" role="dialog" id="modalXL" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content"></div>
+        </div>
+    </div>
+    <!-- /MODAL -->
+	<div class="container-fluid py-3">
+		<h1 class="font-weight-light">Tabla de noticias</h1>
+		<table id="example" class="table table-borderless table-striped w-100"></table>
+	</div>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+	
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+	<script type="text/javascript" src="https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.18/af-2.3.2/b-1.5.4/b-colvis-1.5.4/b-html5-1.5.4/b-print-1.5.4/fc-3.2.5/fh-3.1.4/kt-2.5.0/r-2.2.2/rr-1.2.4/sc-1.5.0/sl-1.2.6/datatables.min.js"></script>
+	<script type="text/javascript" src="../../assets/js/lobibox.js"></script>
+	<script src="/cliente/assets/js/toolbox.js"></script>
+	<script type="text/javascript" src="/cliente/assets/js/userDATOS.js"></script>
+	<script>
+		const translate_spanish = {
+			buttons: {
+				pageLength: {
+					_: "%d filas",
+					'-1': "Todo"
+				}
+			},
+			"sLengthMenu": "_MENU_",
+			"lengthMenu": "_MENU_",
+
+			"sZeroRecords": "No se encontraron resultados",
+			"sEmptyTable": "Ningún dato disponible en esta tabla",
+			"sInfo": "_START_ de _END_ - _TOTAL_ registros",
+			"info": "_START_ de _END_ - _TOTAL_ registros",
+			"sInfoEmpty": "Sin registros",
+			"infoEmpty": "Sin registros disponibles", "infoFiltered": "(filtrado de _MAX_ registros)",
+			"sInfoFiltered": "(total de _MAX_ registros)",
+			"sInfoPostFix": "",
+			"sSearch": "Buscador: ",
+			"sUrl": "",
+			"sInfoThousands": ",",
+			"sLoadingRecords": "Cargando...",
+			"oPaginate": {
+				"sFirst": "<<",
+				"sLast": ">>",
+				"sNext": ">",
+				"sPrevious": "<"
+			},
+			"oAria": {
+				"sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+				"sSortDescending": ": Activar para ordenar la columna de manera descendente"
+			},
+
+			"loadingRecords": "Cargando...",
+			"processing": "Procesando...",
+			"search": "",
+			"zeroRecords": "No se encontraron registros",
+			"paginate": {
+				"next": "Siguiente",
+				"previous": "Anterior"
+			},
+			"select": {
+				//"rows": { _: "%d filas seleccionadas", 0: "", 1: "1 fila seleccionada" }
+				"rows": { _: "%d filas seleccionadas", 0: "", 1: "" }
+			},
+		};
+		window.columnas = [];
+		window.filas = [];
+		table = null;
+		cargar = function() {
+			ARR_btn = [];
+			ARR_btn.push({
+				extend: 'selected',
+				text: '<i class="fas fa-eye"></i>',
+				className: 'btn-primary',
+				action: function (e, dt, node, config) {
+					let rows = dt.rows({ selected: true }).count();
+					userDATOS.show__(window[nombre_tabla], OBJ_pyrus);
+				}
+			});
+			table = $('#example').DataTable( {
+				data: window.filas,
+				columns: window.columnas,
+				aoColumnDefs: [
+					{
+						"targets": -1,
+						"data": null,
+						"defaultContent": `<button type="button" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>`
+					}
+				],
+				// columnDefs:
+				dom: "<'row'<'col-6 d-flex align-items-center'B><'col-6'f>>" +
+						"<'row'<'col-12'tr>>" + 
+						"<'row'<'col-12 d-flex justify-content-between searchStyle'ip>>",
+				buttons: [
+					{
+						extend: 'excelHtml5',
+						text: '<i class="fas fa-file-excel"></i>',
+						className: 'btn-success',
+						exportOptions: {
+							columns: [1, 2, 3]
+						}
+					},
+					{
+						extend: 'csvHtml5',
+						text: '<i class="fas fa-file-csv"></i>',
+						className: 'btn-warning',
+						exportOptions: {
+							columns: [1, 2, 3]
+						}
+					},
+					{
+						extend: 'pdfHtml5',
+						text: '<i class="fas fa-file-pdf"></i>',
+						className: 'btn-danger',
+						exportOptions: {
+							columns: [1, 2, 3]
+						}
+					}
+				],
+				scrollX: true,
+				lengthMenu: [[10, 25, 50], [10, 25, 50]],
+				language: translate_spanish
+			}).column( 0 ).visible( false );
+			$("div.dt-buttons button").removeClass("btn-secondary");
+		};
+		
+		// traigo el dato
+		/*
+			$.get("/lib/queryGraph.php?desde=" + localStorage.getItem('desde') + "&hasta=" + localStorage.getItem('hasta') + "&ua=" + localStorage.getItem('ua') + "&grafico=grafico_2_2_url&id=" + localStorage.getItem('id'),
+				function (data) {
+					console.log(data); 
+					window.recibo = JSON.parse(data);
+					window.columnas = window.recibo.columnas;
+					window.filas = window.recibo.filas;
+
+					window.columnas.push({ title: "accion", sTitle: "accion" })
+					cargar();
+				});
+		*/
+		// obtengo el dato que me pasaron y proceso
+		dato = localStorage.getItem('datos');
+		dato = JSON.parse(dato);
+		window.columnas = dato.columnas;
+		window.filas = dato.filas;
+		window.columnas.push({ title: "accion", sTitle: "accion" });
+		cargar();
+		
+			$(document).ready(function() {
+				$('#example').on('click', 'button', function () {
+					let data = table.row($(this).parents('tr')).data();
+					let modal = $("#modalXL");
+
+					modal.find(".modal-content").html(`<img class="d-block mx-auto w-50 h-50" src="${imgLoading}" />`);
+					modal.modal("show");
+					userDATOS.busqueda({ value: data[0], entidad: "noticia" }, function(data) {
+						let html = "";
+						userDATOS.busqueda({ value: data.data.id_seccion, entidad: "seccion" }, function(s) {
+							userDATOS.busqueda( {value: data.data.id_medio, entidad: "medio" }, function(m) {
+								seccion = "sin sección";
+								if(s.data !== null) seccion = s.data.nombre;
+
+								html += `<div class="modal-header bg-light">`;
+									html += `<h5 class="modal-title text-uppercase">${data.data.titulo}</h5>`;
+									html += `<button type="button" class="close" data-dismiss="modal" aria-label="Close">`;
+										html += `<span aria-hidden="true">&times;</span>`;
+									html += `</button>`;
+								html += `</div>`;
+								html += `<div class="modal-body">`;
+									html += `<p class="mb-0">${seccion} | ${m.data.medio}</p>`;
+									html += `<hr/>`;
+									html += data.data.cuerpo;
+								html += `</div>`;
+								modal.find(".modal-content").html(html);
+							}, true);
+						}, true);
+					}, true);
+				});
+			});
+	</script>
+</body>
+</html>

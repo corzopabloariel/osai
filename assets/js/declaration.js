@@ -124,9 +124,9 @@ const ENTIDAD = {
 		'UNIQUE': ['user'],
 		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'user':{'TIPO':'normal'},'nivel':{'TIPO':'normal'}/*,'id_actor':{'TIPO':'normal'}*/},
     	'FORM': [
-			{'user': '<div class="col col-12">/user/</div>'},
-			{'pass': '<div class="col col-12">/pass/</div>'}
-    	],
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-12'>/user/</div></div>","ATTR": ["user"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-12'>/pass/</div></div>","ATTR": ["pass"] }
+            ],
     	'VISTA': [
 			{'user': '<div class="col col-4"><strong>{nombre}</strong></div><div class="col col-8"><span class="hover user_datos">/user/ <i onclick="userDATOS.editarUSER(\'user\')" class="fas fa-pen"></i></span></div>'},
 			{'cantidad': '<div class="col col-4"><strong>{nombre}</strong></div><div class="col col-8"><span class="hover user_datos">/cantidad/ <i onclick="userDATOS.editarUSER(\'pass\')" class="fas fa-pen"></i></span></div>'},
@@ -207,9 +207,8 @@ const ENTIDAD = {
 		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}/*,'id_actor':{'TIPO':'normal'}*/},
 		'GUARDADO':	'SIMPLE',
 		'FORM': [
-			{'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
-			//{'id_actor': '<div class="col col-4">/id_actor/</div>'},
-	  	],
+                { "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] }
+            ],
 	  	'NOMBRE': 'Unidad de análisis'
 	},
 	'medio': {
@@ -222,12 +221,6 @@ const ENTIDAD = {
 			'nombre':      {
 				'TIPO': 'TP_STRING',
 				'VISIBILIDAD': 'TP_INVISIBLE',
-				'NECESARIO': 1
-      		},
-			'image':      {
-				'TIPO': 'TP_STRING',
-				'VISIBILIDAD': 'TP_INVISIBLE',
-				'NOMBRE': 'imagen',
 				'NECESARIO': 1
       		},
 			'medio':      {
@@ -243,6 +236,12 @@ const ENTIDAD = {
 				'NECESARIO': 0,
 				'RELACION': {'TABLA':'medio_tipo','ATTR':'id'}
  		 	},
+			'image':      {
+				'TIPO': 'TP_STRING',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NOMBRE': 'imagen',
+				'NECESARIO': 0
+      		},
 			'color': {
 				'TIPO': 'TP_COLOR',
 				'VISIBILIDAD': 'TP_VISIBLE',
@@ -256,12 +255,13 @@ const ENTIDAD = {
 		},
 		'VISIBLE': {"TEXTO": "/medio/","ATTR":["medio"]},
 		'UNIQUE': ['medio'],
-		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'medio':{'TIPO':'normal'},'id_medio_tipo':{'TIPO':'normal'},'color':{'TIPO':'normal'}},
+		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'medio':{'TIPO':'normal'},'nombre':{'TIPO':'normal'},'image':{'TIPO':'normal'},'id_medio_tipo':{'TIPO':'normal'},'color':{'TIPO':'normal'}},
 		'GUARDADO':	'SIMPLE',
 		'FORM': [
-			{'id':'/id/','medio': '<div class="col col-12">/medio/</div>'},
-			{'id_medio_tipo':'<div class="col col-6">/id_medio_tipo/</div>','color':'<div class="col col-6">/color/</div>'},
-		],
+                { "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/medio/</div></div>","ATTR": ["id","medio"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-6'>/id_medio_tipo/</div><div class='form-group col-6'>/color/</div></div>","ATTR": ["id_medio_tipo","color"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-12'>/image/</div></div>","ATTR": ["image"] }
+            ],
 		'NOMBRE': 'Medio'
 	},
 	'medio_tipo': {//Nacionales / Provinciales / Regionales
@@ -340,10 +340,10 @@ const ENTIDAD = {
 		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'id_medio':{'TIPO':'normal'},'lugar':{'TIPO':'normal'},'destaque':{'TIPO':'normal'},'referencia':{'TIPO':'normal'},'color':{'TIPO':'normal'}},
 		'GUARDADO':	'SIMPLE',
 		'FORM': [
-			{'id':'/id/','id_medio': '<div class="col col-12">/id_medio/</div>'},
-			{'lugar':'<div class="col col-6">/lugar/</div>','destaque': '<div class="col col-6">/destaque/</div>'},
-			{'referencia': '<div class="col col-6">/referencia/</div>','color': '<div class="col col-6">/color/</div>'},
-		],
+                { "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/id_medio/</div></div>","ATTR": ["id","id_medio"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-6'>/lugar/</div><div class='form-group col-6'>/destaque/</div></div>","ATTR": ["lugar","destaque"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-6'>/referencia/</div><div class='form-group col-6'>/color/</div></div>","ATTR": ["referencia","color"] }
+            ],
 		'NOMBRE': 'Destaque'
 	},
 	'actor': {
@@ -450,7 +450,6 @@ const ENTIDAD = {
 			'id':{'TIPO':'nulo'},
 			'nombre':{'TIPO':'normal'},
 			'apellido':{'TIPO':'normal'},
-			'id_cliente':{'TIPO':'normal'},
 			'id_cargo':{'TIPO':'normal'},
 			'id_poder':{'TIPO':'normal'},
 			'id_nivel':{'TIPO':'normal'},
@@ -460,13 +459,13 @@ const ENTIDAD = {
 			'atributos':{'TIPO':'array','VAR':'ATTR','CLASS':'.attr_actor ul'}
 		},
 		'GUARDADO_COMBINADO': {'TABLA':'usuario','TABLA_ATTR':'id_cliente'},
-    	'FORM':  [
-			{'id':'/id/','nombre': '<div class="col col-6">/nombre/</div>','apellido': '<div class="col col-6">/apellido/</div>'},
-			{'id_cliente': '<div class="col col-12">/id_cliente/</div>'},
-			{'id_cargo': '<div class="col col-6">/id_cargo/</div>','id_poder': '<div class="col col-6">/id_poder/</div>'},
-			{'id_nivel': '<div class="col col-6">/id_nivel/</div>','id_partido': '<div class="col col-6">/id_partido/</div>'},
-			{'id_alianza': '<div class="col col-6">/id_alianza/</div>','id_campo': '<div class="col col-6">/id_campo/</div>'},
-    	],
+    	'FORM': [
+                { "TEXTO": "/id/<div class='form-row'><div class='form-group col-6'>/nombre/</div><div class='form-group col-6'>/apellido/</div></div>","ATTR": ["id","nombre","apellido"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-12'>/id_cliente/</div></div>","ATTR": ["id_cliente"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-6'>/id_cargo/</div><div class='form-group col-6'>/id_poder/</div></div>","ATTR": ["id_cargo","id_poder"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-6'>/id_nivel/</div><div class='form-group col-6'>/id_partido/</div></div>","ATTR": ["id_nivel","id_partido"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-6'>/id_alianza/</div><div class='form-group col-6'>/id_campo/</div></div>","ATTR": ["id_alianza","id_campo"] }
+            ],
 		'NOMBRE': 'Actor'
 	},
 	/**
@@ -709,35 +708,6 @@ const ENTIDAD = {
 			},
 		}
 	},
-	'noticiaseccion': {
-		'ATRIBUTOS':  {
-			'id':        {
-				"TIPO": "TP_PK",
-				"VISIBILIDAD": "TP_VISIBLE_NUNCA",
-				"NECESARIO": 0
-			},
-			'did': {
-				'TIPO': 'TP_ENTERO',
-				'VISIBILIDAD': 'TP_VISIBLE',
-				'NECESARIO': 0,
-			},
-			'id_noticia': {
-				'TIPO': 'TP_ENTERO',
-				'VISIBILIDAD': 'TP_VISIBLE',
-				'NECESARIO': 0,
-			},
-			'id_seccion': {
-				'TIPO': 'TP_ENTERO',
-				'VISIBILIDAD': 'TP_VISIBLE',
-				'NECESARIO': 0,
-			},
-			'elim':     {
-				'TIPO': 'TP_BOLEANO',
-				'VISIBILIDAD': 'TP_BANDERA',
-				'DEFAULT': 0
-			},
-		}
-	},
 	'noticiastema': {
 		'ATRIBUTOS':  {
 			'id':        {
@@ -760,8 +730,52 @@ const ENTIDAD = {
 				'VISIBILIDAD': 'TP_VISIBLE',
 				'NECESARIO': 0,
 			},
+			'id_tema': {
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
 			'valor': {
 				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
+			'elim':     {
+				'TIPO': 'TP_BOLEANO',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'DEFAULT': 0
+			},
+		}
+	},
+	'noticiasvaloracion': {
+		'ATRIBUTOS':  {
+			'id':        {
+				"TIPO": "TP_PK",
+				"VISIBILIDAD": "TP_VISIBLE_NUNCA",
+				"NECESARIO": 0
+			},
+			'autofecha': {
+				'TIPO': 'TP_FECHA_LARGA',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'NECESARIO': 0
+			},
+			'id_cliente': {
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
+			'id_noticia': {
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
+			'id_calificacion': {
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 0,
+			},
+			'valor': {
+				'TIPO': 'TP_FLOAT',
 				'VISIBILIDAD': 'TP_VISIBLE',
 				'NECESARIO': 0,
 			},
@@ -1119,9 +1133,9 @@ const ENTIDAD = {
 	'UNIQUE':	['nombre'],
 	'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
 	'GUARDADO':		'SIMPLE',
-	'FORM':        [
-	                {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
-	],
+	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] }
+		],
 	'NOMBRE':			'Destaque'
 	},
 	'attr_local': {
@@ -1151,9 +1165,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
 	 'GUARDADO':		'SIMPLE',
-	 'FORM':        [
-									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
-	 ],
+	 'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] }
+		],
 	 'NOMBRE':			'Local / Sede'
 	},
 	'attr_contexto': {
@@ -1183,9 +1197,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
 	 'GUARDADO':		'SIMPLE',
-	 'FORM':        [
-									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
-	 ],
+	 'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] }
+		],
 	 'NOMBRE':			'Contexto'
 	},
 	'attr_sector': {
@@ -1215,8 +1229,8 @@ const ENTIDAD = {
 		'UNIQUE':	['nombre'],
 		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
 		'GUARDADO':		'SIMPLE',
-		'FORM':        [
-										 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
+		'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] }
 		],
 		'NOMBRE':			'Sector'
 	},
@@ -1254,10 +1268,10 @@ const ENTIDAD = {
 	 'UNIQUE':	['id_medio','nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'},'id_medio':{'TIPO':'normal'}},
 	 'GUARDADO':		'SIMPLE',
-	 'FORM':        [
-									 {'id':'/id/','id_medio': '<div class="col col-12">/id_medio/</div>'},
-									 {'nombre': '<div class="col col-12">/nombre/</div>'},
-	 ],
+	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/id_medio/</div></div>","ATTR": ["id","id_medio"] },
+			{ "TEXTO": "<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["nombre"] }
+		],
 	 'NOMBRE':			'Sección'
 	},
 	'attr_temas': {
@@ -1292,10 +1306,10 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
-			 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
-			 {'color': '<div class="col col-12">/color/</div>'}
- 	 ],
+	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+			{ "TEXTO": "<div class='form-row'><div class='form-group col-12'>/color/</div></div>","ATTR": ["color"] }
+		],
  	 'NOMBRE':			'Tema'
   },
 	'attr_institucion': {
@@ -1325,9 +1339,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
- 	 ],
+	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Institución'
   },
 	//
@@ -1361,9 +1375,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
- 	 ],
+ 	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Cargo'
   },
 	'attr_poder': {
@@ -1393,9 +1407,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
- 	 ],
+ 	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Poder'
   },
 	'attr_nivel': {
@@ -1425,9 +1439,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
- 	 ],
+ 	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Nivel'
   },
 	'attr_partido': {
@@ -1462,9 +1476,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'},'color':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-6">/nombre/</div>','color': '<div class="col col-6">/color/</div>'},
- 	 ],
+ 	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Partido político'
   },
 	'attr_alianza': {
@@ -1494,9 +1508,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
- 	 ],
+ 	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Alianza electoral'
   },
 	'attr_campo': {
@@ -1526,9 +1540,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
- 	 ],
+ 	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Campo'
   },
 	'calificacion': {
@@ -1564,9 +1578,9 @@ const ENTIDAD = {
 	 'UNIQUE':	['nombre'],
 	 'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'},'valor':{'TIPO':'normal'}},
  	 'GUARDADO':		'SIMPLE',
- 	 'FORM':        [
- 									 {'id':'/id/','nombre': '<div class="col col-8">/nombre/</div>','valor': '<div class="col col-4">/valor/</div>'},
- 	 ],
+ 	'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
  	 'NOMBRE':			'Calificación'
   },
 	//
@@ -1597,9 +1611,9 @@ const ENTIDAD = {
 		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'nombre':{'TIPO':'normal'}},
 		'GUARDADO':		'SIMPLE',
 		'UNIQUE':	['nombre'],
-		'FORM':        [
-  									 {'id':'/id/','nombre': '<div class="col col-12">/nombre/</div>'},
-  	 ],
+		'FORM': [
+			{ "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/nombre/</div></div>","ATTR": ["id","nombre"] },
+		],
 		'NOMBRE':			'Periodista'
 	},
 	//
@@ -1723,35 +1737,132 @@ const ENTIDAD = {
 	'log': {
 		'ATRIBUTOS':  {
 			'id':        {
-										"TIPO": "TP_PK",
-										"VISIBILIDAD": "TP_VISIBLE_NUNCA",
-										"NECESARIO": 0
+				"TIPO": "TP_PK",
+				"VISIBILIDAD": "TP_VISIBLE_NUNCA",
+				"NECESARIO": 0
 			},
 			'autofecha': {
-									 'TIPO': 'TP_FECHA_LARGA',
-									 'VISIBILIDAD': 'TP_BANDERA',
-									 'NECESARIO': 0
+				'TIPO': 'TP_FECHA_LARGA',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'NECESARIO': 0
 			},
 			'id_usuario':  {
-									 'TIPO': 'TP_RELACION',
-									 'VISIBILIDAD': 'TP_VISIBLE',
-									 'NECESARIO': 1,
-									 'NOMBRE': 'usuario',
-									 'RELACION': {'TABLA':'usuario','ATTR':'id'}
+				'TIPO': 'TP_RELACION',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 1,
+				'NOMBRE': 'usuario',
+				'RELACION': {'TABLA':'usuario','ATTR':'id'}
 			},
 			'tabla':    {
-										'TIPO': 'TP_STRING',
-										'VISIBILIDAD': 'TP_VISIBLE',
-      },
+				'TIPO': 'TP_STRING',
+				'VISIBILIDAD': 'TP_VISIBLE',
+      		},
 			'id_tabla':  {
-										'TIPO': 'TP_ENTERO',
-										'VISIBILIDAD': 'TP_VISIBLE',
-										'NOMBRE': 'id'
-      },
+				'TIPO': 'TP_ENTERO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NOMBRE': 'id'
+      		},
 			'accion': {
-									 'TIPO': 'TP_STRING_L',
-									 'VISIBILIDAD': 'TP_VISIBLE',
+				'TIPO': 'TP_STRING_L',
+				'VISIBILIDAD': 'TP_VISIBLE',
 			},
 		},
-	}
+	},
+	'informe': {
+		'ATRIBUTOS':  {
+			'id':        {
+				"TIPO": "TP_PK",
+				"VISIBILIDAD": "TP_VISIBLE_NUNCA",
+				"NECESARIO": 0
+			},
+			'autofecha': {
+				'TIPO': 'TP_FECHA_LARGA',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'NECESARIO': 0
+			},
+			'id_usuario':  {
+				'TIPO': 'TP_RELACION',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 1,
+				'NOMBRE': 'usuario',
+				'RELACION': {'TABLA':'usuario','ATTR':'id'}
+			},
+			'id_cliente':  {
+				'TIPO': 'TP_RELACION',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 1,
+				'NOMBRE': 'cliente',
+				'RELACION': {'TABLA':'cliente','ATTR':'id'}
+			},
+			'id_cliente_osai':  {
+				'TIPO': 'TP_RELACION',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 1,
+				'NOMBRE': 'cliente final',
+				'RELACION': {'TABLA':'osai_usuario','ATTR':'id'}
+			},
+			'archivo':    {
+				'TIPO': 'TP_FILE',
+				'VISIBILIDAD': 'TP_VISIBLE',
+      		},
+			'descripcion':    {
+				'TIPO': 'TP_STRING_L',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NOMBRE': 'descripción'
+      		},
+			'elim':     {
+				'TIPO': 'TP_BOLEANO',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'DEFAULT': 0
+			}
+		},
+		'GUARDADO_ATTR': {'id':{'TIPO':'nulo'},'id_usuario':{'TIPO':'normal'},'id_cliente':{'TIPO':'normal'},'id_cliente_osai':{'TIPO':'normal'},'archivo':{'TIPO':'normal'},'id_cliente_osai':{'TIPO':'normal'}},
+		'GUARDADO': 'SIMPLE',
+		'FORM': [
+                { "TEXTO": "/id/<div class='form-row'><div class='form-group col-12'>/id_cliente_osai/</div></div>","ATTR": ["id","id_cliente_osai"] },
+				{ "TEXTO": "/archivo/","ATTR": ["archivo"] },
+				{ "TEXTO": "<div class='form-row'><div class='form-group col-12'>/descripcion/</div></div>","ATTR": ["descripcion"] }
+            ],
+		'NOMBRE': 'Informe',
+	},
+	'osai_usuario': {
+		'ATRIBUTOS': {
+			'id': {
+				'TIPO': 'TP_PK',
+				'VISIBILIDAD': 'TP_INVISIBLE',
+				'NECESARIO': 0,
+				'DEFAULT': 'nulo'
+			},
+			'autofecha': {
+				'TIPO': 'TP_FECHA_LARGA',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'NECESARIO': 0
+			},
+			'user': {
+				'TIPO': 'TP_STRING',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NOMBRE': 'usuario',
+				'NECESARIO': 1
+			},
+			'pass': {
+				'TIPO': 'TP_PASSWORD',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NOMBRE': 'clave',
+				'NECESARIO': 1
+			},
+			'activo': {
+				'TIPO': 'TP_BOLEANO',
+				'VISIBILIDAD': 'TP_VISIBLE',
+				'NECESARIO': 1,
+				'DEFAULT': 1
+			},
+			'elim': {
+				'TIPO': 'TP_BOLEANO',
+				'VISIBILIDAD': 'TP_BANDERA',
+				'NECESARIO': 0,
+				'DEFAULT': 0
+			}
+		},
+		'VISIBLE': {"TEXTO": "/user/","ATTR":["user"]},
+	},
 };

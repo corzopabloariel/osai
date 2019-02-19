@@ -72,6 +72,20 @@
 			return hexStr;
 		}
 
+		// determino la accion que ocurre cuando se hace doble click
+		function dblClickEvent(){
+			
+			d3.selectAll("circle").on("dblclick", function(d,i){
+				console.log('click en : ' + d['name']);
+				localStorage.setItem('desde',document.getElementById("desde").value);
+				localStorage.setItem('hasta',document.getElementById("hasta").value);
+				localStorage.setItem('ua',document.getElementById("ua").value);
+				localStorage.setItem('id', d['id_actor']);
+				window.open("tabla_1.html");
+				
+				return false;
+				});
+		}
 
 		function initGrafico(desde_, hasta_, ua_) {
 			// vacio la tabla con el contenido
@@ -131,6 +145,7 @@
 						}
 						window.csv += "\n";
 					}
+					dblClickEvent();
 				});
 		}
 
@@ -145,6 +160,7 @@
 			downloadLink.click();
 			document.body.removeChild(downloadLink);
 		}
+		
 
 		function ejecutarDeNuevo() {
 			desde = document.getElementById("desde").value;
@@ -159,6 +175,7 @@
 				return false;
 			}
 			initGrafico(desde, hasta, ua);
+			dblClickEvent();
 		}
 
 		$(document).ready(function () {

@@ -16,10 +16,10 @@ ini_set('display_errors', 1);
 
 switch ($_POST["accion"]) {
   case 'usuariosFinales':
-    $data = R::getAll("SELECT ou.id_cliente,ou.user,c.nombre FROM osai_usuario AS ou INNER JOIN cliente AS c ON (c.id = ou.id_cliente AND c.elim = 0 AND c.todos = 0) WHERE ou.elim = 0");
+    $data = R::getAll("SELECT ou.id,ou.id_cliente,ou.user,c.nombre FROM osai_usuario AS ou INNER JOIN cliente AS c ON (c.id = ou.id_cliente AND c.elim = 0 AND c.todos = 0) WHERE ou.elim = 0");
     $jsondata["data"] = Array();
     foreach($data AS $k => $v) {
-      $jsondata["data"][$v["id_cliente"]] = "Cliente final: {$v["user"]} || Unidad de análisis: {$v["nombre"]}";
+      $jsondata["data"][$v[$_POST["column"]]] = "Cliente final: {$v["user"]} || Unidad de análisis: {$v["nombre"]}";
     }
     break;
   case 'selectOption':
@@ -114,7 +114,7 @@ switch ($_POST["accion"]) {
       $sql .= "INNER JOIN noticiascliente AS nc ON (nc.id_noticia = n.id_noticia AND nc.elim = 0) ";
       $sql .= "INNER JOIN actor AS a ON (a.id = na.id_actor AND a.elim = 0) ";
       $sql .= "INNER JOIN cliente AS c ON (c.id = a.id_cliente AND c.elim = 0) ";
-      $sql .= "WHERE n.estado >= 2 AND n.elim = 0"; 
+      $sql .= "WHERE n.estado >= 2 AND n.elim = 0";
       if($queryRecords = $mysqli->query($sql)) {
         while($e = $queryRecords->fetch_assoc()) {
           if(!$jsondata["estado"]) $jsondata["estado"] = 1;
@@ -140,7 +140,7 @@ switch ($_POST["accion"]) {
       $sql .= "INNER JOIN noticiascliente AS nc ON (nc.id_noticia = n.id_noticia AND nc.elim = 0) ";
       $sql .= "INNER JOIN actor AS a ON (a.id = na.id_actor AND a.elim = 0) ";
       $sql .= "INNER JOIN cliente AS c ON (c.id = a.id_cliente AND c.elim = 0) ";
-      $sql .= "WHERE n.estado >= 2 AND n.elim = 0"; 
+      $sql .= "WHERE n.estado >= 2 AND n.elim = 0";
       if($queryRecords = $mysqli->query($sql)) {
         while($e = $queryRecords->fetch_assoc()) {
           if(!$jsondata["estado"]) $jsondata["estado"] = 1;
@@ -162,7 +162,7 @@ switch ($_POST["accion"]) {
       $sql .= "INNER JOIN noticiascliente AS nc ON (nc.id_noticia = n.id_noticia AND nc.elim = 0) ";
       $sql .= "INNER JOIN actor AS a ON (a.id = na.id_actor AND a.elim = 0) ";
       $sql .= "INNER JOIN cliente AS c ON (c.id = a.id_cliente AND c.elim = 0) ";
-      $sql .= "WHERE n.estado >= 2 AND n.elim = 0"; 
+      $sql .= "WHERE n.estado >= 2 AND n.elim = 0";
       if($queryRecords = $mysqli->query($sql)) {
         while($e = $queryRecords->fetch_assoc()) {
           if(!$jsondata["estado"]) $jsondata["estado"] = 1;
@@ -179,7 +179,7 @@ switch ($_POST["accion"]) {
       $aux[$k] = $v;
     $jsondata["id"] = R::store($aux);
     break;
-  
+
   case 'change':
     if($_POST["massive"] == 0) {
       $data = R::findOne($_POST["tabla"],"id = ?",[$_POST["id"]]);
@@ -484,7 +484,7 @@ switch ($_POST["accion"]) {
             $n = "RELEVADO";
             $class = "bg-warning";
           }
-        } 
+        }
         $jsondata["html"] .= "<div onclick='userDATOS.verNotificacion(this)' data-notificacionUsuario='{$notificacion["id"]}' data-id='{$notificacion["id_notificacion"]}' class='cursor-pointer row {$class}'>";
           $jsondata["html"] .= "<div class='col-12'>";
             $jsondata["html"] .= "<p class='m-0 text-truncate' title='{$notificacion["mensaje"]}'>{$notificacion["mensaje"]}</p>";

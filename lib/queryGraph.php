@@ -53,7 +53,9 @@ function grafico_1( $desde, $hasta, $ua ){
 	foreach($main as $k=>$v){
 		$actores_nombres = R::findOne("actor","id LIKE ?",[ $v['id_actor'] ]);
 		$main[$k]['id_cliente'] = $ua_nombre;
-		$main[$k]['id_actor'] = $actores_nombres['nombre'] . " " . $actores_nombres['apellido'];
+		// $main[$k]['id_actor'] = $actores_nombres['nombre'] . " " . $actores_nombres['apellido'];
+		$main[$k]['id_actor'] = $v['id_actor'];
+		$main[$k]['nombre'] = $actores_nombres['nombre'] . " " . $actores_nombres['apellido'];
 		$id_tema = get_string_between($main[$k]['tema'],"frm_tema_","\"");
 		$tema = R::findOne("attr_temas","id LIKE ?",[$id_tema])['nombre'];
 		if( is_null( $tema ) ) $tema = 'TEMA NO ASIGNADO';
@@ -64,7 +66,8 @@ function grafico_1( $desde, $hasta, $ua ){
 		// TODO - FIXME : deberia ser mas eficiente, busqueda por dos valores
 		$iter = true;
 		foreach($tabla as $ka=>$va){
-			if($va['actor'] == $main[$k]['id_actor'] && $va['tema'] == $tema){
+			// if($va['actor'] == $main[$k]['id_actor'] && $va['tema'] == $tema){
+			if($va['actor'] == $main[$k]['nombre'] && $va['tema'] == $tema){
 				$tabla[$ka]['cantidad'] += 1;
 				$iter = false;
 				break;
@@ -73,7 +76,8 @@ function grafico_1( $desde, $hasta, $ua ){
 		if($iter){
 			$tabla[ ++$i ] = [ 
 				'unidad_analisis' => $ua_nombre,
-				'actor' => $main[$k]['id_actor'],
+				'actor' => $main[$k]['nombre'],
+				'id_actor' => $main[$k]['id_actor'],
 				'tema' => $tema,
 				'cantidad' => 1
 				];
@@ -119,6 +123,8 @@ function grafico_1( $desde, $hasta, $ua ){
 			$in->rank = 1;
 			$in->weight = 0; // lo asigna JS
 			$in->id = $k;
+			//$in->id = $v['id_actor'];
+			$in->id_actor = $v['id_actor'];
 				$t_in = new StdClass();
 				// $t_in->name = $v['tema'] . " (" . $v['cantidad'] . ") " ; // lo construye JS
 				$t_in-> name = "";
@@ -137,6 +143,52 @@ function grafico_1( $desde, $hasta, $ua ){
 		'grafico' => $objeto,
 		'temas' => $temas
 		];
+}
+
+function grafico_1_queryUrl( $desde, $hasta, $ua, $id ){
+	$query = "select noticiascliente.tema, noticia.*  from noticia
+		inner join noticiasactor on noticiasactor.id_noticia = noticia.id
+		inner join proceso on proceso.id_noticia = noticiasactor.id_noticia
+		inner join noticiascliente on noticiascliente.id_noticia = proceso.id_noticia
+		where
+			noticia.fecha between '" . $desde . " 00:00:00' and '" . $hasta . " 23:59:59'
+			and 
+			noticiasactor.id_actor = " . $id . "
+			and
+			proceso.elim = 0
+			and
+			noticiascliente.id_cliente = " . $ua . "";
+	$main = R::getAll($query);
+	
+	$columnas = [
+		(object) ['title' => 'id' ],
+		(object) ['title' => 'tema'],
+		(object) ['title' => 'titulo'],
+		(object) ['title' => 'medio'],
+		(object) ['title' => 'link'] 
+	];
+	
+	$filas = [];
+	foreach($main as $k=>$v){
+		$medio = R::findOne('medio','id LIKE ?',[ $v['id_medio'] ])['medio'];
+		// obtengo el tema
+		$id_tema = get_string_between($main[$k]['tema'],"frm_tema_","\"");
+		$tema = R::findOne("attr_temas","id LIKE ?",[$id_tema])['nombre'];
+		if( is_null( $tema ) ) $tema = 'TEMA NO ASIGNADO';
+		// cargo la fila
+		$filas[] = [
+			$v['id'],
+			$tema,
+			$v['titulo'],
+			$medio,
+			$v['url']
+		];
+	}
+	return [
+		'columnas' => $columnas,
+		'filas' => $filas
+		];
+	
 }
 
 function grafico_1_2( $desde, $hasta, $ua ){
@@ -229,6 +281,59 @@ function grafico_1_2( $desde, $hasta, $ua ){
 	
 }
 
+function grafico_1_2_queryUrl( $desde, $hasta, $ua, $id){
+	// el id es del campo, traigo todas las urls
+	// FUNCIONA PERFECTAMENTE, se elije o 3 (oposicion) o 4 (oficialismo) como ID
+	// y coincide con la cantidad de notas
+	$query = "select actor.nombre, actor.apellido, actor.id_campo, noticia.id_medio, noticia.titulo, noticia.url, noticia.id from noticiascliente 
+		inner join noticiasactor on noticiascliente.id_noticia = noticiasactor.id_noticia 
+		inner join noticia on noticiasactor.id_noticia = noticia.id 
+		inner join actor on noticiasactor.id_actor = actor.id 
+		where 
+		noticiascliente.id_cliente = " . $ua . " and 
+		noticiascliente.elim = 0 and 
+		noticia.fecha between '" . $desde . " 00:00:01' and '" . $hasta . " 23:59:59' 
+		and ( actor.id_campo like '%" . $id . "%'  )
+		ORDER BY `actor`.`nombre` ASC";
+	/*$query = "select actor.nombre, actor.apellido, actor.id_campo, noticia.id_medio, noticia.titulo, noticia.url, noticia.id from noticiascliente  
+		inner join noticiasactor on noticiascliente.id_noticia = noticiasactor.id_noticia 
+		inner join noticias on noticiasactor.id_noticia = noticias.id 
+		inner join actor on noticiasactor.id_actor = actor.id 
+		where 
+		noticiascliente.id_cliente = " . $ua . " and 
+		noticiascliente.elim = 0 and 
+		noticias.fecha between '" . $desde . " 00:00:01' and '" . $hasta . " 23:59:59' 
+		and ( actor.id_campo like '%" . $id . "%'  )
+		ORDER BY `actor`.`nombre` ASC";*/
+	
+	$main = R::getAll($query);
+	
+	$columnas = [
+		(object) ['title' => 'id' ],
+		(object) ['title' => 'actor'],
+		(object) ['title' => 'titulo'],
+		(object) ['title' => 'medio'],
+		(object) ['title' => 'link'] 
+	];
+	
+	$filas = [];
+	foreach($main as $k=>$v){
+		$medio = R::findOne('medio','id LIKE ?',[ $v['id_medio'] ])['medio'];
+		// cargo la fila
+		$filas[] = [
+			$v['id'],
+			$v['nombre'] . ' ' . $v['apellido'],
+			$v['titulo'],
+			$medio,
+			$v['url']
+		];
+	}
+	return [
+		'columnas' => $columnas,
+		'filas' => $filas
+		];
+	
+}
 function grafico_1_3( $desde, $hasta, $ua ){
 	
 	// solo nos quedaremos de este lado con los registros que tengan campo 3 y 4, el resto se desecha
@@ -696,6 +801,72 @@ function grafico_3( $desde, $hasta, $ua){
 		];
 	
 }
+
+	// FAVORABILIDAD TOTAL
+function grafico_3_2( $desde, $hasta, $ua){
+	$query = "SELECT noticiasvaloracion.* FROM `noticiasvaloracion` 
+		INNER JOIN noticia ON noticia.id = noticiasvaloracion.id_noticia
+		INNER JOIN proceso on proceso.id_noticia = noticia.id
+		WHERE
+			noticiasvaloracion.id_cliente = " . $ua . " AND
+			noticia.elim = 0 AND
+			proceso.elim = 0 AND
+			noticia.fecha BETWEEN '" . $desde . " 00:00:00' AND '" . $hasta . " 23:59:59'
+		ORDER by id_noticia";
+	
+	$main = R::getAll($query);
+	$todo = [];
+	$current_sum = 0;
+	$current_id = -1;
+	foreach($main as $k=>$v){
+		if($v['id_noticia'] != $current_id){
+			// -1 es negativo, 0 neutro y +1 positivo
+			if($current_sum > 0) $current_sum = 1;
+			elseif($current_sum < 0) $current_sum = -1;
+			$todo[] = [
+				'id' => $current_id,
+				'sum' => $current_sum
+				];
+			// el nuevo valor
+			$current_id = $v['id_noticia'];
+			$current_sum =  intval( $v['valor'] );
+		} else
+			$current_sum += intval( $v['valor'] );
+	}
+	unset($todo[0]);
+	return [
+		'grafico' => $todo
+		];
+	
+}
+
+function grafico_3_2_queryUrl( $array_id ){
+	$columnas = [
+		(object) ['title' =>'id' ],
+		(object) ['title' => 'titulo'],
+		(object) ['title' => 'medio'],
+		(object) ['title' => 'link'] 
+	];
+	
+	$query = "select id, titulo, id_medio, url from noticia where id IN (" . implode(",",$array_id) . ")";
+	$ret = R::getAll($query);
+	$filas = [];
+	foreach($ret as $k=>$v){
+		$medio = R::findOne('medio','id LIKE ?',[ $v['id_medio'] ])['medio'];
+		$filas[] = [
+			$v['id'],
+			$v['titulo'],
+			$medio,
+			( $v['url'] == null ) ? '<i class="fas fa-unlink text-danger"></i>' : "<a style='text-decoration:none;' class='text-primary' href='{$v['url']}' target='blank'><i class='fas fa-external-link-alt'></i></a>"
+		];
+	}
+	return [
+		'columnas' => $columnas,
+		'filas' => $filas
+		];
+}
+
+
 function grafico_4( $desde, $hasta, $ua) {
 	$query = "SELECT n.id, n.id_medio AS medio, np.data, nt.id_tema AS tema, nt.valor FROM `noticia` AS n
 		INNER JOIN proceso AS p ON (p.id_cliente = {$ua} AND p.id_noticia = n.id AND p.elim = 0)
@@ -716,7 +887,7 @@ function grafico_4( $desde, $hasta, $ua) {
 		$data = json_decode($data);
 		$valoracion = "Neutro//#ffc107";
 		if($v["valor"] == 1) $valoracion = "Positivo//#28a745";
-		if($v["valor"] == 0) $valoracion = "Negativo//#dc3545";
+		if($v["valor"] == -1) $valoracion = "Negativo//#dc3545";
 		if(empty($data->select_destaque)) $destaqueNombre = "Sin destaque//#DEDEDE";
 		else {
 			$destaque = R::findOne('medio_destaque','id = ? AND elim = ?',[ $data->select_destaque,0 ]);
@@ -795,6 +966,71 @@ function grafico_4( $desde, $hasta, $ua) {
 
 }
 
+//TABLA Círculos
+function grafico_4_queryUrl( $desde, $hasta, $ua, $data ) {
+	$elemento = json_decode($data);//a buscar
+	$idmedio = R::findOne("medio","medio LIKE ? AND elim = ?",[ $elemento[0], 0 ]);
+
+	$query = "SELECT n.id, n.titulo, n.url, np.data, nt.id_tema AS tema, nt.valor FROM `noticia` AS n
+		INNER JOIN proceso AS p ON (p.id_cliente = {$ua} AND p.id_noticia = n.id AND p.elim = 0)
+		INNER JOIN noticiasproceso AS np ON (np.id_noticia = n.id AND np.elim = 0)
+		INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0)
+		WHERE n.fecha BETWEEN '{$desde} 00:00:00' AND '{$hasta} 23:59:59' AND n.id_medio = {$idmedio["id"]} AND n.elim = 0";
+
+	$main = R::getAll($query);
+	$arr_todo = [];
+	$columnas = [
+		(object) ['title' =>'id' ],
+		(object) ['title' => 'valoracion'],
+		(object) ['title' => 'titulo'],
+		(object) ['title' => 'medio'],
+		(object) ['title' => 'destaque'],
+		(object) ['title' => 'link'] ];
+	foreach($main as $k=>$v){
+		// obtengo el valor
+		$valor = "";
+		$data = str_replace("'",'"',$v['data']);
+		$temaR = R::findOne('attr_temas','id = ? AND elim = ?',[ $v['tema'],0 ]);
+		$data = json_decode($data);
+		$valor = "<i class='fas fa-minus-circle text-warning'></i> neutro";
+		if($v["valor"] == 1) $valor = "<i class='fas fa-arrow-alt-circle-up text-success'></i> positivo";
+		if($v["valor"] == -1) $valor = "<i class='fas fa-arrow-alt-circle-down text-danger'></i> negativo";
+		if(empty($data->select_destaque)) $destaqueNombre = "Sin destaque";
+		else {
+			$destaque = R::findOne('medio_destaque','id = ? AND elim = ?',[ $data->select_destaque,0 ]);
+			$destaqueNombre = "{$destaque["lugar"]}";
+			if (!empty($destaque["destaque"])) $destaqueNombre .= ", {$destaque["destaque"]}";
+		}
+		if(count($elemento) >= 2)
+			if($destaqueNombre != $elemento[1]) continue;
+			
+		if(count($elemento) >= 3)
+			if($temaR["nombre"] != $elemento[2]) continue;
+		
+		if(count($elemento) == 4) {
+			$aux = 0;
+			if($elemento[3] == "Positivo")
+				$aux = 1;
+			if($elemento[3] == "Negativo")
+				$aux = -1;
+			if($v["valor"] != $aux) continue;
+		}
+		
+		$arr_todo[] = [
+			$v['id'],
+			$valor,
+			"<span class='text-truncate d-block' style='width:450px;'>{$v['titulo']}</span>",
+			$idmedio["medio"],
+			$destaqueNombre,
+			( $v['url'] == null ) ? '<i class="fas fa-unlink text-danger"></i>' : "<a style='text-decoration:none;' class='text-primary' href='{$v['url']}' target='blank'><i class='fas fa-external-link-alt'></i></a>"
+		];
+	}
+	return [
+		'columnas' => $columnas,
+		'filas' => $arr_todo
+		];
+}
+
 
 if($grafico == 'grafico_1') echo json_encode( grafico_1( $desde, $hasta, $ua ) );
 if($grafico == 'grafico_1_2') echo json_encode( grafico_1_2( $desde, $hasta, $ua ) );
@@ -803,12 +1039,21 @@ if($grafico == 'grafico_2') echo json_encode( grafico_2( $desde, $hasta, $ua ) )
 if($grafico == 'grafico_2_2') echo json_encode( grafico_2_2( $desde, $hasta, $ua ) );
 if($grafico == 'grafico_2_3') echo json_encode( grafico_2_3( $desde, $hasta, $ua ) );
 if($grafico == 'grafico_3') echo json_encode( grafico_3( $desde, $hasta, $ua ) );
+if($grafico == 'grafico_3_2') echo json_encode( grafico_3_2( $desde, $hasta, $ua ) );
 if($grafico == 'grafico_4') echo json_encode( grafico_4( $desde, $hasta, $ua ) );
 // subquerys
 if( isset( $_GET['id'] ) ){
+	if($grafico == 'grafico_1_url') echo json_encode( grafico_1_queryUrl( $desde, $hasta, $ua, $_GET['id'] ) );
+	if($grafico == 'grafico_1_2_url') echo json_encode( grafico_1_2_queryUrl( $desde, $hasta, $ua, $_GET['id'] ) ); 
 	if($grafico == 'grafico_2_url') echo json_encode( grafico_2_queryUrl( $desde, $hasta, $ua, $_GET['id'] ) );
 	if($grafico == 'grafico_2_2_url') echo json_encode( grafico_2_2_queryUrl( $desde, $hasta, $ua, $_GET['id']) );
 	if($grafico == 'grafico_2_3_url') echo json_encode( grafico_2_3_queryUrl( $desde, $hasta, $ua, $_GET['id']) );
+}
+// realmente no importa si envian cualquier cosa en otro dato, aqui solo importa los ids
+if( isset($_POST['ids']) && $grafico == 'grafico_3_2_url' ) echo json_encode( grafico_3_2_queryUrl( $_POST['ids'] ) );
+
+if( isset( $_GET['data'] ) ) {
+	if($grafico == 'grafico_4_url') echo json_encode( grafico_4_queryUrl( $desde, $hasta, $ua, $_GET['data'] ) );
 }
 
 /*echo json_encode(

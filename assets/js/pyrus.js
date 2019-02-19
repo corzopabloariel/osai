@@ -219,6 +219,9 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 				case 'TP_COLOR':
 					return this.inputString(OBJ_elemento,"frm_" + TAG_nombre,"color",STR_class,OBJ_funcion);
 				break;
+				case 'TP_FILE':
+					return this.inputString(OBJ_elemento,"frm_" + TAG_nombre,"file",STR_class,OBJ_funcion);
+				break;
 				case 'TP_STRING':
 					return this.inputString(OBJ_elemento,"frm_" + TAG_nombre,"text",STR_class,OBJ_funcion);
 				break;
@@ -271,9 +274,25 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
         break;
       case "date":
         STR_class += " texto-date";
-        break;
-    }
+				break;
+			case "file":
+				STR_class += " custom-file-input";
+				break;
+		}
+		
 		return "<input " + (necesario ? "required='true'" : "") + " " + STR_funcion + " ng-name='" + STR_nombre + "' name='" + STR_nombre + "' id='" + STR_nombre + "' class=\"" + STR_class + "\" type='" + STR_type + "' placeholder='" + OBJ_elemento["NOMBRE"] + "' />";
+	}
+	this.inputStringL = function(OBJ_elemento,STR_nombre,STR_class,OBJ_funcion = null) {
+		let STR_funcion = "";
+		let necesario = 0;
+		if(OBJ_elemento["NECESARIO"] !== undefined) necesario = OBJ_elemento["NECESARIO"];
+    if(OBJ_funcion !== null) {
+  		for(var i in OBJ_funcion) {
+  			if(STR_funcion != "") STR_funcion += " ";
+  			STR_funcion += i + "=" + OBJ_funcion[i];
+  		}
+    }
+		return "<textarea " + (necesario ? "required='true'" : "") + " " + STR_funcion + " ng-name='" + STR_nombre + "' name='" + STR_nombre + "' id='" + STR_nombre + "' class=\"" + STR_class + "\" placeholder='" + OBJ_elemento["NOMBRE"] + "'></textarea>";
 	}
 	/**
 	 * Función para la creación de formularios en un lugar determinado del dom
@@ -306,47 +325,53 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 	this.selector = function() {
 		let ARR_aux = {};
 		let ARR_resultado = null;
-		this.query("get_todos",{"entidad":this.entidad},function(e) { ARR_resultado = e; }, null, false);
-		if(this.objeto['VISIBLE'] === undefined) return ARR_aux;
+		if(this.entidad == "osai_usuario") {
+			userDATOS.busquedaUsuariosFinales(function(clientes) {
+				ARR_aux = clientes.data;
+			}, false)
+		} else {
+			this.query("get_todos",{"entidad":this.entidad},function(e) { ARR_resultado = e; }, null, false);
+			if(this.objeto['VISIBLE'] === undefined) return ARR_aux;
 
-		let OBJ_attr = this.objeto['ATRIBUTOS'];
-		let OBJ_formato = this.objeto['VISIBLE'];
-		let STR_form = OBJ_formato['TEXTO'];
-
-		for(var INT_resultado in ARR_resultado) {
-			let OBJ_aux = {}
-			OBJ_aux[ARR_resultado[INT_resultado]["id"]] = "";
+			let OBJ_attr = this.objeto['ATRIBUTOS'];
+			let OBJ_formato = this.objeto['VISIBLE'];
 			let STR_form = OBJ_formato['TEXTO'];
-			for(var i in OBJ_formato['ATTR']) {
-				let STR_attr = OBJ_formato['ATTR'][i];
-				if(OBJ_attr[STR_attr]['TIPO'] != 'TP_RELACION') {
-					STR_form = STR_form.replace('/' + OBJ_formato['ATTR'][i] + '/', ARR_resultado[INT_resultado][OBJ_formato['ATTR'][i]])
-				} else {
-					if(this.entidad == OBJ_attr[STR_attr]['relacion']['tabla']) {
-						let OBJ_resultado = this.busqueda('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
-						let STR = this.resultado_1('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
-						if(STR == "") {
-							STR_form = STR_form.replace('/' + OBJ_formato['datos'][i] + '/,', "");
-							STR_form = STR_form.trim();
-						} else
-							STR_form = STR_form.replace('/' + OBJ_formato['datos'][i] + '/', STR);
+
+			for(var INT_resultado in ARR_resultado) {
+				let OBJ_aux = {}
+				OBJ_aux[ARR_resultado[INT_resultado]["id"]] = "";
+				let STR_form = OBJ_formato['TEXTO'];
+				for(var i in OBJ_formato['ATTR']) {
+					let STR_attr = OBJ_formato['ATTR'][i];
+					if(OBJ_attr[STR_attr]['TIPO'] != 'TP_RELACION') {
+						STR_form = STR_form.replace('/' + OBJ_formato['ATTR'][i] + '/', ARR_resultado[INT_resultado][OBJ_formato['ATTR'][i]])
 					} else {
-						let NEW_entidad = new Pyrus(ipcRenderer, OBJ_attr[STR_attr]['relacion']['tabla']);
-						let OBJ_resultado = NEW_entidad.busqueda('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
-						let STR = NEW_entidad.resultado_1('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
-						STR_form = STR_form.replace('/' + OBJ_formato['datos'][i] + '/', STR);
+						if(this.entidad == OBJ_attr[STR_attr]['relacion']['tabla']) {
+							let OBJ_resultado = this.busqueda('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
+							let STR = this.resultado_1('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
+							if(STR == "") {
+								STR_form = STR_form.replace('/' + OBJ_formato['datos'][i] + '/,', "");
+								STR_form = STR_form.trim();
+							} else
+								STR_form = STR_form.replace('/' + OBJ_formato['datos'][i] + '/', STR);
+						} else {
+							let NEW_entidad = new Pyrus(ipcRenderer, OBJ_attr[STR_attr]['relacion']['tabla']);
+							let OBJ_resultado = NEW_entidad.busqueda('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
+							let STR = NEW_entidad.resultado_1('id',ARR_resultado[INT_resultado][OBJ_formato['datos'][i]]);
+							STR_form = STR_form.replace('/' + OBJ_formato['datos'][i] + '/', STR);
+						}
 					}
 				}
+				ARR_aux[ARR_resultado[INT_resultado]["id"]] = STR_form;
+				//ARR_aux.push(OBJ_aux);
 			}
-			ARR_aux[ARR_resultado[INT_resultado]["id"]] = STR_form;
-			//ARR_aux.push(OBJ_aux);
 		}
 		return ARR_aux;
 	}
 	this.formularioDato = function(t,id) {
 		let dom = $(t);
 		let OBJ_dato = this.busqueda("id",id);// Datos
-		
+		console.log(OBJ_dato)
 		let OBJ_attr = this.objeto["GUARDADO_ATTR"];
 		let OBJ_datos = this.objeto["ATRIBUTOS"];
 		let ARR_aux = [];
@@ -410,42 +435,67 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 	/**
 	 *
 	 */
-	this.formulario_OK = function(id = "") {
+	this.formulario_OK = function(id = "", ngReadOnly = null) {
 		if(window.formulario === undefined)
 			window.formulario = [];
 
-		if(window.formulario[this.entidad] === undefined) {
-			window.formulario[this.entidad] = "";
+		if (window.formulario[this.entidad] === undefined)
+			window.formulario[this.entidad] = {};
 
+		if (window.formulario[this.entidad][id] === undefined) {
+			window.formulario[this.entidad][id] = "";
 			let OBJ_funciones = {}
-			let ARR_form = this.objeto['FORM'];
+			let ARR_form = this.objeto['FORM'];//ARRAY de OBJETOS
 
-			if(this.objeto['FORM_CLASS'] === undefined) this.objeto['FORM_CLASS'] = 'form-control';
+			if (this.objeto['FORM_CLASS'] === undefined) this.objeto['FORM_CLASS'] = 'form-control';
 			let STR_class = this.objeto['FORM_CLASS'];
 
-			if(this.objeto['FUNCIONES'] !== undefined) OBJ_funciones = this.objeto['FUNCIONES'];
+			if (this.objeto['FUNCIONES'] !== undefined) OBJ_funciones = this.objeto['FUNCIONES'];
 
-			if(ARR_form !== undefined) {
-				for(var i in ARR_form) {
-					let STR_input = ""
-					for(var e in ARR_form[i]) {
-						let AUX_nombre = e + (id != "" ? "_" + id : "");
-						let OBJ_funcion = {};
-						let STR_aux = ARR_form[i][e];
-
-						if(this.objeto['FUNCIONES'] !== undefined)
-		          if(this.objeto['FUNCIONES'][e] !== undefined)
-		            OBJ_funcion = this.objeto['FUNCIONES'][e];
-						STR_input += STR_aux.replace('/' + e + '/',this.inputAdecuado(this.especificacion[e],e,AUX_nombre,STR_class,OBJ_funcion));
+			if (ARR_form !== undefined) {
+				for (var i in ARR_form) {
+					TEXTO = ARR_form[i]["TEXTO"];
+					ATTR = ARR_form[i]["ATTR"];
+					console.log(TEXTO)
+					for (var e in ATTR) {
+						let AUX_nombre = ATTR[e] + (id != "" ? "_" + id : "");
+						if (ATTR[e] == "id" || this.especificacion[ATTR[e]]["VISIBILIDAD"] == "TP_INVISIBLE")
+							TEXTO = TEXTO.replace(`/${ATTR[e]}/`, this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class));
+						else {
+							let OBJ_funcion = {};
+							let label = (this.especificacion[ATTR[e]]["NOMBRE"] === undefined ? ATTR[e] : this.especificacion[ATTR[e]]["NOMBRE"]);
+							if (TEXTO.indexOf("ngReadOnly") > 0) {
+								if(ngReadOnly !== null)
+									TEXTO = TEXTO.replace("ngReadOnly", `ng-disabled="${ngReadOnly}"`);
+							}
+							if (OBJ_funciones[ATTR[e]] !== undefined)
+								OBJ_funcion = this.objeto['FUNCIONES'][ATTR[e]];
+							if(this.especificacion[ATTR[e]].TIPO == "TP_FILE") {
+								TEXTO = TEXTO.replace(`/${ATTR[e]}/`, this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class, OBJ_funcion, ngReadOnly));
+								TEXTO_FILE = `<div class="input-group mb-3">`;
+									TEXTO_FILE += `<div class="input-group-prepend">`;
+										TEXTO_FILE += `<span class="input-group-text">${label.toUpperCase()}</span>`;
+									TEXTO_FILE += `</div>`;
+									TEXTO_FILE += `<div class="custom-file">`;
+										TEXTO_FILE += TEXTO;
+										TEXTO_FILE += `<label class="custom-file-label" for="frm_${AUX_nombre}"></label>`;
+									TEXTO_FILE += `</div>`;
+								TEXTO_FILE += `</div>`;
+								TEXTO = TEXTO_FILE;
+							} else {
+								TEXTO = TEXTO.replace(`/${ATTR[e]}/`, `<label class="text-truncate text-capitalize d-block">${label.toLowerCase()}</label>${this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class, OBJ_funcion, ngReadOnly)}`);
+							}
+						}
 					}
-					window.formulario[this.entidad] += '<div class="form-group">' +
-									'<div class="row">' + STR_input + '</div>' +
-								'</div>';
+					window.formulario[this.entidad][id] += TEXTO
+				}
+
+				if(this.entidad == "medio") {
+					window.formulario[this.entidad][id] += "<p class='mb-0'>IMAGEN DEL MEDIO: busque el link de la imagen adecuada.</p>";
 				}
 			}
-
-			return window.formulario[this.entidad];
-		} else return window.formulario[this.entidad];
+		}
+		return `<div class="contenedorForm" id="form_${this.entidad + (id != "" ? "_" + id : "")}">${window.formulario[this.entidad][id]}</div>`;
 	}
 	/**
 	 *
@@ -633,6 +683,50 @@ Pyrus = function( e = null, contenido = true, async_contenido = false ){
 			returnE["id"] = m;
 		}, null, false);
 		return returnE;
+	};
+	this.guardar_2 = function(OBJ_dato, callbackOK, asy = false) {
+		let dato_guardar = {};
+		
+		dato_guardar["entidad"] = this.entidad;
+		if(this.objeto["UNIQUE"] !== undefined) {
+			let aux = {};
+			for(var i in this.objeto["UNIQUE"])
+				aux[this.objeto["UNIQUE"][i]] = OBJ_dato[this.objeto["UNIQUE"][i]];
+			aux["elim"] = 0;
+			if(!this.search(aux,(OBJ_dato["id"] == "nulo" ? false : true))) {
+				callbackOK.call(this,null);
+			}
+		}
+		for(var i in this.especificacion) {
+			if(this.especificacion[i]["FORMATO"] === undefined) continue;
+			if(this.especificacion[i]["FORMATO"] != "json") continue;
+			if(OBJ_dato[i] === null) continue;
+			data = OBJ_dato[i];
+			if((typeof data) == 'object') {
+				if(Array.isArray(data))
+					OBJ_dato[i] = JSON.stringify(data);
+				else {
+					s = Object.keys(data).map(function(k,i){
+						if(Array.isArray(data[k])) {
+							a = "";
+							for(var i in data[k]) {
+								cadena = data[k][i];
+								if(a != "") a += ",";
+								a += "'" + cadena.replace(/['"]+/g, '\"') + "'";
+					    }
+							return "'" + k + "':\"[" + a + "]\"";
+					  } else return "'" + k + "':'" + data[k] + "'";
+					});
+					OBJ_dato[i] = "{" + s.join(',') + "}";//PARSEO a string
+				}
+			}
+		}
+		dato_guardar["objeto"] = OBJ_dato;
+		dato_guardar["attr"] = this.objeto["ATRIBUTOS"];
+
+		this.query("guardar_uno_generico",dato_guardar, function(m) {
+			callbackOK.call(this,m)
+		}, null, asy);
 	};
 	/**
 	 * Función que verifica la relación con otra entidad y devuelve

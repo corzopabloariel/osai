@@ -46,7 +46,7 @@ class PYRUS_DB {
     $inner = "INNER JOIN proceso AS p ON (p.elim = 0 AND p.id_noticia = n.id_noticia) ";
     $inner .= "INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0) ";
     $inner .= "INNER JOIN noticiasactor AS na ON (na.id_noticia = n.id AND na.elim = 0) ";
-    
+
     $sqlVISTA .= "SELECT {$attr} FROM noticia AS n ";
     $sqlVISTA .= "{$inner} {$where_condition} " . (!empty($group) ? "GROUP BY {$group} " : "");
 
@@ -99,7 +99,7 @@ class PYRUS_DB {
     $A["cliente_final"]["no"] = "SIN CLIENTE";
     $Adatos = Array();
     foreach($Aelementos AS $e) $Adatos[$e] = Array();
-    
+
     if($queryRecords = $mysqli->query($sql)) {
       while($noticia = $queryRecords->fetch_assoc()) {
         foreach($Aelementos AS $e) {
@@ -186,6 +186,7 @@ class PYRUS_DB {
         if(!empty($where)) $where .= " AND ";
         $where .= "{$entidad}.{$k} = {$v}";
       }
+
       // echo "SELECT {$entidad}.* FROM {$entidad} INNER JOIN noticia ON (noticia.id = {$entidad}.id_noticia AND noticia.elim = 0 {$whereNoticia}) WHERE {$where} AND {$entidad}.elim = 0 ORDER BY {$entidad}.id DESC LIMIT {$start},{$length}";
       return R::getAll("SELECT {$entidad}.* FROM {$entidad} INNER JOIN noticia ON (noticia.id = {$entidad}.id_noticia AND noticia.elim = 0 {$whereNoticia}) WHERE {$where} AND {$entidad}.elim = 0 ORDER BY id DESC LIMIT {$start},{$length}");
     } if($entidad == "osai_notificacion" && isset($values["medios"])) {
@@ -234,7 +235,7 @@ class PYRUS_DB {
     }
   }
   /**
-   * 
+   *
    */
   static function get_agenda($valores) {
     $paginado = $valores["paginado"];
@@ -295,33 +296,29 @@ class PYRUS_DB {
     $noticiasInstituciones = R::findAll("noticiasinstitucion","id_noticia = ? AND elim = ?",[$idNoticia,0]);
     $noticiasActor = R::findAll("noticiasactor","id_noticia = ? AND elim = ?",[$idNoticia,0]);
     // $noticiasProceso = R::findOne("noticiasproceso","id_noticia = ? AND elim = ?",[$idNoticia,0]);
-    $noticiasCliente = R::findOne("noticiascliente","id_noticia = ? AND id_cliente = ? AND elim = ?",[$idNoticia,$idUnidad,0]);
-    
+    $noticiastema = R::findAll("noticiastema","id_noticia = ? AND id_cliente = ? AND elim = ?",[$idNoticia,$idUnidad,0]);
+    $noticiasvaloracion = R::findAll("noticiasvaloracion","id_noticia = ? AND id_cliente = ? AND elim = ?",[$idNoticia,$idUnidad,0]);
+
     $ArrCliente["temas"] = Array();
     $ArrCliente["valoracion"] = Array();
-    foreach(json_decode($noticiasCliente["tema"]) AS $k => $v) {
-      if($k == "texto") continue;
-      $id = substr($k,9);
-      if($id == "") continue;
-      $tema = R::findOne("attr_temas","id = ? AND elim = ?",[$id,0]);
-      $ArrCliente["temas"][$id] = Array();
-      $ArrCliente["temas"][$id]["nombre"] = $tema["nombre"];
-      $ArrCliente["temas"][$id]["valoracion"] = $v;
+		foreach($noticiastema AS $n) {
+      $tema = R::findOne("attr_temas","id = ? AND elim = ?",[$n["id_tema"],0]);
+      $ArrCliente["temas"][$n["id_tema"]] = Array();
+      $ArrCliente["temas"][$n["id_tema"]]["nombre"] = $tema["nombre"];
+      $ArrCliente["temas"][$n["id_tema"]]["valoracion"] = $n["valor"];
     }
-    foreach(json_decode($noticiasCliente["valoracion"]) AS $k => $v) {
-      $id = substr($k,4);
-      if($id == "") continue;
-      $calificacion = R::findOne("calificacion","id = ? AND elim = ?",[$id,0]);
-      $ArrCliente["valoracion"][$id] = Array();
-      $ArrCliente["valoracion"][$id]["nombre"] = $calificacion["nombre"];
-      $ArrCliente["valoracion"][$id]["valoracion"] = $v;
+    foreach($noticiasvaloracion AS $n) {
+      $calificacion = R::findOne("calificacion","id = ? AND elim = ?",[$n["id_calificacion"],0]);
+      $ArrCliente["valoracion"][$n["id_calificacion"]] = Array();
+      $ArrCliente["valoracion"][$n["id_calificacion"]]["nombre"] = $calificacion["nombre"];
+      $ArrCliente["valoracion"][$n["id_calificacion"]]["valoracion"] = $n["valor"];
     }
     foreach($noticiasInstituciones AS $k => $v) {
       $idInstitucion = $v["id_institucion"];
       $data = str_replace("'",'"',$v["data"]);
       $data = json_decode($data);
       $institucion = R::findOne("attr_institucion","id = ?  AND elim = ?",[$idInstitucion,0]);
-      
+
       $ArrInstituciones[$idInstitucion] = Array();
       $ArrInstituciones[$idInstitucion]["nombre"] = $institucion["nombre"];
       $ArrInstituciones[$idInstitucion]["data"] = Array();
@@ -434,11 +431,11 @@ class PYRUS_DB {
           $Arr[] = Array("id" => $data["id_medio"],"text" => (isset($ARR_medios[$data["id_medio"]]) ? $ARR_medios[$data["id_medio"]]["medio"] : "SIN MEDIO"));
       }
     }
-    
+
     return $Arr;
   }
   /**
-   * 
+   *
    */
   static function get_medios($valores) {
     if($valores["tipo"] == "A") {
@@ -467,7 +464,7 @@ class PYRUS_DB {
 
       $ARR_medios = R::findAll("medio","elim = 0");
       $ARR_secciones = R::findAll("seccion","elim = 0");
-      
+
       $elementosMedio = R::getAll("SELECT n.id_medio AS medio FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND {$whereNoticia}) where {$where} GROUP BY n.id_medio");
       $elementosSeccion = R::getAll("SELECT n.id_medio AS medio,n.id_seccion AS seccion FROM `proceso` AS p INNER JOIN noticia AS n ON (n.id = p.id_noticia AND n.elim = 0 AND  {$whereNoticia}) where {$where} GROUP BY n.id_seccion");
       $medios = $secciones = Array();
@@ -475,7 +472,7 @@ class PYRUS_DB {
       $medios[] = $secciones[] = Array("id" => "","text" => "");
       foreach($elementosMedio AS $k => $v)
         $medios[] = Array("id" => $v["medio"],"text" => $ARR_medios[$v["medio"]]["medio"]);
-      
+
       foreach($elementosSeccion AS $k => $v) {
         $nombre = "SIN SECCIÓN";
         if(isset($ARR_secciones[$v["seccion"]])) $nombre = $ARR_secciones[$v["seccion"]]["nombre"];
@@ -485,7 +482,7 @@ class PYRUS_DB {
           $text = $nombre;
         $secciones[] = Array("id" => $v["seccion"],"text" => $text);
       }
-      
+
       return Array("medio" => $medios,"seccion" => $secciones);
     }
   }

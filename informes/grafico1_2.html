@@ -66,6 +66,24 @@
 			return hexStr;
 		}
 
+		// determino la accion que ocurre cuando se hace doble click
+		function dblClickEvent(){
+			
+			d3.selectAll("circle").on("dblclick", function(d,i){
+				console.log(d);
+				console.log('click en : ' + d['name']);
+				localStorage.setItem('desde',document.getElementById("desde").value);
+				localStorage.setItem('hasta',document.getElementById("hasta").value);
+				localStorage.setItem('ua',document.getElementById("ua").value);
+				if(d['name'] == 'Oposicion')
+					localStorage.setItem('id', '3');
+				else // oficialismo
+					localStorage.setItem('id', '4');
+				window.open("tabla_1_2.html");
+				
+				return false;
+				});
+		}
 
 		function initGrafico(desde_, hasta_, ua_) {
 			// vacio la tabla con el contenido
@@ -128,6 +146,7 @@
 						}
 						window.csv += "\n";
 					}
+					dblClickEvent();
 				});
 		}
 
@@ -156,6 +175,7 @@
 				return false;
 			}
 			initGrafico(desde, hasta, ua);
+			dblClickEvent();
 		}
 
 		$(document).ready(function () {

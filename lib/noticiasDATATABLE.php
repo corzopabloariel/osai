@@ -140,7 +140,7 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
     }
     $inner .= "INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0 AND nt.id_tema IN ({$temasIN}))";
   } else
-    $inner .= "INNER JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0)";
+    $inner .= "LEFT JOIN noticiastema AS nt ON (nt.id_noticia = n.id AND nt.elim = 0)";
   if(isset($params["actoresFilter"]) && !empty($params["actoresFilter"])) {
     $actores = $params["actoresFilter"];
     $actoresIN = "";
@@ -150,7 +150,7 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
       }
       $inner .= "INNER JOIN noticiasactor AS na ON (na.id_noticia = n.id AND na.elim = 0 AND na.id_actor IN ({$actoresIN})) ";
   } else
-    $inner .= "INNER JOIN noticiasactor AS na ON (na.id_noticia = n.id AND na.elim = 0) ";
+    $inner .= "LEFT JOIN noticiasactor AS na ON (na.id_noticia = n.id AND na.elim = 0) ";
   
 } else if(isset($params["clipping"])) {
   $idAgendaNacional = 12;
@@ -171,7 +171,7 @@ else if(isset($params["moderado"]) && !isset($params["estado"])) {//NOTICIAS a P
 /* </VISTA> */
 $sqlVISTA .= "SELECT {$attr} FROM noticia AS n ";
 $sqlVISTA .= "{$inner} {$where_condition} " . (!empty($group) ? "GROUP BY {$group} " : "");
-
+// print_r($sqlVISTA);
 $total = total($mysqli,$sqlVISTA);// CALCULO DEL TOTAL DE REGISTROS SIN LIMIT
 // $total = 10;
 $recordsTotal = 0;
@@ -316,6 +316,7 @@ function separarPOR($mysqli,$sql,$Aelementos) {
         if(!isset($Adatos[$e][$noticia[$e]])) {
           if($e == "cliente" || $e == "cliente_final" || $e == "tema" || $e == "actor") {
             $groupConcat = explode(",",$noticia[$e]);
+            // if($e == "cliente_final") print_r($aux[$groupConcat[0]][$A[$e]["column"]]);
             foreach($groupConcat AS $a) {
               if($a == "") continue;
               if(isset($aux[$a])) {

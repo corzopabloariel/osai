@@ -1,0 +1,210 @@
+<html>
+	<meta charset="utf-8">
+<head>
+	<title>OSAI ::: Gráfico 3</title>
+	<link rel="stylesheet" href="../../assets/css/bootstrap.css">
+	<link rel="stylesheet" href="../../assets/css/lobibox.css">
+	<link rel="stylesheet" href="/cliente/assets/grafico1/client.css">
+	
+
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-9" id="pieChart">
+	
+			</div>
+			<div class="p-3 bg-light border-left col-3 position-fixed h-100" style="top:0; right:0; overflow-y: auto;" id="colores_temas">
+				<div>
+					<div class="form-group">
+						<label for="desde">Fecha Inicio</label>
+						<input class="form-control" type="date" id="desde">
+					</div>
+					<div class="form-group">
+						<label for="hasta">Fecha Hasta</label>
+						<input class="form-control" type="date" id="hasta">
+					</div>
+					<div class="form-group">
+						<label for="ua">Unidad de análisis</label>
+						<select class="form-control" id="ua">
+							<!-- <option value="12">Agenda Nacional</option> -->
+						</select>
+					</div>
+					<button class="btn btn-block btn-primary text-uppercase" type="button" onclick="javascript:consulta();">ejecutar</button>
+					<div>
+						<!-- <a href="#" id="descargar" onclick="javascript:descargarCSV();">Descargar CSV</a> -->
+					</div>
+				</div>
+				<table class="table mb-0 mt-2" id='tabla_temas_colores'></table>
+			</div>
+		</div>
+	</div>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/4.7.2/d3.min.js"></script>
+<script src="/cliente/assets/grafico1/d3pie.min.js"></script>
+<script src="/cliente/assets/grafico1/jquery.min.js"></script>
+<script type="text/javascript" src="../../assets/js/lobibox.js"></script>
+<script src="/cliente/assets/js/toolbox.js"></script>
+<script type="text/javascript" src="/cliente/assets/js/userDATOS.js"></script>
+
+<script>
+window.llamado = function(e){
+	traerUrls(e);
+};
+
+userDATOS.unidades(function (selects) {
+	for (var i in selects.data.unidad)
+		$("#ua").append(`<option value="${i}">${selects.data.unidad[i]}</option>`);
+}, true);
+
+function grafico(data){
+	window.pie = new d3pie("pieChart", {
+		"header": {
+			"title": {
+				"text": "",
+				"fontSize": 22,
+				"font": "verdana"
+			},
+			"subtitle": {
+				"text": "",
+				"color": "#999999",
+				"fontSize": 10,
+				"font": "verdana"
+			},
+			"titleSubtitlePadding": 12
+		},
+		"footer": {
+			"text": "",
+			"color": "#999999",
+			"fontSize": 11,
+			"font": "open sans",
+			"location": "bottom-center"
+		},
+		"size": {
+			"canvasHeight": 600,
+			"canvasWidth": 690,
+			"pieOuterRadius": "88%"
+		},
+		"data": {
+			"content": 
+				data // la que envian
+		},
+		"labels": {
+			"outer": {
+				"pieDistance": 32
+			},
+			"inner": {
+				"format": "value"
+			},
+			"mainLabel": {
+				"font": "verdana"
+			},
+			"percentage": {
+				"color": "#e1e1e1",
+				"font": "verdana",
+				"decimalPlaces": 0
+			},
+			"value": {
+				"color": "#e1e1e1",
+				"font": "verdana"
+			},
+			"lines": {
+				"enabled": true,
+				"color": "#cccccc"
+			},
+			"truncation": {
+				"enabled": true
+			}
+		},
+		"effects": {
+			"pullOutSegmentOnClick": {
+				"effect": "linear",
+				"speed": 400,
+				"size": 8
+			}
+		},
+		"callbacks": {
+			onClickSegment: function(e) { window.llamado(e); }
+		}
+	});
+}
+
+traerUrls = function(l){
+	arreglo = [];
+	if(l.data.label == 'positivo') arreglo = window.positivo_arr;
+	if(l.data.label == 'neutro') arreglo = window.neutro_arr;
+	if(l.data.label == 'negativo') arreglo = window.negativo_arr;
+	$.post(
+		"/lib/queryGraph.php?desde=0&hasta=0&ua=0&grafico=grafico_3_2_url",
+		{ 'ids' : arreglo },
+		function(d){
+			window.ret = d;
+			localStorage.setItem('datos',window.ret);
+			// aca hago lo que quiero basado en la posicion del indice
+			window.open("tabla_3_2.html");
+		});
+};
+
+convertirAGraficos = function(dato){
+	// el dato viene en orden
+	
+	negativo = {'label':'negativo', 'value':0, 'color':'red'};
+	neutro = {'label':'neutro', 'value':0, 'color':'grey'};
+	positivo = {'label':'posito', 'value':0, 'color':'green'};
+	// id de los elementos
+	window.negativo_arr = []; 
+	window.neutro_arr = []; 
+	window.positivo_arr = []; 
+	for(var x in dato){
+		if(dato[x]['sum'] == 1){ 
+			positivo.value += 1; 
+			window.positivo_arr.push(dato[x]['id']);
+			}
+		if(dato[x]['sum'] == 0){ 
+			neutro.value += 1;
+			window.neutro_arr.push(dato[x]['id']);
+			}
+		if(dato[x]['sum'] == -1){ 
+			negativo.value += 1;
+			window.negativo_arr.push(dato[x]['id']);
+			}
+	}
+	ret = [];
+	if(negativo.value > 0) ret.push(negativo);
+	if(neutro.value > 0) ret.push(neutro);
+	if(positivo.value > 0) ret.push(positivo);
+	return ret;
+}
+
+	// nombre_grafico = "grafico_3";
+	// $.get("/lib/queryGraph.php?desde=2018-12-01&hasta=2018-12-31&ua=12&grafico=grafico_3",
+	// 	function (data) {
+	// 		window.recibo = JSON.parse(data);
+	// 		grafico(window.recibo.grafico);
+	// 	});
+	
+consulta = function () {
+	desde = document.getElementById("desde").value;
+	hasta = document.getElementById("hasta").value;
+	ua = document.getElementById("ua").value;
+	nombre_grafico = "grafico_3_2";
+	if (desde == "" || hasta == "") {
+		userDATOS.notificacion("Falta fechas", "error");
+		return false;
+	}
+	if (dates.compare(dates.convert(hasta), dates.convert(desde)) < 0) {
+		userDATOS.notificacion("La fecha de INICIO no puede superar el HASTA", "error");
+		return false;
+	}
+	$.get("/lib/queryGraph.php?desde=" + desde + "&hasta=" + hasta + "&ua=" + ua + "&grafico=" + nombre_grafico,
+		function (data) {
+			window.recibo = JSON.parse(data);
+			grafico( convertirAGraficos( window.recibo.grafico ) );
+		});
+
+};
+	
+</script>
+
+</body>
+</html>

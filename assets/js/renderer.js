@@ -15,6 +15,7 @@ if(userDATOS.verificar(1)) {
   const pyrusNoticias = new Pyrus("noticias",false);
   const pyrusNoticiasActor = new Pyrus("noticiasactor",false);
   const pyrusNoticiasCliente = new Pyrus("noticiascliente",false);
+  const pyrusNoticiasValoracion = new Pyrus("noticiasvaloracion",false);
   const pyrusNoticiasTema = new Pyrus("noticiastema",false);
   const pyrusNoticiasInstitucion = new Pyrus("noticiasinstitucion",false);
   const pyrusNoticiasProceso = new Pyrus("noticiasproceso",false);
@@ -36,6 +37,9 @@ if(userDATOS.verificar(1)) {
   const pyrusPartido = new Pyrus("attr_partido",false);
   const pyrusPoder = new Pyrus("attr_poder",false);
   const pyrusDestaque = new Pyrus("attr_destaque",false);
+
+  const pyrusInforme = new Pyrus("informe",false);
+  const pyrusOsaiUsuario = new Pyrus("osai_usuario",false);
 
   window.user = userDATOS.user();
   window.filterNotificacion = ["sin_leer"];
@@ -346,30 +350,18 @@ if(userDATOS.verificar(1)) {
         userDATOS.notificacion(strings.noClienteFinal(cliente.nombre),"error",false);
         return false;
       }
-      
+
       clientes_osai = null;
-      userDATOS.busquedaTabla("osai_usuario", function( clientes_osai ) {
+      userDATOS.busquedaUsuariosFinales(function(clientes) {
         let defaultValue = null;
-        let OBJ_clientes_osai = {};//CLIENTES FINALES <-- relacionado con --> UNIDAD DE ANALISIS
-        for(var i in clientes_osai) {
-          if(OBJ_clientes_osai[i] === undefined) {  
-            userDATOS.busqueda({"value":clientes_osai[i]["id_cliente"],"tabla":"cliente"}, function(u) {
-              if(!parseInt(u.todos)) {
-                OBJ_clientes_osai[i] = "";
-                if(clientes_osai[i]["id_cliente"] == cliente.id)
-                  defaultValue = i;
-                OBJ_clientes_osai[i] = clientes_osai[i]["user"] + " (" + u["nombre"] + ")";
-              }
-            });
-          }
-        }
+        let OBJ_clientes_osai = clientes.data;
         //////////
         $.MessageBox({
           buttonDone  : strings.btn.pasar,
           buttonFail  : strings.btn.cancelar,
           message : strings.messege.pasar,
           // input: select,
-          input   : { 
+          input   : {
             input_detalle  : {
               type         : "texts",
               label        : "Detalle (máx. 200 caracteres):",
@@ -387,7 +379,6 @@ if(userDATOS.verificar(1)) {
               label        : "Seleccione Cliente final",
               title        : "cliente final",
               options      : OBJ_clientes_osai,
-              default      : 3
             },
           },
           top     : "auto",
@@ -416,7 +407,7 @@ if(userDATOS.verificar(1)) {
           userDATOS.change(window.notificacionUsuario,"notificacion_usuario","pasado",1,0,true);
         })
       }, true);//CLIENTES FINALES
-      
+
     }
     /**
      * FUNCIÓN DESTINADA PARA VER LA NOTIFICACIÓN DE UNA NOTICIA NUEVA
@@ -548,100 +539,134 @@ if(userDATOS.verificar(1)) {
             message   : "¿Está seguro de guardar y procesar la noticia?"
           }).done(function(){
             let OBJ_data = {}
-            let OBJ_noticia = {}
             let n_proceso = new Pyrus("proceso",false);
             let obj_proceso = n_proceso.objetoLimpio();
+            let np = new Pyrus("noticiaperiodista",false);
 
-            // GUARDO en tabla noticias
-            OBJ_noticia["id"] = "nulo";
-            OBJ_noticia["estado"] = "2";
-            OBJ_noticia["moderado"] = "1";
-            OBJ_noticia["titulo"] = $("#frm_titulo").text();
-            OBJ_noticia["url"] = $("*[name='frm_url']").val();
+            cuerpo = $(".note-editable").html();
             fecha = $("*[name='frm_fecha']").val();
             if(fecha == "") fecha = dates.string(new Date(), 1, "aaaammdd");
             else fecha = fecha.replace("T"," ");
-            OBJ_noticia["fecha"] = fecha;
-            OBJ_noticia["data"] = {};
-            OBJ_noticia["data"]["titulo"] = $("#frm_titulo").text();
-            if($("#frm_subtitulo").text() != "") OBJ_noticia["data"]["bajada"] = $("#frm_subtitulo").text();
-            OBJ_noticia["data"]["fecha"] = fecha
-            OBJ_noticia["data"]["autor"] = $("#select_periodista option[value='" + select_periodista.value + "']").text();
-            OBJ_noticia["data"]["cuerpo"] = (window.cuerpoPEGADO === undefined ? $(".note-editable").html() : window.cuerpoPEGADO);
-            OBJ_noticia["data"]["categoria"] = pyrusSeccion.mostrar_1(select_seccion.value);
-            accion = pyrusNoticias.guardar_1(OBJ_noticia);
-            userDATOS.log(window.user_id,"Alta base de registro",0,accion.id,"noticias");
-            // GUARDO en tabla noticia
-            cuerpo = $(".note-editable").html();
-            OBJ_noticia = {}
-            OBJ_noticia["id"] = "nulo";
-            OBJ_noticia["id_noticia"] = accion.id;
-            OBJ_noticia["id_medio"] = select_medio.value;
-            OBJ_noticia["id_medio_tipo"] = select_medioTipo.value;
-            OBJ_noticia["id_seccion"] = select_seccion.value;
-            OBJ_noticia["estado"] = "2";
-            OBJ_noticia["relevado"] = "1";
-            OBJ_noticia["nueva"] = "0";
-            OBJ_noticia["fecha"] = fecha;
-            OBJ_noticia["url"] = $("*[name='frm_url']").val();
-            OBJ_noticia["video"] = $("#video_noticia input").val();
-            OBJ_noticia["titulo"] = $("#frm_titulo").text();
-            OBJ_noticia["cuerpo"] = cuerpo;
-            accion_not = pyrusNoticia.guardar_1(OBJ_noticia);
-            userDATOS.log(window.user_id,"Alta de registro y proceso",0,accion.id,"noticia");
-            //
-
-            OBJ_data["select_medioTipo"] = select_medioTipo.value;
-            OBJ_data["select_destaque"] = select_destaque.value;
-            np = new Pyrus("noticiaperiodista",false);
-            o = np.objetoLimpio();
-            o["id_periodista"] = select_periodista.value;
-            o["id_noticia"] = accion.id;
-            np.guardar_1(o);
-
-            OBJ_data["noticiaATTR"] = [];
-            for(var i in window.ARR_atributos) {
-              if(OBJ_data["noticiaATTR"].indexOf(i) < 0)
-                OBJ_data["noticiaATTR"].push(i);//ATRIBUTOS asociados a la noticia
-            }
-
-            for(var i in window.ARR_actor)//ACTORES mencionados en la noticia
-              pyrusNoticiasActor.guardar_1({"id":"nulo","id_noticia": accion.id,"id_actor": i,"data": window.ARR_actor[i]})
-            for(var i in window.ARR_cliente) {//
-              pyrusNoticiasCliente.guardar_1({"id":"nulo","id_noticia": accion.id,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
-
-              for(var x in window.ARR_cliente[i]["tema"]) {
-                if(x == "texto") continue;
-                v = window.ARR_cliente[i]["tema"][x]["valor"];
-                id_tema = x.substring(9);
-                pyrusNoticiasTema.guardar_1({id: "nulo", id_noticia: accion.id, id_cliente: i, id_tema: id_tema, valor: v});
+            // GUARDO en tabla noticias
+            let OBJ_noticia = {
+              id: "nulo",
+              estado: "2",
+              moderado: "1",
+              titulo: $("#frm_titulo").text(),
+              url: $("*[name='frm_url']").val(),
+              fecha: fecha,
+              data: {
+                titulo: $("#frm_titulo").text(),
+                fecha: fecha,
+                autor: ($("#select_periodista").val() == "" ? "" : $(`#select_periodista option[value="${$("#select_periodista").val()}"]`).text().trim()),
+                cuerpo: (window.cuerpoPEGADO === undefined ? cuerpo : window.cuerpoPEGADO),
+                categoria: pyrusSeccion.mostrar_1($("#select_seccion").val())
               }
-              //proceso
-              obj_proceso["id_noticia"] = accion.id;
-              obj_proceso["did_noticia"] = accion_not.id;
-              obj_proceso["id_usuario"] = window.user_id;
-              obj_proceso["id_cliente"] = i;
-              obj_proceso["cuerpo_noticia"] = cuerpo;
-              accion_pro = n_proceso.guardar_1(obj_proceso);
-              userDATOS.log(window.user_id,"Alta de proceso",0,accion_pro.id,"proceso");
-            }
-            for(var i in window.ARR_institucion)//INSTITUCIONES mencionados en la noticia
-              pyrusNoticiasInstitucion.guardar_1({"id":"nulo","id_noticia": accion.id,"id_institucion": i,"data": window.ARR_institucion[i]})
+            };
+            if($("#frm_subtitulo").text() != "") OBJ_noticia["data"]["bajada"] = $("#frm_subtitulo").text();
 
-            pyrusNoticiasProceso.guardar_1({"id":"nulo","id_noticia": accion.id,"id_usuario":window.user_id,"data": OBJ_data});
-            // LIMPIO VARIABLES
-            window.cuerpoPEGADO = undefined;
-            userDATOS.pantalla_OFF();
-            userDATOS.notificacion("Noticia guardada y procesada","success");
-            scopeNoticias(angular.element($("#menu_noticias")).scope(),"total",1);
-            scopeNoticias(angular.element($("#menu_noticias")).scope(),"procesadas",1);
+            pyrusNoticias.guardar_2(OBJ_noticia, function(idNoticias) {
+              if(idNoticias === null) {
+                userDATOS.notificacion("<p class='m-0'><strong>Datos repetids</strong></p>","error");
+                return false;
+              }
+              userDATOS.log(window.user_id,"Alta base de registro",0,idNoticias,"noticias");
+              /** <NOTICIA> */
+              OBJ_noticia = {
+                id: "nulo",
+                id_noticia: idNoticias,
+                id_medio: $("#select_medio").val(),
+                id_medio_tipo: $("#select_medioAlcance").val(),
+                id_seccion: $("#select_seccion").val(),
+                estado: "2",
+                relevado: "1",
+                nueva: "0",
+                fecha: fecha,
+                url: $("*[name='frm_url']").val(),
+                video: $("#video_noticia input").val(),
+                titulo: $("#frm_titulo").text(),
+                cuerpo: cuerpo
+              };
+              pyrusNoticia.guardar_2(OBJ_noticia, function(idNoticia) {
+                userDATOS.log(window.user_id,"Alta de registro y proceso",0,idNoticia,"noticia");
+                /** <PERIODISTA> */
+                o = np.objetoLimpio();
+                o["id_periodista"] = $("#select_periodista").val();
+                o["id_noticia"] = idNoticia;
+                np.guardar_2(o, function(XX) {});
+                /** </PERIODISTA> */
+
+                /** <ACTORES> */
+                for(var i in window.ARR_actor)//ACTORES mencionados en la noticia
+                  pyrusNoticiasActor.guardar_2({"id":"nulo","id_noticia": idNoticia,"id_actor": i,"data": window.ARR_actor[i]}, function(xx) {});
+                /** </ACTORES> */
+
+                /** <INSTITUCIONES> */
+                for(var i in window.ARR_institucion)
+                  pyrusNoticiasInstitucion.guardar_2({"id":"nulo","id_noticia": idNoticia,"id_institucion": i,"data": window.ARR_institucion[i]}, function(xx) {});
+                /** </INSTITUCIONES> */
+
+                /** <NOTICIAPROCESO> */
+                OBJ_data["select_medioTipo"] = $("#select_medioTipo").val();
+                OBJ_data["select_destaque"] = $("#select_destaque").val();
+                OBJ_data["noticiaATTR"] = [];
+                for(var i in window.ARR_atributos) {
+                  if(OBJ_data["noticiaATTR"].indexOf(i) < 0)
+                    OBJ_data["noticiaATTR"].push(i);//ATRIBUTOS asociados a la noticia
+                }
+                pyrusNoticiasProceso.guardar_2({"id":"nulo","id_noticia": idNoticia,"id_usuario":window.user_id,"data": OBJ_data}, function(xx) {});
+                /** </NOTICIAPROCESO> */
+
+                /** <CLIENTE> */
+                for(var i in window.ARR_cliente) {//
+                  pyrusNoticiasCliente.guardar_2({"id":"nulo","id_noticia": idNoticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])}, function(xx) {});
+
+                  /** <VALORACION> */
+                  for(var x in window.ARR_cliente[i]["valoracion"]) {
+                    id_calificacion = x.substring(4);
+                    pyrusNoticiasValoracion.guardar_2({
+                      id: "nulo",
+                      id_noticia: idNoticia,
+                      id_cliente: i,
+                      id_calificacion: id_calificacion,
+                      valor: window.ARR_cliente[i]["valoracion"][x]
+                    }, function(xx) {});
+                  }
+                  /** </VALORACION> */
+
+                  /** <TEMA> */
+                  for(var x in window.ARR_cliente[i]["tema"]) {
+                    if(x == "texto") continue;
+                    v = window.ARR_cliente[i]["tema"][x]["valor"];
+                    id_tema = x.substring(9);
+                    pyrusNoticiasTema.guardar_2({id: "nulo", id_noticia: idNoticia, id_cliente: i, id_tema: id_tema, valor: v}, function(xx) {});
+                  }
+                  /** </TEMA> */
+                  /** <PROCESO> */
+                  obj_proceso["id_noticia"] = idNoticias;//TABLA noticias
+                  obj_proceso["did_noticia"] = idNoticia;//TABLA noticia
+                  obj_proceso["id_usuario"] = window.user_id;
+                  obj_proceso["id_cliente"] = i;
+                  obj_proceso["cuerpo_noticia"] = cuerpo;
+                  n_proceso.guardar_2(obj_proceso,function(idProceso) {
+                    userDATOS.log(window.user_id,"Alta de proceso",0,idProceso,"proceso");
+                  });
+
+                  // LIMPIO VARIABLES
+                  delete window.cuerpoPEGADO;
+                  userDATOS.pantalla_OFF();
+                  userDATOS.notificacion("Noticia guardada y procesada","success");
+                  scopeNoticias(angular.element($("#menu_noticias")).scope(),"total",1);
+                  scopeNoticias(angular.element($("#menu_noticias")).scope(),"procesadas",1);
+                  /** </PROCESO> */
+                }
+                /** </CLIENTE> */
+              });
+              /** </NOTICIA> */
+            });
           }).fail(function(){});
         } else userDATOS.notificacion("<p class='m-0'><strong>Faltan datos</strong></p><p class='m-0'>" + msj_err+ "</p>","error");
       } else {
-        let periodista = null;
-        userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia, function(d) {
-          periodista = d;
-        });
         if(flag_variables) {
           $.MessageBox({
             buttonDone  : strings.btn.si,
@@ -654,68 +679,91 @@ if(userDATOS.verificar(1)) {
             userDATOS.change(noticiaSELECCIONADA.id,"noticia","estado",2);//CAMBIO estado
             let cuerpo = $(".note-editable").html();//guardo cuerpo de noticias con ETIQUETAS
             if(reprocesar) {
-              let noticiaproceso = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia"}, function(d) {
-                noticiaproceso = d;
-              });
-              let ARR_proceso = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia","retorno":0}, function(d) {
-                ARR_proceso = d;
-              });
-              let ARR_actores = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasactor","column":"id_noticia","retorno":0}, function(d) {
-                ARR_actores = d;
-              });
-              let ARR_clientes = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiascliente","column":"id_noticia","retorno":0}, function(d) {
-                ARR_clientes = d;
-              });
-              let ARR_instituciones = userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasinstitucion","column":"id_noticia","retorno":0}, function(d) {
-                ARR_instituciones = d;
-              });
-              let procesoDATA = userDATOS.parseJSON(noticiaproceso.data);
               let did = parseInt(window.noticiaSELECCIONADA.did) + 1;//Identificador de elementos en tablas con registros múltiples
               userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","did",did);
-
               userDATOS.log(window.user_id,"Reproceso de elemento",0,window.noticiaSELECCIONADA.id_noticia,"noticias",1);
               userDATOS.log(window.user_id,"Reproceso de elemento",0,window.noticiaSELECCIONADA.id,"noticia",1);
-              for(var i in ARR_proceso)
-                userDATOS.change(i,"proceso","elim","1");
-              if(noticiaproceso !== null)
-                userDATOS.change(noticiaproceso.id,"noticiasproceso","elim","1");
-              for(var i in ARR_actores)
-                userDATOS.change(i,"noticiasactor","elim","1");
-              for(var i in ARR_clientes)
-                userDATOS.change(i,"noticiascliente","elim","1");
-              for(var i in ARR_instituciones)
-                userDATOS.change(i,"noticiasinstitucion","elim","1");
-              //
-              procesoDATA["select_medioTipo"] = select_medioTipo.value;
-              procesoDATA["select_destaque"] = select_destaque.value;
-              procesoDATA["noticiaATTR"] = [];
-              for(var i in window.ARR_atributos) {
-                if(procesoDATA["noticiaATTR"].indexOf(i) < 0)
-                  procesoDATA["noticiaATTR"].push(i);//ATRIBUTOS asociados a la noticia
-              }
-              if($("#select_periodista").is(":visible")) {
-                if(periodista !== null) userDATOS.change(periodista.id_notp,"noticiaperiodista","elim",1);
-                np = new Pyrus("noticiaperiodista",false);
-                o = np.objetoLimpio();
-                o["did"] = did;
-                o["id_periodista"] = select_periodista.value;
-                o["id_noticia"] = window.noticiaSELECCIONADA.id_noticia;
-                np.guardar_1(o);
-              }
               if($("#select_seccion").is(":visible"))
                 userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","id_seccion",select_seccion.value);
+              if($("#video_noticia input").val() != "")
+                userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","video",$("#video_noticia input").val());
 
-              pyrusNoticiasProceso.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": procesoDATA});
+              userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia"}, function(noticiaproceso) {
+                if(noticiaproceso !== null) {
+                  //ELIMINO el registro viejo
+                  userDATOS.change(noticiaproceso.id,"noticiasproceso","elim","1");
+                  let procesoDATA = userDATOS.parseJSON(noticiaproceso.data);
+                  procesoDATA["select_medioTipo"] = $("#select_medioTipo").val();
+                  procesoDATA["select_destaque"] = $("#select_destaque").val();
+                  procesoDATA["noticiaATTR"] = [];
+                  for(var i in window.ARR_atributos) {
+                    if(procesoDATA["noticiaATTR"].indexOf(i) < 0)
+                      procesoDATA["noticiaATTR"].push(i);//ATRIBUTOS asociados a la noticia
+                  }
+                  pyrusNoticiasProceso.guardar_2({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": procesoDATA}, function(xx) {});
+                }
+              });
+              userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia","retorno":0}, function(ARR_proceso) {
+                for(var i in ARR_proceso)
+                  userDATOS.change(i,"proceso","elim","1");
+              });
+              userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasactor","column":"id_noticia","retorno":0}, function(ARR_actores) {
+                for(var i in ARR_actores)
+                  userDATOS.change(i,"noticiasactor","elim","1");
+              });
+              userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiascliente","column":"id_noticia","retorno":0}, function(ARR_clientes) {
+                for(var i in ARR_clientes)
+                  userDATOS.change(i,"noticiascliente","elim","1");
+              });
+              userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasinstitucion","column":"id_noticia","retorno":0}, function(ARR_instituciones) {
+                for(var i in ARR_instituciones)
+                  userDATOS.change(i,"noticiasinstitucion","elim","1");
+              });
+
+              userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia, function(periodista) {
+                if($("#select_periodista").is(":visible")) {
+                  if(periodista !== null)
+                    userDATOS.change(periodista.id_notp,"noticiaperiodista","elim",1);
+                  else {
+                    np = new Pyrus("noticiaperiodista",false);
+                    o = np.objetoLimpio();
+                    delete o["did"];
+                    o["id_periodista"] = $("#select_periodista").val();
+                    o["id_noticia"] = window.noticiaSELECCIONADA.id_noticia;
+                    np.guardar_2(o, function(xx) {});
+                  }
+                }
+              });
+
+              /** <ACTOR> */
               for(var i in window.ARR_actor)//ACTORES mencionados en la noticia
-                pyrusNoticiasActor.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]})
-              for(var i in window.ARR_cliente) {
-                pyrusNoticiasCliente.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+                pyrusNoticiasActor.guardar_2({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]}, function(xx) {});
+              /** </ACTOR> */
 
+              /** <INTITUCION> */
+              for(var i in window.ARR_institucion)//INSTITUCIONES mencionados en la noticia
+                pyrusNoticiasInstitucion.guardar_2({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]}, function(xx) {});
+              /** </INTITUCION> */
+
+              /** <CLIENTE> */
+              for(var i in window.ARR_cliente) {
+                pyrusNoticiasCliente.guardar_2({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])}, function(xx) {});
+
+                for(var x in window.ARR_cliente[i]["valoracion"]) {
+                  id_calificacion = x.substring(4);
+                  pyrusNoticiasValoracion.guardar_2({
+                    id: "nulo",
+                    id_noticia: window.noticiaSELECCIONADA.id_noticia,
+                    id_cliente: i,
+                    id_calificacion: id_calificacion,
+                    valor: window.ARR_cliente[i]["valoracion"][x]
+                  }, function(xx) {});
+                }
                 for(var x in window.ARR_cliente[i]["tema"]) {
                   if(x == "texto") continue;
                   v = window.ARR_cliente[i]["tema"][x]["valor"];
                   id_tema = x.substring(9);
-                  pyrusNoticiasTema.guardar_1({id: "nulo", id_noticia: accion.id, id_cliente: i, id_tema: id_tema, valor: v});
+                  pyrusNoticiasTema.guardar_2({id: "nulo", id_noticia: window.noticiaSELECCIONADA.id_noticia, id_cliente: i, id_tema: id_tema, valor: v}, function(xx) {});
                 }
                 //proceso
                 obj_proceso["did"] = did;
@@ -724,46 +772,71 @@ if(userDATOS.verificar(1)) {
                 obj_proceso["id_usuario"] = window.user_id;
                 obj_proceso["id_cliente"] = i;
                 obj_proceso["cuerpo_noticia"] = cuerpo;
-                accion = n_proceso.guardar_1(obj_proceso);
-                userDATOS.log(window.user_id,"Alta de proceso",0,accion.id,"proceso");
+                n_proceso.guardar_2(obj_proceso, function(idProceso) {
+                  userDATOS.log(window.user_id,"Alta de proceso",0,idProceso,"proceso");
+                });
               }
-              for(var i in window.ARR_institucion)//INSTITUCIONES mencionados en la noticia
-                pyrusNoticiasInstitucion.guardar_1({"id":"nulo","did":did,"id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]})
-              //
-              if($("#video_noticia input").val() != "") userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","video",$("#video_noticia input").val());
+              /** <<CLIENTE> */
               userDATOS.pantalla_OFF();
               userDATOS.notificacion("Noticia reprocesada","success");
             } else {
-              OBJ_data["select_medioTipo"] = select_medioTipo.value;
-              OBJ_data["select_destaque"] = select_destaque.value;
-              if($("#select_periodista").is(":visible")) {
-                if(periodista !== null)
-                  userDATOS.change(periodista.id_notp,"noticiaperiodista","id_periodista",select_periodista.value);
-              }
-              if($("#select_seccion").is(":visible")) {
-                userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","id_seccion",select_seccion.value);
-              }
-              OBJ_data["noticiaATTR"] = [];
-
               // ID de tabla noticia
               userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","estado",2);
               userDATOS.change(window.noticiaSELECCIONADA.id_noticia,"noticias","estado",2);
+              if($("#select_seccion").is(":visible"))
+                userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","id_seccion",$("#select_seccion").val());
+              if($("#video_noticia input").val() != "")
+                userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","video",$("#video_noticia input").val());
+
+              userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia, function(periodista) {
+                if($("#select_periodista").is(":visible")) {
+                  if(periodista !== null)
+                    userDATOS.change(periodista.id_notp,"noticiaperiodista","id_periodista",$("#select_periodista").val());
+                  else {
+                    n_periodista = new Pyrus("noticiaperiodista", false);
+                    data = n_periodista.objetoLimpio();
+                    delete data.did;
+                    data.id_noticia = window.noticiaSELECCIONADA.id_noticia;
+                    data.id_periodista = $("#select_periodista").val();
+                    n_periodista.guardar_2(data, function(xx) {});
+                  }
+                }
+              });
+              /** <NOTICIAPROCESO> */
+              OBJ_data["select_medioTipo"] = $("#select_medioTipo").val();
+              OBJ_data["select_destaque"] = $("#select_destaque").val();
+              OBJ_data["noticiaATTR"] = [];
 
               for(var i in window.ARR_atributos) {
                 if(OBJ_data["noticiaATTR"].indexOf(i) < 0)
                   OBJ_data["noticiaATTR"].push(i);//ATRIBUTOS asociados a la noticia
               }
-              pyrusNoticiasProceso.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": OBJ_data});
+              pyrusNoticiasProceso.guardar_2({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_usuario":window.user_id,"data": OBJ_data}, function(xx) {});
+              /** </NOTICIAPROCESO> */
+
+              /** <ACTOR> */
               for(var i in window.ARR_actor)//ACTORES mencionados en la noticia
-                pyrusNoticiasActor.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]})
-              id_cliente = 0;
+                pyrusNoticiasActor.guardar_2({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_actor": i,"data": window.ARR_actor[i]}, function(xx) {});
+              /** </ACTOR> */
+
+              /** <CLIENTE> */
               for(var i in window.ARR_cliente) {
-                pyrusNoticiasCliente.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])})
+                pyrusNoticiasCliente.guardar_2({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_cliente": i,"valoracion": JSON.stringify(window.ARR_cliente[i]["valoracion"]),"tema": JSON.stringify(window.ARR_cliente[i]["tema"])}, function(xx) {});
+                for(var x in window.ARR_cliente[i]["valoracion"]) {
+                  id_calificacion = x.substring(4);
+                  pyrusNoticiasValoracion.guardar_2({
+                    id: "nulo",
+                    id_noticia: window.noticiaSELECCIONADA.id_noticia,
+                    id_cliente: i,
+                    id_calificacion: id_calificacion,
+                    valor: window.ARR_cliente[i]["valoracion"][x]
+                  }, function(xx) {});
+                }
                 for(var x in window.ARR_cliente[i]["tema"]) {
                   if(x == "texto") continue;
                   v = window.ARR_cliente[i]["tema"][x]["valor"];
                   id_tema = x.substring(9);
-                  pyrusNoticiasTema.guardar_1({id: "nulo", id_noticia: accion.id, id_cliente: i, id_tema: id_tema, valor: v});
+                  pyrusNoticiasTema.guardar_2({id: "nulo", id_noticia: window.noticiaSELECCIONADA.id_noticia, id_cliente: i, id_tema: id_tema, valor: v}, function(xx) {});
                 }
                 //proceso
                 obj_proceso["id_noticia"] = window.noticiaSELECCIONADA.id_noticia;
@@ -771,13 +844,14 @@ if(userDATOS.verificar(1)) {
                 obj_proceso["id_usuario"] = window.user_id;
                 obj_proceso["id_cliente"] = i;
                 obj_proceso["cuerpo_noticia"] = cuerpo;
-                accion = n_proceso.guardar_1(obj_proceso);
-                userDATOS.log(window.user_id,"Alta de proceso",0,accion.id,"proceso");
+                n_proceso.guardar_2(obj_proceso, function(idProceso) {
+                  userDATOS.log(window.user_id,"Alta de proceso",0,idProceso,"proceso");
+                });
               }
+              /** </CLIENTE> */
               for(var i in window.ARR_institucion)//INSTITUCIONES mencionados en la noticia
-                pyrusNoticiasInstitucion.guardar_1({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]})
+                pyrusNoticiasInstitucion.guardar_2({"id":"nulo","id_noticia": window.noticiaSELECCIONADA.id_noticia,"id_institucion": i,"data": window.ARR_institucion[i]}, function(xx) {});
               //
-              if($("#video_noticia input").val() != "") userDATOS.change(window.noticiaSELECCIONADA.id,"noticia","video",$("#video_noticia input").val());
               userDATOS.log(window.user_id,"Cambio de estado",0,window.noticiaSELECCIONADA.id,"noticia");
               userDATOS.log(window.user_id,"Cambio de estado",0,window.noticiaSELECCIONADA.id_noticia,"noticias");
               // LIMPIO VARIABLES
@@ -811,7 +885,7 @@ if(userDATOS.verificar(1)) {
    * Acceso a un area no autorizada
    */
   app.controller("none", function ($scope,factory_simat) {
-    window.location = "http://93.188.164.27/principal.html";
+    window.location = `http://${servidor}/principal.html`;
   });
   app.filter('reverse', function() {
     return function(items) {
@@ -883,6 +957,11 @@ if(userDATOS.verificar(1)) {
 
     factory_simat.load("clipping");
 
+    userDATOS.selectOption("select_medio","medio","medio");
+    userDATOS.selectOption("select_medioAlcance","medio_tipo");
+    userDATOS.selectOption("select_periodista","periodista");
+    userDATOS.selectOption("select_medioTipo","");
+
     userDATOS.noticiasSELECT("clipping", null, function(selectMEDIOS) {
       $scope.mediosSELECT = selectMEDIOS.medio;
       $scope.unidadSELECT = selectMEDIOS.unidad;
@@ -911,7 +990,7 @@ if(userDATOS.verificar(1)) {
       setTimeout(function() {
         userDATOS.dataTableNOTICIAS4("#t_data",data)
       },500)
-      
+
     })
 
     $("#btn_limpiar").on("click",function() {
@@ -988,7 +1067,7 @@ if(userDATOS.verificar(1)) {
       });
     }
 
-    
+
     userDATOS.clippingNOTICIA = function() {
       let row = tabla_noticia.rows(".selected").data()[0];
       let noticia = null;
@@ -1011,7 +1090,7 @@ if(userDATOS.verificar(1)) {
           });
           continue;
         }
-        proceso.push(d.id_cliente);
+        proceso.push(procesos[i].id_cliente);
       }
       /**
        * ESTADOS DE UNA NOTICIA <-- OJO, no confundir con TIPO DE NOTICIA (NUEVA/VIEJA)
@@ -1029,7 +1108,7 @@ if(userDATOS.verificar(1)) {
         userDATOS.notificacion("Noticia publicada en CLIENTE/S");
         return false;
       }
-      
+
       userDATOS.busquedaUsuariosFinales(function(clientes) {
         for(var i in proceso) {
           if(clientes[proceso[i]] !== undefined) {
@@ -1041,7 +1120,7 @@ if(userDATOS.verificar(1)) {
           buttonDone  : strings.btn.si,
           buttonFail  : strings.btn.no,
           message     : strings.noticia.prePublicar(msg),
-          input   : { 
+          input   : {
             input_detalle  : {
               type         : "texts",
               label        : "Descripción (máx. 200 caracteres):",
@@ -1086,11 +1165,11 @@ if(userDATOS.verificar(1)) {
 
             tabla_noticia.draw();
             userDATOS.noticiasSELECT("clipping", null, function(selectMEDIOS) {
-              angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
-              angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
-              angular.element($(".submenu")).scope().seccionSELECT = selectMEDIOS.seccion;
-              angular.element($(".submenu")).scope().unidadSELECT = selectMEDIOS.unidad;
-              angular.element($(".submenu")).scope().$digest();
+              angular.element($("#date_filter")).scope().mediosSELECT = selectMEDIOS.medio;
+              angular.element($("#date_filter")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
+              angular.element($("#date_filter")).scope().seccionSELECT = selectMEDIOS.seccion;
+              angular.element($("#date_filter")).scope().unidadSELECT = selectMEDIOS.unidad;
+              angular.element($("#date_filter")).scope().$digest();
             });
           },500);
         });
@@ -1144,7 +1223,7 @@ if(userDATOS.verificar(1)) {
     factory_simat.load("attr_nivel")
     factory_simat.load("attr_partido")
     factory_simat.load("attr_poder")
-      
+
     userDATOS.submit = function(t) {
       let e = $("#" + t.id).data("tipo");
       if(userDATOS.validar("#" + t.id)) {
@@ -1166,6 +1245,10 @@ if(userDATOS.verificar(1)) {
               OBJ[j].push(x)
           }
         }
+        if(e == "medio") {
+          OBJ["nombre"] = "";
+          OBJ["nombre"] = OBJ["medio"].replace(/ /g, "").toLocaleLowerCase();
+        }
         $("#" + t.id).find("input","button","select").attr("disabled")
 
         accion = pyrusObjeto.guardar_1(OBJ);//
@@ -1179,7 +1262,7 @@ if(userDATOS.verificar(1)) {
             userDATOS.log(window.user_id,"Alta de registro",0,accion.id,e);
           else
             userDATOS.log(window.user_id,"Edición de registro",0,accion.id,e);
-          
+
           $("#modal").modal("hide");
 
         } else userDATOS.notificacion(strings.repetidoDatos,"error");
@@ -1210,138 +1293,342 @@ if(userDATOS.verificar(1)) {
    */
   app.controller("informes", function ($scope) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
-    userDATOS.noticiasSELECT("procesadas", null, function(select) {
-      graficos = {};
-      userDATOS.busquedaTabla("osai_grafico",function(data) { 
+    window.select = null;
+    $scope.graficos = {};
+    $scope.graficoSelect = {}
+    window.filas = [];
+    userDATOS.busquedaUsuariosFinales(function(select) {
+      window.select = select.data;
+      userDATOS.busquedaTabla("osai_grafico",function(data) {
         for(var i in data) {
-          graficos[i] = {};
-          graficos[i]["idOsaiGrafico"] = i;
-          graficos[i]["nombre"] = select.unidad[data[i]["id_usuario_osai"]];
-          graficos[i]["id"] = data[i]["id_usuario_osai"];
-          graficos[i]["grafico"] = ($scope.graficoSelect[data[i]["grafico"]] === undefined ? "-" : $scope.graficoSelect[data[i]["grafico"]]);
-          graficos[i]["idgrafico"] = data[i]["grafico"];
-          graficos[i]["titulo"] = data[i]["titulo"];
-          graficos[i]["descripcion"] = data[i]["descripcion"];
+          idUsuarioOsai = 0;
+          userDATOS.busqueda({tabla: "osai_usuario", value: data[i]["id_usuario_osai"]}, function(u) {
+            idUsuarioOsai = u.id_cliente;
+          });
+          $scope.graficos[i] = {};
+          $scope.graficos[i]["idOsaiGrafico"] = i;
+          $scope.graficos[i]["nombre"] = select.data[idUsuarioOsai];
+          $scope.graficos[i]["id"] = data[i]["id_usuario_osai"];
+          $scope.graficos[i]["grafico"] = ($scope.graficoSelect[data[i]["grafico"]] === undefined ? "-" : $scope.graficoSelect[data[i]["grafico"]]["name"]);
+          $scope.graficos[i]["idgrafico"] = data[i]["grafico"];
+          $scope.graficos[i]["titulo"] = data[i]["titulo"];
+          $scope.graficos[i]["descripcion"] = data[i]["descripcion"];
         }
       });
-      $scope.graficos = graficos;
+      $scope.unidad = select.data;
 
-      $scope.$digest();
-    });
-    graficos = {}
+      // $scope.$digest();
+    }, false, "id_cliente");
+    cargarGraficosClientes = function(target, searching = true) {
+      let ARR_btn = [];
+      let nombre_tabla = `tabla_${target}`;
+
+      ARR_btn.push({
+      extend: 'selected',
+      text: '<i class="fas fa-pencil-alt"></i>',
+      className: 'btn-warning',
+      action: function ( e, dt, node, config ) {
+          let c = dt.rows( { selected: true } ).data()[0];
+          $scope.submitNG = c.id;
+          // t.editNG = false;
+          formGrafico.select_grafico.value = c.idGrafico;
+          $("#select_grafico").attr("disabled",true);
+          $("#select_grafico").select2();
+          formGrafico.select_cliente.value = c.idCliente;//
+          $("#select_cliente").attr("disabled",true);
+          $("#select_cliente").select2();
+          formGrafico.titulo.value = c.tituloSOLO;
+          formGrafico.descripcion.value = c.descripcion;
+          $("#btnGraficos").text("editar");
+          $("#btnGraficos").removeAttr("disabled");
+          // window.btnNG = t;
+        // userDATOS.show__(window[nombre_tabla],OBJ_pyrus);
+      }
+      });
+
+      ARR_btn.push({
+      extend: 'selected',
+      text: '<i class="fas fa-trash-alt"></i>',
+      className: 'btn-danger',
+      action: function ( e, dt, node, config ) {
+          let data = dt.rows( { selected: true } ).data()[0];
+          angular.element("fieldset").scope().remove(data.id);
+      }
+      });
+
+      window[nombre_tabla] = $(`#${target}`).DataTable({
+        processing: true,
+        pageLength: 5,
+        serverSide: true,
+        paging: true,
+        lengthChange: true,
+        responsive: true,
+        ajax: {
+          method: "POST",
+          url:"lib/DATATABLE.php",
+          data: { entidad: "__graficos__", entidades: JSON.stringify(ENTIDAD)},
+        },
+        columns: [
+          { title: "Gráfico", data: "titulo" },
+          { title: "Cliente", data: "cliente" },
+          { title: "Descripción", data: "descripcion" }
+        ],
+        columnDefs: [
+          { className: "text-left", targets: [ 0, 1, 2 ] }
+        ],
+        fixedHeader: {
+            header: false,
+        },
+        select: 'single',
+        destroy: true,
+        order: [[ 0, "desc" ]],
+        searching: searching,
+        dom: 'Bfrtip',
+        scrollX:true,
+        buttons: ARR_btn,
+        language: translate_spanish
+      });
+      window[nombre_tabla].buttons().container().appendTo( $('.col-sm-6:eq(0)', window[nombre_tabla].table().container() ) );
+      window[nombre_tabla].on( 'deselect', function ( e, dt, type, indexes ) {
+        angular.element("fieldset").scope().edit(false);
+      });
+    }
+    cargarInformesClientes = function(target, searching = true) {
+      let ARR_btn = [];
+      let nombre_tabla = `tabla_${target}`;
+
+      ARR_btn.push({
+				text: '<i class="fas fa-plus"></i>',
+				className: 'btn-primary',
+				action: function ( e, dt, node, config ) {
+					window[nombre_tabla].rows('.selected').deselect();
+					userDATOS.modal(window[nombre_tabla],pyrusInforme);
+				}
+			});
+
+      ARR_btn.push({
+      extend: 'selected',
+      text: '<i class="fas fa-trash-alt"></i>',
+      className: 'btn-danger',
+      action: function ( e, dt, node, config ) {
+          let data = dt.rows( { selected: true } ).data()[0];
+          angular.element("fieldset").scope().remove(data.id);
+      }
+      });
+      window[nombre_tabla] = $(`#${target}`).DataTable({
+        processing: true,
+        pageLength: 10,
+        serverSide: true,
+        paging: true,
+        lengthChange: true,
+        responsive: true,
+        ajax: {
+          method: "POST",
+          url:"lib/DATATABLE.php",
+          data: { entidad: "__informes__", entidades: JSON.stringify(ENTIDAD)},
+        },
+        columns: [
+          { title: "Usuario OSAI", data: "usuario" },
+          { title: "Fecha", data: "fecha" },
+          { title: "Cliente Final", data: "cliente_final" },
+          { title: "Unidad de Análisis", data: "cliente" },
+          { title: "Descripción", data: "descripcion" },
+          { title: "Archivo", data: "archivo" }
+        ],
+        columnDefs: [
+          { className: "text-left", targets: [ 0, 2, 3, 4, 5 ] },
+          { className: "text-right", targets: [ 1 ] }
+        ],
+        fixedHeader: {
+            header: false,
+        },
+        select: 'single',
+        destroy: true,
+        order: [[ 0, "desc" ]],
+        searching: searching,
+        dom: 'Bfrtip',
+        scrollX:true,
+        lengthMenu: [[10, 25, 50], [10, 25, 50]],
+        buttons: ARR_btn,
+        language: translate_spanish
+      });
+      window[nombre_tabla].buttons().container().appendTo( $('.col-sm-6:eq(0)', window[nombre_tabla].table().container() ) );
+      window[nombre_tabla].on( 'deselect', function ( e, dt, type, indexes ) {
+        angular.element("fieldset").scope().edit(false);
+      });
+    }
+    cargar = function() {
+      window["table_graficos"] = $("#table_graficos").DataTable({
+        data: window.filas,
+        column: [
+          { title: 'Enlace' },
+          { title: 'Descripción' }
+        ],
+        paging: true,
+        lengthChange: true,
+        responsive: true,
+        destroy: true,
+        searching: true,
+        dom: 'lBfrtip',
+        buttons: [],
+        language: translate_spanish
+      });
+    }
+    cargarGraficosClientes("graficosCliente");
+    cargarInformesClientes("informesCliente");
     userDATOS.busquedaTabla("grafico",function(data) {
-      $scope.graficoTable = data;
-      for(var i in data)
-        graficos[i] = data[i].name;
-    });
-    $scope.graficoSelect = graficos;
-    
+      for(var i in data) {
+        $scope.graficoSelect[i] = {};
+        $scope.graficoSelect[i]["name"] = data[i].name;
+        $scope.graficoSelect[i]["url"] = data[i].url;
 
+        a = `<a href="http://${servidor}/${data[i].url}" target="_blank">${data[i].name}</a>`;
+        window.filas.push([ a, (data[i].description === null ? "" : data[i].description) ]);
+      }
+      cargar();
+    });
+    userDATOS.submit = function(t) {
+      let e = $("#" + t.id).data("tipo");
+      if(userDATOS.validar("#" + t.id)) {
+        var form_data = new FormData(t);
+        if(document.getElementById(`frm_id`).value == "")
+          form_data.set("frm_id","nulo");
+
+        cliente = pyrusOsaiUsuario.busqueda("id",form_data.get("frm_id_cliente_osai"));
+        form_data.append("frm_id_cliente",cliente.id_cliente);
+
+        $.ajax({
+          url: 'upload.php',
+          method: 'POST',
+          data:  form_data,
+          contentType: false,
+          cache: false,
+          processData: false,
+          beforeSend : function() {
+            userDATOS.notificacion("Subiendo archivo. Al finalizar la tabla se actualizará");
+          },
+          success: function(data){
+            console.log(data);
+            
+          }
+        });
+      }
+    }
     $(document).ready(function(){
       $(".select__2").select2();
       window.localStorage.clear();
       $("tbody a").on("click",function(e) {
         e.preventDefault();
         href = $(this).attr("href");
-        // min = $("#fecha_min").val();
-        // max = $("#fecha_max").val();
-        // uni = $("#select_unidad").val();
-        
-        // if(min == "" || max == "" || uni == "")
-        //   userDATOS.notificacion(strings.faltan.especifico[0],"error");
-        // else {
-        //   if(dates.compare(dates.convert(min),dates.convert(max)) == 1) {
-        //     userDATOS.notificacion(strings.error.fechas,"error");
-        //     return false;
-        //   }
-        //   window.localStorage.setItem("fecha_min", min);
-        //   window.localStorage.setItem("fecha_max", max);
-        //   window.localStorage.setItem("unidad", uni);
 
-          let win = window.open(href, '_blank');
-          win.focus();
-        
+        let win = window.open(href, '_blank');
+        win.focus();
         return false;
+      });
+
+      $(document).on('change','#frm_archivo',function() {
+        property = document.getElementById('frm_archivo').files[0];
+        name = property.name;
+        ext = name.split(".")[1].toLowerCase();
+        $("#modal_form button").removeAttr("disabled");
+        if(property.size > (5 * 1024 * 1024 * 1024)) {
+          userDATOS.notificacion("El archivo supera los 5mb","error");
+          $("#modal_form button").attr("disabled",true);
+          return false;
+        }
+        if(ext != "pdf") {
+          userDATOS.notificacion("Extensión invalida","error");
+          $("#modal_form button").attr("disabled",true);
+          return false;
+        }
+        $(this).next().text(name);
       })
     })
     //si utilizo actores emisores, puedo vincularlos a los temas, por campo
     /**
-     * Cada ACTOR está vinculado con un [CLIENTE/UNIDAD DE ANÁLISIS]
-     * Los temas se encuentran en UNIDAD de ANÁLISIS
-     * hay que vincularlos para generar el grafico de globos
-     **
-     * Se va a poder seleccionar por ACTOR
-     */
+    * Cada ACTOR está vinculado con un [CLIENTE/UNIDAD DE ANÁLISIS]
+    * Los temas se encuentran en UNIDAD de ANÁLISIS
+    * hay que vincularlos para generar el grafico de globos
+    **
+    * Se va a poder seleccionar por ACTOR
+    */
     $scope.submit = function(t) {
-      if(t.submitNG == -1) {//NUEVO
+      if(angular.element("fieldset").scope().submitNG == -1) {//NUEVO
         userDATOS.busqueda({value:formGrafico.select_cliente.value,tabla:"osai_grafico",column: "id_usuario_osai", retorno: 0},function(data) {
           if(Object.keys(data).length == 0) {
-            userDATOS.log(window.user_id,$scope.graficos[t.submitNG]["grafico"] + " agregado - CLIENTE FINAL: " + $scope.graficos[t.submitNG]["nombre"],0,t.submitNG,"osai_grafico");
+            // userDATOS.log(window.user_id,$scope.graficoSelect[t.submitNG] + " agregado - CLIENTE FINAL: " + $scope.graficos[t.submitNG]["nombre"],0,t.submitNG,"osai_grafico");
             userDATOS.busqueda({value:formGrafico.select_grafico.value,tabla:"grafico"},function(grafico) {
+              id_usuario_osai = 0;
+              userDATOS.busqueda({tabla:"osai_usuario",value:9,column:"id_cliente"},function(d) { id_usuario_osai = d.id });
               userDATOS.insertDatos("osai_grafico",{
                 descripcion: formGrafico.descripcion.value,
                 titulo: formGrafico.titulo.value,
                 grafico: formGrafico.select_grafico.value,
-                id_usuario_osai: formGrafico.select_cliente.value,
+                id_usuario_osai: id_usuario_osai,
                 image: grafico.image,
                 url: grafico.url
               }, function(i) {
                 // i = 44
                 $scope.graficos[i] = {};
                 $scope.graficos[i]["idOsaiGrafico"] = i;
-                $scope.graficos[i]["nombre"] = select.unidad[formGrafico.select_cliente.value];
+                $scope.graficos[i]["nombre"] = window.select.unidad[formGrafico.select_cliente.value];
                 $scope.graficos[i]["id"] = formGrafico.select_cliente.value;
                 $scope.graficos[i]["grafico"] = ($scope.graficoSelect[formGrafico.select_grafico.value] === undefined ? "-" : $scope.graficoSelect[formGrafico.select_grafico.value]);
                 $scope.graficos[i]["idgrafico"] = formGrafico.select_grafico.value;
                 $scope.graficos[i]["titulo"] = formGrafico.titulo.value;
                 $scope.graficos[i]["descripcion"] = formGrafico.descripcion.value;
+                angular.element("fieldset").scope().submitNG = -1;
                 $scope.$digest();
-                
+
                 $("#select_grafico").val("").select2();
                 $("#select_cliente").val("").select2();
                 formGrafico.select_grafico.value = "";
                 formGrafico.select_cliente.value = "";
                 formGrafico.titulo.value = "";
                 formGrafico.descripcion.value = "";
-                
+
+                cargarGraficosClientes("graficosCliente");
                 $("#btnGraficos").text("agregar");
                 $("#btnGraficos").attr("disabled",true);
               });
             }, true);
           } else {
             returnKey = -1;
-            $.each(data.data, function(key, g) {
+            $.each(data, function(key, g) {
               if (g.grafico == formGrafico.select_grafico.value) {
                 returnKey = key;
-                return false; 
-              };   
+                return false;
+              };
             });
-            if(returnKey < 0) userDATOS.notificacion("El usuario final ya tiene asociado ese gráfico");
+            if(returnKey >= 0) userDATOS.notificacion("El usuario final ya tiene asociado ese gráfico");
             else {
-              userDATOS.log(window.user_id,$scope.graficos[t.submitNG]["grafico"] + " agregado - CLIENTE FINAL: " + $scope.graficos[t.submitNG]["nombre"],0,t.submitNG,"osai_grafico");
+              userDATOS.log(window.user_id,`${angular.element("fieldset").scope().graficos[t.submitNG]} agregado - CLIENTE FINAL: ${angular.element("fieldset").scope().graficos[t.submitNG]}`,0,t.submitNG,"osai_grafico");
               userDATOS.busqueda({value:formGrafico.select_grafico.value,tabla:"grafico"},function(grafico) {
                 userDATOS.insertDatos("osai_grafico",{
                   descripcion: formGrafico.descripcion.value,
                   titulo: formGrafico.titulo.value,
                   grafico: formGrafico.select_grafico.value,
                   id_usuario_osai: formGrafico.select_cliente.value,
-                  image: grafico.image
+                  image: grafico.image,
+                  url: angular.element("fieldset").scope().graficoSelect[formGrafico.select_grafico.value]["url"]
                 },function(i) {
-                  $scope.graficos[i] = {};
-                  $scope.graficos[i]["idOsaiGrafico"] = i;
-                  $scope.graficos[i]["nombre"] = select.unidad[formGrafico.select_cliente.value];
-                  $scope.graficos[i]["id"] = formGrafico.select_cliente.value;
-                  $scope.graficos[i]["grafico"] = ($scope.graficoSelect[formGrafico.select_grafico.value] === undefined ? "-" : $scope.graficoSelect[formGrafico.select_grafico.value]);
-                  $scope.graficos[i]["idgrafico"] = formGrafico.select_grafico.value;
-                  $scope.graficos[i]["titulo"] = formGrafico.titulo.value;
-                  $scope.graficos[i]["descripcion"] = formGrafico.descripcion.value;
+                  angular.element("fieldset").scope().graficos[i] = {};
+                  angular.element("fieldset").scope().graficos[i]["idOsaiGrafico"] = i;
+                  angular.element("fieldset").scope().graficos[i]["nombre"] = select.unidad[formGrafico.select_cliente.value];
+                  angular.element("fieldset").scope().graficos[i]["id"] = formGrafico.select_cliente.value;
+                  angular.element("fieldset").scope().graficos[i]["grafico"] = (angular.element("fieldset").scope().graficoSelect[formGrafico.select_grafico.value] === undefined ? "-" : angular.element("fieldset").scope().graficoSelect[formGrafico.select_grafico.value]["name"]);
+                  angular.element("fieldset").scope().graficos[i]["idgrafico"] = formGrafico.select_grafico.value;
+                  angular.element("fieldset").scope().graficos[i]["titulo"] = formGrafico.titulo.value;
+                  angular.element("fieldset").scope().graficos[i]["descripcion"] = formGrafico.descripcion.value;
+                  angular.element("fieldset").scope().$digest();
+
                   $("#select_grafico").val("").select2();
                   $("#select_cliente").val("").select2();
                   formGrafico.select_grafico.value = "";
                   formGrafico.select_cliente.value = "";
                   formGrafico.titulo.value = "";
                   formGrafico.descripcion.value = "";
-                  
+                  cargarGraficosClientes("graficosCliente");
                   $("#btnGraficos").text("agregar");
                   $("#btnGraficos").attr("disabled",true);
                 });
@@ -1349,7 +1636,7 @@ if(userDATOS.verificar(1)) {
             }
           }
         }, true);
-        
+
       } else {
         $.MessageBox({
           buttonDone  : strings.btn.si,
@@ -1371,11 +1658,11 @@ if(userDATOS.verificar(1)) {
           formGrafico.select_cliente.value = "";
           formGrafico.titulo.value = "";
           formGrafico.descripcion.value = "";
-          
+          cargarGraficosClientes("graficosCliente");
           $("#btnGraficos").text("agregar");
           $("#btnGraficos").attr("disabled",true);
           $scope.$digest();
-          window.btnNG.editNG = true;
+          window.btnNG = true;
           $scope.edit(window.btnNG);
         });
       }
@@ -1383,12 +1670,12 @@ if(userDATOS.verificar(1)) {
     $scope.edit = function(t, c = null) {
       // $scope.editNG = false;
       if(t.editNG && c !== null) {
-        $scope.submitNG = c.idgrafico;
+        $scope.submitNG = c.idOsaiGrafico;
         t.editNG = false;
-        formGrafico.select_grafico.value = c.idgrafico;
+        formGrafico.select_grafico.value = c.idGrafico;
         $("#select_grafico").attr("disabled",true);
         $("#select_grafico").select2();
-        formGrafico.select_cliente.value = c.id;
+        formGrafico.select_cliente.value = c.idCliente;//
         $("#select_cliente").attr("disabled",true);
         $("#select_cliente").select2();
         formGrafico.titulo.value = c.titulo;
@@ -1408,14 +1695,14 @@ if(userDATOS.verificar(1)) {
         formGrafico.select_cliente.value = "";
         formGrafico.titulo.value = "";
         formGrafico.descripcion.value = "";
-        
+
         $("#btnGraficos").text("agregar");
         $("#btnGraficos").attr("disabled",true);
         if(c === null)
           $scope.$digest();
       }
     }
-    $scope.remove = function(t, id) {
+    $scope.remove = function(id) {
       $.MessageBox({//ACA
         buttonDone  : strings.btn.si,
         buttonFail  : strings.btn.no,
@@ -1424,6 +1711,7 @@ if(userDATOS.verificar(1)) {
         userDATOS.log(window.user_id," Grafico eliminado",0,id,"osai_grafico");
         delete $scope.graficos[id];
         userDATOS.change(id,"osai_grafico","elim",1);
+        cargarGraficosClientes("graficosCliente");
         $scope.$digest();
       });
     }
@@ -1692,13 +1980,13 @@ if(userDATOS.verificar(1)) {
         $("#" + t.id).find("input","button","select").attr("disabled")
         accion = pyrusCliente.guardar_1(OBJ);//
         if(accion.id !== null && accion.flag) {//
-          let elemento = null;
-          userDATOS.busqueda({"value":accion.id,"tabla":"cliente"},function(d) {
-            elemento = d;
-          });//traigo el nuevo registro
+          // let elemento = null;
+          // userDATOS.busqueda({"value":accion.id,"tabla":"cliente"},function(d) {
+          //   elemento = d;
+          // });//traigo el nuevo registro
           window["tabla_0"].destroy();
           $("#t_clientes").remove();
-          $(".container fieldset:last-child .card-body").append('<table class="table table-hover w-100" id="t_clientes"></table>');
+          $(".container-fluid fieldset:last-child .card-body").append('<table class="table table-hover w-100" id="t_clientes"></table>');
           userDATOS.listador("#t_clientes",pyrusCliente,false);
           $("#modal").modal("hide");
           //service_simat.option($scope);
@@ -1791,14 +2079,18 @@ if(userDATOS.verificar(1)) {
         aux = {};
         aux["id_cliente"] = row.id;
         aux["user"] = data.user;
+        aux["tam"] = data.password1.length;
         aux["pass"] = md5(data.password1);
         userDATOS.insertDatos("osai_usuario",aux)
         userDATOS.notificacion(strings.usuario.creado);
         userDATOS.log(window.user_id,"Alta de registro / [USER] " + data.user + " / [PASS] " + data.password1,0,i,"osai_usuario");
 
         window["tabla_0"].destroy();
-        $("#t_clientes").remove();
-        $(".container fieldset:last-child .card-body").append('<table class="table table-hover w-100" id="t_clientes"></table>');
+        // $("#t_clientes").remove();
+        // $(".container fieldset:last-child .card-body").append('<table class="table table-hover w-100" id="t_clientes"></table>');
+        $("#t_clientes").find("thead,tbody").html("");
+          // card.find(".card-body").append('<table class="table table-hover w-100" id="t_clientes"></table>');
+
         userDATOS.listador("#t_clientes",pyrusCliente,false);
       });
     }
@@ -1858,7 +2150,7 @@ if(userDATOS.verificar(1)) {
   app.controller("usuarios", function ($scope) {
     $(".nav_ul a").closest("ul").find(".active").removeClass("active");
     let ua = userDATOS.user();
-    
+
     let ARR_btn = [];
     let btn = [];
     if(parseInt(window.user.nivel) <= 2) btn.push("delete");
@@ -1916,7 +2208,7 @@ if(userDATOS.verificar(1)) {
             e = d;
           });//el dato nuevo
           userDATOS.log(window.user_id,"Alta de registro",0,e.id,"usuario");
-          
+
           window["tabla_0"].draw();//agrego sin recargar sitio
           $("#modal").modal("hide");
         } else userDATOS.notificacion("Datos repetidos","error");
@@ -2009,7 +2301,7 @@ if(userDATOS.verificar(1)) {
         let a = pyrusAlarma.objeto["GUARDADO_ATTR"];
         let modal = $("#modal");
         let OBJ = {};
-        
+
         for(var j in a) {
           OBJ[j] = null;
 
@@ -2118,7 +2410,7 @@ if(userDATOS.verificar(1)) {
       o.estado = cliente.estado
       accion = pyrusAlarma.guardar_1(o);
       userDATOS.log(window.user_id,"Alarma de " + cliente.nombre + " (" +(cliente.estado == "0" ? "APAGADA" : "ENCENDIDA")+ ")",0,accion.id,"alarma");
-      
+
     }
     $scope.delete = function(i, cliente) {
       let text = angular.element($("#alarmas")).scope().alarmasCLIENTE[cliente.id]["atributos"][i];
@@ -2156,7 +2448,7 @@ if(userDATOS.verificar(1)) {
         let span = '<span class="float-right"><i onclick="userDATOS.removeATTRnegativo(this,\'' + tipo + '\')" class="fas fa-trash-alt text-danger cursor-pointer"></i></span>';
         li.parent().append("<li class='list-group-item bg-light'>" + data + span + "</li>");
         elem.$parent[tipo]["atributos_negativos"][elem.attr].push(data);
-        
+
         let o = null;
         userDATOS.busqueda({"value":elem.$parent[tipo].id_alarma,"tabla":"alarma"}, function(d) {
           o = d;
@@ -2234,7 +2526,7 @@ if(userDATOS.verificar(1)) {
       $scope.seccionSELECT = selectMEDIOS.seccion;
       $scope.$digest();
     });
-    
+
     userDATOS.busquedaTabla("cliente", function(d) {
       $scope.unidadSELECT = d;
       $scope.$digest();
@@ -2508,7 +2800,7 @@ if(userDATOS.verificar(1)) {
       actoresFilter = $("#select_actores").val();
       userDATOS.noticiasSELECT("procesada",{"medio":medio,"mediotipo":medioTipo,"seccion":seccion,"unidad":unidad,"temasFilter":temasFilter,"actoresFilter":actoresFilter}, function(m) {
         if(medioTipo == "")
-          $scope.mediostipoSELECT = m.medio_tipo;    
+          $scope.mediostipoSELECT = m.medio_tipo;
         if(seccion.length == 0)
           $scope.seccionSELECT = m.seccion;
         if(temasFilter.length == 0)
@@ -2665,19 +2957,19 @@ if(userDATOS.verificar(1)) {
             proceso.push(procesos[i]["id_cliente"]);
           }
 
-          
+
           userDATOS.busquedaUsuariosFinales(function(clientes) {
             for(var i in proceso) {
-              if(clientes[proceso[i]] !== undefined) {
-                msg += "<p class='m-0'>" + clientes[proceso[i]] + "</p>";
-                delete clientes[proceso[i]];
+              if(clientes.data[proceso[i]] !== undefined) {
+                msg += "<p class='m-0'>" + clientes.data[proceso[i]] + "</p>";
+                delete clientes.data[proceso[i]];
               }
             }
             $.MessageBox({
               buttonDone  : strings.btn.si,
               buttonFail  : strings.btn.no,
               message     : strings.noticia.prePublicar(msg),
-              input   : { 
+              input   : {
                 input_detalle  : {
                   type         : "texts",
                   label        : "Descripción (máx. 200 caracteres):",
@@ -2688,7 +2980,7 @@ if(userDATOS.verificar(1)) {
                   type         : "selects",
                   label        : "Seleccione Cliente final para publicar",
                   title        : "cliente final",
-                  options      : clientes.data,
+                  options      : clientes.data,//TABLA CLIENTE
                   default      : proceso
                 },
               },
@@ -2701,9 +2993,44 @@ if(userDATOS.verificar(1)) {
               userDATOS.notificacion(strings.tablaReseteo,"warning",false);
               userDATOS.change(noticia.id,"noticia","estado",3);
               id_usuario = window.user_id;//USUARIO de OSAI que generó esto
-              
-              setTimeout(function() {
 
+              setTimeout(function() {
+                for(var i in proceso) {//<-- CLIENTES donde se valoriza su participación
+                  aux = {};
+                  idClienteFinal = 0;
+                  userDATOS.busqueda({tabla:"osai_usuario",value:proceso[i],column:"id_cliente"},function(xx) { if(xx !== null ) idClienteFinal = xx.id; })
+                  aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
+                  aux["id_usuario_osai"] = idClienteFinal;//TABLA osai_cliente != cliente
+                  aux["tipo_aviso"] = 1;
+                  userDATOS.insertDatos("osai_cliente",aux,function(x) {
+                    userDATOS.log(window.user_id,"NOTICIA publicada",0,x,"osai_cliente");
+                  },true);
+                  userDATOS.insertDatos("osai_notificacion",
+                    {"id_usuario":id_usuario,
+                    "id_noticia":noticia.id,
+                    "id_usuario_osai":idClienteFinal,
+                    "mensaje": data.input_detalle,
+                    "nivel": 0,
+                    "estado": 1});
+                }
+                clientesFinales = data.select_tipo;
+                for(var i in clientesFinales) {//<-- CLIENTES que puede interarsarle / Publicado en el INDEX
+                  aux = {};
+                  idClienteFinal = 0;
+                  userDATOS.busqueda({tabla:"osai_usuario",value:clientesFinales[i],column:"id_cliente"},function(xx) { if(xx !== null ) idClienteFinal = xx.id; })
+                  aux["id_noticia"] = noticia.id;//TABLA noticia <-- OJO
+                  aux["id_usuario_osai"] = idClienteFinal;
+                  userDATOS.insertDatos("osai_cliente",aux,function(x) {
+                    userDATOS.log(window.user_id,"NOTICIA publicada",0,x,"osai_cliente");
+                  },true);
+                  userDATOS.insertDatos("osai_notificacion",
+                    {"id_usuario":id_usuario,
+                    "id_noticia":noticia.id,
+                    "id_usuario_osai":idClienteFinal,
+                    "mensaje": data.input_detalle,
+                    "nivel": 0,
+                    "estado": 1});
+                }
                 userDATOS.noticiasSELECT("procesada", null, function(selectMEDIOS) {
                   angular.element($(".submenu")).scope().mediosSELECT = selectMEDIOS.medio;
                   angular.element($(".submenu")).scope().mediostipoSELECT = selectMEDIOS.medio_tipo;
@@ -2714,7 +3041,7 @@ if(userDATOS.verificar(1)) {
                 scopeNoticias(angular.element($(".submenu")).scope(),"procesadas",-1);
               },500);
             });
-          },true);
+          },true,"id_cliente");
         }, true);
       }, true);
     }
@@ -3099,7 +3426,7 @@ if(userDATOS.verificar(1)) {
                       html += '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>';
                       html += '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
                     html += "</tr>";
-                  
+
                   html += "</tbody>";
                 html += "</table>";
               html += "</div>";
@@ -3109,12 +3436,12 @@ if(userDATOS.verificar(1)) {
             html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
           html += "</div>";
         html += "</div>";
-        
+
         modal.find(".modal-container").html(html);
         if(window.noticiaSELECCIONADAeditar !== undefined)
           modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
         modal.modal("show");
-        
+
         if(window.ARR_cliente !== undefined) {
           for(var i in window.ARR_cliente) {
             $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
@@ -3141,7 +3468,7 @@ if(userDATOS.verificar(1)) {
         instituciones = d;
       });
       modal.find(".modal-title").text("INSTITUCIONES");
-      for(var i in instituciones) 
+      for(var i in instituciones)
         optionInstitucion += "<option value='" + i + "'>" + instituciones[i]["nombre"] + "</option>";
       selectInstitucion += optionInstitucion;
       selectInstitucion += "</select>";
@@ -3202,18 +3529,18 @@ if(userDATOS.verificar(1)) {
                 html += '</div>';
               html += '</td>';
             html += "</tr>";
-          
+
             html += "</tbody>";
           html += "</table>";
         html += "</div>";
       html += "</div>";
-      
+
       modal.find(".modal-body").html(html);
       if(window.noticiaSELECCIONADAeditar !== undefined)
         modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
       modal.modal("show");
 
-      
+
       if(window.ARR_institucion !== undefined) {
         for(var i in window.ARR_institucion) {
           $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
@@ -3225,7 +3552,7 @@ if(userDATOS.verificar(1)) {
 
           valoracionTR = $("#modal-table-institucion tr:last-child()").find("td:last-child() > div > div:last-child");
           $(valoracionTR).find("input[value='" + window.ARR_institucion[i]["frm_valor"] + "']").attr("checked",true);
-          
+
           if(window.noticiaSELECCIONADAeditar === undefined) {
             $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select").attr("disabled",true);
             $("#modal-table-institucion tr:last-child()").find("input").attr("disabled",true);
@@ -3251,7 +3578,7 @@ if(userDATOS.verificar(1)) {
       let optionActor = "<option value=''></option>";
       modal.find(".modal-title").text("ACTORES");
       for(var i in actores)
-        optionActor += "<option value='" + i + "'>" + actores[i]["nombre"] + "</option>";
+        optionActor += `<option value="${i}">${actores[i]["nombre"]} ${actores[i]["apellido"]}</option>`;
       selectActor += optionActor;
       selectActor += "</select>";
       flag = true;
@@ -3282,7 +3609,7 @@ if(userDATOS.verificar(1)) {
               html += "<tr class='d-none'>";
                 html += '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
                 html += '<td class="w-50">';
-                  html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-0' onchange='userDATOS.actorUnico(this);'>" + optionActor + "</select>"; 
+                  html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-0' onchange='userDATOS.actorUnico(this);'>" + optionActor + "</select>";
                 html += '</td>';
                 html += '<td class="px-0 w-50">';
                   html += '<div class="d-flex align-items-center justify-content-end">';
@@ -3302,7 +3629,7 @@ if(userDATOS.verificar(1)) {
               html += "<tr>";
                 html += '<td class="px-0 ' + (window.noticiaSELECCIONADAeditar === undefined ? "d-none" : "") + '"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
                 html += '<td class="w-50">';
-                  html += selectActor; 
+                  html += selectActor;
                 html += '</td>';
                 html += '<td class="px-0 w-50">';
                   html += '<div class="d-flex align-items-center justify-content-end">';
@@ -3339,7 +3666,7 @@ if(userDATOS.verificar(1)) {
 
           valoracionTR = $("#modal-table-actor tr:last-child()").find("td:last-child() > div > div:last-child");
           $(valoracionTR).find("input[value='" + window.ARR_actor[i]["frm_valor"] + "']").attr("checked",true);
-          
+
           if(window.noticiaSELECCIONADAeditar === undefined) {
             $("#modal-table-actor tr:last-child()").find("input").attr("disabled",true);
             $("#modal-table-actor tr:last-child()").find("label.btn").addClass("disabled");
@@ -3599,20 +3926,96 @@ if(userDATOS.verificar(1)) {
     $scope.buscar = function() {
       userDATOS.notificacion(strings.buscando.actores,"info",false);
       userDATOS.notificacion(strings.buscando.instituciones,"info",false);
-      userDATOS.procesar_noticia(function(resultado) {
-        setTimeout(function() {
-          if(resultado["actores"] === undefined) userDATOS.notificacion(strings.busquedaSinResultado.actores,"warning");
-          else {
-            if(Object.keys(resultado["actores"]).length == 0) userDATOS.notificacion(strings.busquedaSinResultado.actores,"warning");
-            else userDATOS.notificacion(strings.busquedaConResultado.actores,"success");
-          }
-          if(resultado["instituciones"] === undefined) userDATOS.notificacion(strings.busquedaSinResultado.instituciones,"warning");
-          else {
-            if(Object.keys(resultado["instituciones"]).length == 0) userDATOS.notificacion(strings.busquedaSinResultado.instituciones,"warning");
-            else userDATOS.notificacion(strings.busquedaConResultado.instituciones,"success");
-          }
-        },1000);
+      let promiseActores = new Promise(function (resolve, reject) {
+        userDATOS.busquedaTabla("actor",function(actores) {
+          resolve(actores);
+        });
       });
+      let promiseInstitucion = new Promise(function (resolve, reject) {
+        userDATOS.busquedaTabla("attr_institucion",function(instituciones) {
+          resolve(instituciones);
+        });
+      });
+      // userDATOS.procesar_noticia(function(resultado) {
+      //   setTimeout(function() {
+      //     if(resultado["instituciones"] === undefined) userDATOS.notificacion(strings.busquedaSinResultado.instituciones,"warning");
+      //     else {
+      //       if(Object.keys(resultado["instituciones"]).length == 0) userDATOS.notificacion(strings.busquedaSinResultado.instituciones,"warning");
+      //       else userDATOS.notificacion(strings.busquedaConResultado.instituciones,"success");
+      //     }
+      //   },1000);
+      // });
+
+      promiseFunction = () => {
+        promiseActores
+          .then(function(actores) {
+            let CUERPO_noticia = $(".note-editable");
+            delete window.ARR_actor;
+            if(!CUERPO_noticia.find("iframe").length) {
+              for(var i in actores) {
+                flag = false;
+                nombre = actores[i]["nombre"];
+                apellido = actores[i]["apellido"];
+                if(CUERPO_noticia.buscar(`${nombre} ${apellido}`)) {//BUSQUEDA de nombre completo
+                  console.log(`NOMBRE COMPLETO: ${nombre} ${apellido}`);
+                  flag = true;
+                  TextHighlighting(`${nombre} ${apellido}`,"resaltarCLASS_nom");
+                } else {//busqueda de nombre separado
+                  apellidoARR = apellido.split(" ");
+                  for(var x in apellidoARR) {
+                    if(apellidoARR[x].length <= 2) continue;
+                    console.log("APELLIDO parte: " + apellidoARR[x]);
+                    if(CUERPO_noticia.buscar(apellidoARR[x])) {
+                      flag = true;
+                      TextHighlighting(apellidoARR[x],"resaltarCLASS_nom");
+                    }
+                  }
+                }
+                let attr = eval("(" + actores[i]["atributos"] + ")");//PARSEO atributos del actor
+                for(var i_attr in attr) {
+                  if(CUERPO_noticia.buscar(attr[i_attr])) {
+                    flag = true;
+                    if(window.ARR_atributos === undefined) window.ARR_atributos = [];
+                    if(window.ARR_atributos[attr[i_attr]] === undefined) {
+                      window.ARR_atributos[attr[i_attr]] = "";
+                      $("#noticiaATTR").append("<span class=\"bg-light border rounded p-2 m-2\">" + attr[i_attr] + " <i class=\"fas fa-times-circle text-danger btn-click\" onclick=\"userDATOS.eliminarATTR(this)\"></i></span>");
+                    }
+                    TextHighlighting(attr[i_attr],"resaltarCLASS");
+                  }
+                }
+                if(flag) {
+                  if(window.ARR_actor === undefined) window.ARR_actor = {};
+                  if(window.ARR_actor[actores[i]["id"]] === undefined)
+                    window.ARR_actor[actores[i]["id"]] = {"frm_img": "0", "frm_emisor": "0", "frm_descripcion": ""};
+                }
+              }
+              if(window.ARR_actor !== undefined)
+                userDATOS.notificacion(strings.busquedaConResultado.actores,"success");
+              else
+                userDATOS.notificacion(strings.busquedaSinResultado.actores,"warning");
+            }
+          });
+
+        promiseInstitucion
+          .then(function(instituciones) {
+            let CUERPO_noticia = $(".note-editable");
+            for(var i in instituciones) {
+              if(CUERPO_noticia.buscar(instituciones[i]["nombre"])) {
+                TextHighlighting(instituciones[i]["nombre"],"resaltarCLASS_ins");
+
+                if(window.ARR_institucion === undefined) window.ARR_institucion = {};
+                if(window.ARR_institucion[instituciones[i]["id"]] === undefined)
+                  window.ARR_institucion[instituciones[i]["id"]] = {"frm_emisor": "0", "frm_descripcion": ""};
+              }
+            }
+            if(window.ARR_institucion === undefined) userDATOS.notificacion(strings.busquedaSinResultado.instituciones,"warning");
+            else userDATOS.notificacion(strings.busquedaConResultado.instituciones,"success");
+          });
+      };
+
+      setTimeout(() => {
+        promiseFunction();
+      }, 1500 );
     }
     // V. PROCESAR
     /**
@@ -3662,7 +4065,7 @@ if(userDATOS.verificar(1)) {
                         '<td style="width:100%">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE' required='true' name='frm_cliente-1' id='frm_cliente-1' onchange='userDATOS.unidadUnico(this);'>" + selectCliente + '</td>' +
                         '<td class="px-0"><button type="button" disabled class="btn bg-success rounded-0 text-white" onclick="userDATOS.updateUnidad(this);"><i class="fas fa-angle-right"></i></button></td>';
                     html += "</tr>";
-                  
+
                   html += "</tbody>";
                 html += "</table>";
               html += "</div>";
@@ -3672,11 +4075,11 @@ if(userDATOS.verificar(1)) {
             html += "<div class='align-self-center text-center text-uppercase w-100'>Seleccione unidad<i class='ml-2 fas fa-edit'></i></div>";
           html += "</div>";
         html += "</div>";
-        
+
         modal.find(".modal-container").html(html);
         modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
         modal.modal("show");
-        
+
         if(window.ARR_cliente !== undefined) {
           for(var i in window.ARR_cliente) {
             $("#modal-table-unidad tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
@@ -3699,7 +4102,7 @@ if(userDATOS.verificar(1)) {
         instituciones = d;
       });
       modal.find(".modal-title").text("INSTITUCIONES");
-      for(var i in instituciones) 
+      for(var i in instituciones)
         optionInstitucion += "<option value='" + i + "'>" + instituciones[i]["nombre"] + "</option>";
       selectInstitucion += optionInstitucion;
       selectInstitucion += "</select>";
@@ -3760,17 +4163,17 @@ if(userDATOS.verificar(1)) {
                 html += '</div>';
               html += '</td>';
             html += "</tr>";
-          
+
             html += "</tbody>";
           html += "</table>";
         html += "</div>";
       html += "</div>";
-      
+
       modal.find(".modal-body").html(html);
       modal.find(".modal-footer").html("<p class='m-0 text-muted'>Los elementos trabajados en este modal <strong>no necesitan confirmación</strong>, una vez seleccionados quedan preguardados</p>")
       modal.modal("show");
 
-      
+
       if(window.ARR_institucion !== undefined) {
         for(var i in window.ARR_institucion) {
           $("#modal-table-institucion tr:last-child() td:nth-child(2)").find("select option[value='" + i + "']").removeAttr("disabled");
@@ -3800,7 +4203,7 @@ if(userDATOS.verificar(1)) {
       let optionActor = "<option value=''></option>";
       modal.find(".modal-title").text("ACTORES");
       for(var i in actores)
-        optionActor += "<option value='" + i + "'>" + actores[i]["nombre"] + "</option>";
+        optionActor += `<option value="${i}">${actores[i]["nombre"]} ${actores[i]["apellido"]}</option>`;
       selectActor += optionActor;
       selectActor += "</select>";
       flag = true;
@@ -3831,7 +4234,7 @@ if(userDATOS.verificar(1)) {
               html += "<tr class='d-none'>";
                 html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
                 html += '<td class="w-50">';
-                  html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-0' onchange='userDATOS.actorUnico(this);'>" + optionActor + "</select>"; 
+                  html += "<select style='width:100%' class='select__2 w-100' data-allow-clear='true' data-placeholder='Actor' required='true' name='frm_actor-0' onchange='userDATOS.actorUnico(this);'>" + optionActor + "</select>";
                 html += '</td>';
                 html += '<td class="px-0 w-50">';
                   html += '<div class="d-flex align-items-center justify-content-end">';
@@ -3851,7 +4254,7 @@ if(userDATOS.verificar(1)) {
               html += "<tr>";
                 html += '<td class="px-0"><button type="button" class="btn bg-danger rounded-0 text-white" onclick="userDATOS.removeActor(this);"><i class="fas fa-times"></i></button></td>';
                 html += '<td class="w-50">';
-                  html += selectActor; 
+                  html += selectActor;
                 html += '</td>';
                 html += '<td class="px-0 w-50">';
                   html += '<div class="d-flex align-items-center justify-content-end">';
@@ -3933,7 +4336,7 @@ if(userDATOS.verificar(1)) {
           return false;
         }
       }
-      
+
       tabla_noticia.destroy();
       $("#t_data").html("");
       $("#t_data").addClass("animate-flicker");
@@ -4090,7 +4493,9 @@ $(document).ready(function() {
     var rows = tabla_noticia.rows({ 'search': 'applied' }).nodes();
     $('input[type="checkbox"]', rows).prop('checked', this.checked);
   }).on('change', '#select_medio', function() {
-    userDATOS.busqueda({"value":$(this).val(),"tabla":"medio"},function(medio) {
+    select_medio = $(this).val();
+
+    userDATOS.busqueda({"value":select_medio,"tabla":"medio"},function(medio) {
       if(medio !== null) {
         if(medio.id_medio_tipo != "0") {
           $("#select_medioAlcance").val(medio.id_medio_tipo).trigger("change");
@@ -4103,28 +4508,51 @@ $(document).ready(function() {
         $("#select_medioAlcance").select2();
       }
     },true);
-    userDATOS.busqueda({"value":$(this).val(),"tabla":"medio_destaque","column":"id_medio","retorno":0}, function(destaques) {
-      let selectDestaque = $("#select_destaque");
-      selectDestaque.html("");
-      if(Object.keys(destaques).length == 0)
-        selectDestaque.append("<option value=''>SIN ESPECIFICAR</option>");
-      else {
-        selectDestaque.append("<option value=''></option>");
-        for(var i in destaques)
-          selectDestaque.append("<option value='" + destaques[i].id + "'>" + destaques[i].lugar + " - " + destaques[i].destaque + " (" + destaques[i].referencia + ")</option>");
-      }
-      selectDestaque.select2();
-    },true);
-    userDATOS.busqueda({"value":$(this).val(),"tabla":"seccion","column":"id_medio","retorno":0}, function(secciones) {
-      let selectSeccion = $("#select_seccion");
-      selectSeccion.html("<option value=''></option>");
-      selectSeccion.append("<option value='1'>SIN SECCIÓN</option>");
-      for(var i in secciones) selectSeccion.append("<option value='" + i + "'>" + secciones[i]["nombre"] + "</option>")
-      if(window.noticiaSELECCIONADA !== undefined)
-        selectSeccion.val(window.noticiaSELECCIONADA.id_seccion).trigger("change");
-      selectSeccion.select2();
-    },true);
-    
+    let promiseDestaques = new Promise(function (resolve, reject) {
+      userDATOS.busqueda({"value": select_medio,"tabla":"medio_destaque","column":"id_medio","retorno":0}, function(destaques) {
+        resolve(destaques);
+      },true);
+    })
+    let promiseSeccion = new Promise(function (resolve, reject) {
+      userDATOS.busqueda({"value": select_medio,"tabla":"seccion","column":"id_medio","retorno":0}, function(secciones) {
+        resolve(secciones);
+      });
+    });
+
+    promiseFunction = () => {
+      promiseDestaques
+        .then(function(h) {
+          let selectDestaque = $("#select_destaque");
+          selectDestaque.html("");
+
+          if(Object.keys(h).length == 0)
+            selectDestaque.append("<option value=''>SIN ESPECIFICAR</option>");
+          else {
+            selectDestaque.append("<option value=''></option>");
+            for(var i in h) {
+              d = "";
+              if(h[i].destaque != "") d = `- ${h[i].destaque}`;
+              selectDestaque.append(`<option value="${h[i].id}">${h[i].lugar} ${d} (${h[i].referencia})</option>`);
+            }
+          }
+          selectDestaque.select2();
+        });
+      promiseSeccion
+        .then(function(h) {
+          let selectSeccion = $("#select_seccion");
+          selectSeccion.html("<option value=''></option>");
+          selectSeccion.append("<option value='1'>SIN SECCIÓN</option>");
+
+          for(var i in h) selectSeccion.append(`<option value="${i}">${h[i]["nombre"]}</option>`);
+          if(window.noticiaSELECCIONADA !== undefined)
+            selectSeccion.val(window.noticiaSELECCIONADA.id_seccion).trigger("change");
+          selectSeccion.select2();
+        });
+    };
+
+    // setTimeout(() => {
+      promiseFunction();
+    // }, 1500 );
   }).on('change','section thead input[type="checkbox"]', function(){
     if(window.noticiasCHECKED === null) window.noticiasCHECKED = {}
     if($(this).is(":checked")) {
@@ -4143,7 +4571,7 @@ $(document).ready(function() {
         }
       })
     }
-    
+
     if(Object.keys(window.noticiasCHECKED).length == 0)
       $(".dt-buttons .btn-success, .dt-buttons .btn-danger").addClass("buttons-selected disabled");
     else
@@ -4245,13 +4673,13 @@ $(document).ready(function() {
     intNotificacion = parseInt($('*[data-notificacion="numero"]').text());
     intNotificacion ++;
     $.get("/lib/servidorCAMBIO.php?tipo=noticia&id_noticia=" + e.lastEventId,function(m){});
-    
+
     userDATOS.traerNotificacion(e.data,"#tabla_notificacion");
     $('*[data-notificacion="numero"]').text(intNotificacion);
   }
   function noticiaRELEVADA(e) {
     aux = userDATOS.parseJSON(e.data);
-    
+
     n = $('*[data-notificacion="numero"]').text();
     html = "";
     html += "<div class='row'>";
@@ -4273,7 +4701,7 @@ $(document).ready(function() {
     $('*[data-notificacion="numero"]').text(parseInt(n) + parseInt(window["noticiaRELEVADA"]));
 
     if(parseInt(window.user.nivel) == 4) {
-      
+
     }
   }
 

@@ -3,9 +3,13 @@
     <div class="col-12 col-lg-3 p-0 bg-light position-fixed column-metricas">
       <!-- <h2 class="text-uppercase text-white bg-primary p-3 mb-0">Métricas - Desde:<input type="text" id="desde" alt="desde"> Hasta:<input type="text" id="hasta"> UA:<input type="text" id="ua"> <input type="button" onclick="javascript:ejecutarGrafico();" value="Ejecutar"></h2>  -->
       <h2 class="text-uppercase text-white bg-primary p-3 mb-0">Métricas</h2> 
-      <div class="p-3" style="overflow-y: auto; height: calc(100% - 70px);">
-        
-		    <div id="knowledgegraphcontent" class=""></div>
+      <div id="contenedorMetricas" class="p-3 d-flex justify-content-center align-items-center" style="overflow-y: auto; height: calc(100% - 70px);">
+        <div ng-if="metricas">
+          <p class="mb-0 text-uppercase text-center">Sin datos / métricas</p>
+        </div>
+        <div id="knowledgegraphcontent" class="">
+          <p class="mb-0 text-center text-uppercase d-flex justify-content-center align-items-center">Cargando<span class="spinner-border ml-2"></span></p>
+        </div>
       </div>
     </div>
 

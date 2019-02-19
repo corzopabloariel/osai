@@ -11,7 +11,6 @@ ini_set('display_errors', 1);
 
 /************************************************************
   RECIBO LA CARGA EN JSON Y LA DESPEDAZO, LAS PARTES SERIAN
-
 *************************************************************/
 if(isset($_POST['carga'])){
   echo ' se ingreso al if';

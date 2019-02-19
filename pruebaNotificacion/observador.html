@@ -1,0 +1,24 @@
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+
+<script>
+	
+function msg(str){
+	$.get("/pruebaNotificacion/agregar.php",{"msg":str});
+}
+	
+var evtSource = new EventSource("alertador.php");
+
+var lista = [];
+evtSource.onmessage = function(e) {
+  // alert(e);
+  console.log("#####################nuevo mensaje:" + e.data);
+  lista.push(e);
+};
+
+evtSource.onerror = function(e) {
+  alert("Error: No se pudo conectar con el servidor");
+};
+</script>

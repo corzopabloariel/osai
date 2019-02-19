@@ -115,27 +115,17 @@
                 $("#ua").append(`<option value="${i}">${selects.data.unidad[i]}</option>`);
         }, true);
         // Dimensions of sunburst.
-            var width = 750;
-            var height = 600;
-            var radius = Math.min(width, height) / 2;
+        var width = 750;
+        var height = 600;
+        var radius = Math.min(width, height) / 2;
 
-            // Breadcrumb dimensions: width, height, spacing, width of tip/tail.
-            var b = {
-                w: 75, h: 30, s: 3, t: 10
-            };
-            var colors = {}
-            // Total size of all segments; we set this later, after loading the data.
-            var totalSize = 0;
-        // Use d3.text and d3.csv.parseRows so that we do not need to have a header
-        // row, and can receive the csv as an array of arrays.
-        // d3.text("visit-sequences.csv", function(text) {
-        //   var csv = d3.csv.parseRows(text);
-        //   var json = buildHierarchy(csv);
-        //   createVisualization(json);
-        // });
-        // desde = "2018-12-01";
-        // hasta = "2019-01-01";
-        // ua = 12;
+        // Breadcrumb dimensions: width, height, spacing, width of tip/tail.
+        var b = {
+            w: 75, h: 30, s: 3, t: 10
+        };
+        var colors = {}
+        // Total size of all segments; we set this later, after loading the data.
+        var totalSize = 0;
         
         consulta = function () {
             $("#sequence").html("");
@@ -187,7 +177,7 @@
             // Basic setup of page elements.
             initializeBreadcrumbTrail();
             drawLegend();
-            d3.select("#togglelegend").on("click", toggleLegend);
+            // d3.select("#togglelegend").on("click", toggleLegend);
 
             // Bounding circle underneath the sunburst, to make it easier to detect
             // when the mouse leaves the parent g.
@@ -214,7 +204,8 @@
                         return "#DEDEDE";
                 })
                 .style("opacity", 1)
-                .on("mouseover", mouseover);
+                .on("mouseover", mouseover)
+                .on("click", table);
 
             // Add the mouseleave handler to the bounding circle.
             d3.select("#container").on("mouseleave", mouseleave);
@@ -274,6 +265,21 @@
                 d3.select("#explanation")
                     .style("visibility", "hidden");
             }
+
+            function table(d, i) {
+                var sequenceArray = getAncestors(d);
+                data = [];
+                sequenceArray.forEach(function(t) {
+                    data.push(t.name);
+                });
+
+                localStorage.setItem('desde', document.getElementById("desde").value);
+                localStorage.setItem('hasta', document.getElementById("hasta").value);
+                localStorage.setItem('ua', document.getElementById("ua").value);
+                localStorage.setItem('data', JSON.stringify(data));
+                // aca hago lo que quiero basado en la posicion del indice
+                window.open("tabla_4.html");
+            }
         };
 
         // Given a node in a partition layout, return an array of all of its ancestor
@@ -321,110 +327,106 @@
             else
                 return data.parent.name.length + recParent(data.parent);
         }
-      function updateBreadcrumbs(nodeArray, percentageString) {
-        console.log(percentageString)
-        // Data join; key function combines name and depth (= position in sequence).
-        var g = d3.select("#trail")
-            .selectAll("g")
-            .data(nodeArray, function(d) { return d.name + d.depth; });
+        function updateBreadcrumbs(nodeArray, percentageString) {
+            console.log(percentageString)
+            // Data join; key function combines name and depth (= position in sequence).
+            var g = d3.select("#trail")
+                .selectAll("g")
+                .data(nodeArray, function(d) { return d.name + d.depth; });
 
-        // Add breadcrumb and label for entering nodes.
-        var entering = g.enter().append("svg:g");
+            // Add breadcrumb and label for entering nodes.
+            var entering = g.enter().append("svg:g");
 
-        entering.append("svg:polygon")
-            .attr("points", breadcrumbPoints)
-            .style("fill", function(d) { return d.color; });
+            entering.append("svg:polygon")
+                .attr("points", breadcrumbPoints)
+                .style("fill", function(d) { return d.color; });
 
-        entering.append("svg:text")
-            .attr("x", function(d) {
-                return 10;
-            })
-            .attr("y", b.h / 2)
-            .attr("dy", "0.35em")
-            .attr("font-size",14)
-            .attr("text-anchor", "start")
-            .text(function(d) {
-                return d.name;
+            entering.append("svg:text")
+                .attr("x", function(d) {
+                    return 10;
+                })
+                .attr("y", b.h / 2)
+                .attr("dy", "0.35em")
+                .attr("font-size",14)
+                .attr("text-anchor", "start")
+                .text(function(d) {
+                    return d.name;
+                });
+
+            // Set position for entering and updating nodes.
+            g.attr("transform", function(d, i) {
+                y = i * b.h;
+                return `translate(0, ${y})`;
             });
 
-        // Set position for entering and updating nodes.
-        g.attr("transform", function(d, i) {
-            y = i * b.h;
-            return `translate(0, ${y})`;
-        });
+            // Remove exiting nodes.
+            g.exit().remove();
 
-        // Remove exiting nodes.
-        g.exit().remove();
+            // Now move and update the percentage at the end.
+            d3.select("#trail").select("#endlabel")
+                .attr("x", function() {
+                    x = nodeArray[nodeArray.length - 1].name.length * 6.6263;
+                    return x + 60;
+                })
+                .attr("y", (b.h / 2 + (nodeArray.length - 1) * b.h))
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "middle")
+                .text(percentageString);
 
-        // Now move and update the percentage at the end.
-        d3.select("#trail").select("#endlabel")
-            .attr("x", function() {
-                x = nodeArray[nodeArray.length - 1].name.length * 6.6263;
-                return x + 60;
-            })
-            .attr("y", (b.h / 2 + (nodeArray.length - 1) * b.h))
-            .attr("dy", "0.35em")
-            .attr("text-anchor", "middle")
-            .text(percentageString);
+            // Make the breadcrumb trail visible, if it's hidden.
+            d3.select("#trail")
+                .style("visibility", "");
 
-        // Make the breadcrumb trail visible, if it's hidden.
-        d3.select("#trail")
-            .style("visibility", "");
-
-      }
-
-      function drawLegend() {
-
-        // Dimensions of legend item: width, height, spacing, radius of rounded rect.
-        var li = {
-          w: 75, h: 30, s: 3, r: 3
-        };
-
-        var legend = d3.select("#legend").append("svg:svg")
-            .attr("width", li.w)
-            .attr("height", d3.keys(colors).length * (li.h + li.s));
-
-        var g = legend.selectAll("g")
-            .data(d3.entries(colors))
-            .enter().append("svg:g")
-            .attr("transform", function(d, i) {
-                    return "translate(0," + i * (li.h + li.s) + ")";
-                 });
-
-        g.append("svg:rect")
-            .attr("rx", function(d) {
-                return li.r;
-            })
-            .attr("ry", li.r)
-            .attr("width", li.w)
-            .attr("height", li.h)
-            .style("fill", function(d) {
-                console.log(d)
-                return d.value;
-            });
-
-        g.append("svg:text")
-            .attr("x", li.w / 2)
-            .attr("y", li.h / 2)
-            .attr("dy", "0.35em")
-            .attr("text-anchor", "middle")
-            .text(function(d) { return d.key; });
-      }
-
-      function toggleLegend() {
-        var legend = d3.select("#legend");
-        if (legend.style("visibility") == "hidden") {
-          legend.style("visibility", "");
-        } else {
-          legend.style("visibility", "hidden");
         }
-      }
 
-      // Take a 2-column CSV and transform it into a hierarchical structure suitable
-      // for a partition layout. The first column is a sequence of step names, from
-      // root to leaf, separated by hyphens. The second column is a count of how
-      // often that sequence occurred.
-      function buildHierarchy(csv) {
+        function drawLegend() {
+
+            // Dimensions of legend item: width, height, spacing, radius of rounded rect.
+            var li = {
+            w: 75, h: 30, s: 3, r: 3
+            };
+
+            var legend = d3.select("#legend").append("svg:svg")
+                .attr("width", li.w)
+                .attr("height", d3.keys(colors).length * (li.h + li.s));
+
+            var g = legend.selectAll("g")
+                .data(d3.entries(colors))
+                .enter().append("svg:g")
+                .attr("transform", function(d, i) {
+                        return "translate(0," + i * (li.h + li.s) + ")";
+                    });
+
+            g.append("svg:rect")
+                .attr("rx", function(d) {
+                    return li.r;
+                })
+                .attr("ry", li.r)
+                .attr("width", li.w)
+                .attr("height", li.h)
+                .style("fill", function(d) {
+                    console.log(d)
+                    return d.value;
+                });
+
+            g.append("svg:text")
+                .attr("x", li.w / 2)
+                .attr("y", li.h / 2)
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "middle")
+                .text(function(d) { return d.key; });
+        }
+
+    //   function toggleLegend() {
+    //     var legend = d3.select("#legend");
+    //     if (legend.style("visibility") == "hidden") {
+    //       legend.style("visibility", "");
+    //     } else {
+    //       legend.style("visibility", "hidden");
+    //     }
+    //   }
+
+    function buildHierarchy(csv) {
         var root = {"name": "root", "children": []};
         for (var i = 0; i < csv.length; i++) {
             var data = csv[i].split(",")

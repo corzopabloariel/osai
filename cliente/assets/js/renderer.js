@@ -35,7 +35,7 @@ if(userDATOS.verificar(1)) {
         controller : 'configuracion'
       })
   });
-  
+
   /**
    * Carga principal de entidades
    */
@@ -60,128 +60,143 @@ if(userDATOS.verificar(1)) {
    */
   app.controller("index", function ($scope) {
     userDATOS.nav("#!");
+    $scope.metricas = false;
     let ARR_secciones = {};
     let ARR_medios = {};
-    if(window["name_index"] !== undefined) window["name_index"] = undefined;
+    if(window["name_index"] !== undefined) delete window["name_index"];
     userDATOS.mostrar = function(append = false) {
       if(append) $("#cargando").show();
-      userDATOS.busqueda_paginado({"values":{"id_usuario_osai":session.id_cliente},"entidad":"osai_cliente","name":"index"},function(data) {
-        console.log(data)
+      userDATOS.busqueda_paginado({"values":{"id_usuario_osai":session.id},"entidad":"osai_cliente","name":"index"},function(data) {
         let html = "";
         let html_seccion = "";
         let OBJ_tipo = {"0": "Noticia recomenda"};
-        if(data.data !== null) {
+        if(data.data.length != 0) {
           $.each( data.data, function( key, value ) {
-            userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
-              userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
-                userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
-                  image = medio.data.image;
-                  seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
-                  date = value["autofecha"];
-                  tipo = value["tipo_aviso"];
-                  url = noticia.data.url;
-                  body = noticia.data.cuerpo;
-                  titulo = noticia.data.titulo;
-                  texto = $(body).text();
-                  texto = texto.trim();
-                  subtexto = texto.substring(0,200) + " [...]";
-                  console.log(subtexto)
-                  //----------------
-                  if(OBJ_tipo[tipo] === undefined) {//NOTICIA PROPIA
-                    data = data = {
-                      "idUnidad": session.id_cliente,
-                      "idNoticia": noticia.data.id
-                    };
-                    userDATOS.ajax("verProceso",data,true,function(valores) {
-                      valoracion = 0;
-                      noticiasCliente = valores.data.noticiasCliente;
-                      for(var x in noticiasCliente.valoracion)
-                        valoracion += parseFloat(noticiasCliente.valoracion[x]["valoracion"]);
-                      if(valoracion > 0)
-                        span = "<span class='ml-2 badge badge-success'>POSITIVO</span>";
-                      else if(valoracion == 0)
-                        span = "<span class='ml-2 badge badge-warning'>NEUTRO</span>";
-                      else
-                        span = "<span class='ml-2 badge badge-danger'>NEGATIVO</span>";
-                      
-                        html = '<div class="card rounded-0 position-relative">';
-                          html += '<div class="card-body p-3">';
-                            html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
-                            html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + span + '</h5>';
-                            html += '<p class="card-text">' + subtexto + '</p>';
-                            html += '<hr/>';
-                            html += '<p class="card-text text-truncate">';
-                              html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+            let promise = new Promise(function (resolve, reject) {
+              userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
+                userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
+                  userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
+                    tipo = value["tipo_aviso"];
+                    //----------------
+                    if(OBJ_tipo[tipo] === undefined) {//NOTICIA PROPIA
+                      data = data = {
+                        "idUnidad": session.id_cliente,
+                        "idNoticia": noticia.data.id
+                      };
+                      userDATOS.ajax("verProceso",data,true,function(valores) {
+                        valoracion = 0;
+                        image = medio.data.image;
+                        seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                        date = value["autofecha"];
+                        url = noticia.data.url;
+                        body = noticia.data.cuerpo;
+                        titulo = noticia.data.titulo;
+                        texto = $(body).text();
+                        texto = texto.trim();
+                        subtexto = `${texto.substring(0,200)} [...]`;
 
-                              if(url !== null) 
-                                html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                            html += '</p>';
+                        noticiasCliente = valores.data.noticiasCliente;
+                        for(var x in noticiasCliente.valoracion)
+                          valoracion += parseFloat(noticiasCliente.valoracion[x]["valoracion"]);
+                        if(valoracion > 0)
+                          span = "<span class='ml-2 badge badge-success'>POSITIVO</span>";
+                        else if(valoracion == 0)
+                          span = "<span class='ml-2 badge badge-warning'>NEUTRO</span>";
+                        else
+                          span = "<span class='ml-2 badge badge-danger'>NEGATIVO</span>";
+
+                          html = '<div class="card rounded-0 position-relative">';
+                            html += '<div class="card-body p-3">';
+                              html += `<img src="${image}"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>`;
+                              html += `<h5 class="card-title text-uppercase font-italic" style="font-size:90%">${titulo + span}</h5>`;
+                              html += `<p class="card-text">${subtexto}</p>`;
+                              html += '<hr/>';
+                              html += '<p class="card-text text-truncate">';
+                                html += `<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">${dates.string(new Date(date))}</span></small>`;
+                                html += `<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#${value["id_noticia"]}" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>`;
+
+                                if(url !== null)
+                                  html += `<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="${url}" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>`;
+                                html += `<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">${seccion}</span></small>`;
+                              html += '</p>';
+                            html += '</div>';
                           html += '</div>';
+                          resolve(html);
+                      });
+                    } else {
+                      image = medio.data.image;
+                      seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                      date = value["autofecha"];
+                      url = noticia.data.url;
+                      body = noticia.data.cuerpo;
+                      titulo = noticia.data.titulo;
+                      texto = $(body).text();
+                      texto = texto.trim();
+                      subtexto = `${texto.substring(0,200)} [...]`;
+
+                      html = '<div class="card rounded-0 position-relative">';
+                        html += '<div class="card-header p-3 text-uppercase" style="font-size: .7em;">';
+                          html += `<p class="m-0"><i class="fas fa-asterisk text-warning"></i> ${OBJ_tipo[tipo]}</p>`;
                         html += '</div>';
 
-                        if(!append) {
-                          if($("#section_body").find(".loading").length) {
-                            $("#section_body").addClass("card-columns");
-                            $("#section_body").html("");
-                          }
-                          $("#section_body").append(html);
-                        } else {
-                          $("#cargando").hide();
-                          $("#section_body").append(html);
-                        }
-                        $("#section_body").find('[data-toggle="tooltip"]').tooltip();
-                    });
-                  } else {
-                    html = '<div class="card rounded-0 position-relative">';
-                      html += '<div class="card-header p-3 text-uppercase" style="font-size: .7em;">';
-                        html += '<p class="m-0"><i class="fas fa-asterisk text-warning"></i> ' + OBJ_tipo[tipo] + '</p>';
-                      html += '</div>';
-                      
-                      html += '<div class="card-body p-3">';
-                        html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
-                        html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + '</h5>';
-                        html += '<p class="card-text">' + subtexto + '</p>';
-                        html += '<hr/>';
-                        html += '<p class="card-text text-truncate">';
-                          html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                          if(OBJ_tipo[tipo] !== undefined)
-                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="recomendado#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+                        html += '<div class="card-body p-3">';
+                          html += `<img src="${image}"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>`;
+                          html += `<h5 class="card-title text-uppercase font-italic" style="font-size:90%">${titulo}</h5>`;
+                          html += `<p class="card-text">${subtexto}</p>`;
+                          html += '<hr/>';
+                          html += '<p class="card-text text-truncate">';
+                            html += `<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">${dates.string(new Date(date))}</span></small>`;
+                            if(OBJ_tipo[tipo] !== undefined)
+                              html += `<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="recomendado#${value["id_noticia"]}" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>`;
 
-                          if(url !== null) 
-                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                        html += '</p>';
+                            if(url !== null)
+                              html += `<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="${url}" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>`;
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                          html += '</p>';
+                        html += '</div>';
                       html += '</div>';
-                    html += '</div>';
-
-                    if(!append) {
-                      if($("#section_body").find(".loading").length) {
-                        $("#section_body").addClass("card-columns");
-                        $("#section_body").html("");
-                      }
-                      $("#section_body").append(html);
-                    } else {
-                      $("#cargando").hide();
-                      $("#section_body").append(html);
+                      resolve(html);
                     }
-                    $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                  }, true); // END busqueda MEDIO
+                }, true); // END busqueda SECCION
+                delete window["scroll"];
+              }, true); // END busqueda NOTICIA
+            }); // END PROMISE
+
+            promiseFunction = () => {
+              promise
+                .then(function(html) {
+                  if(!append) {
+                    if($("#section_body").find(".loading").length) {
+                      $("#section_body").addClass("card-columns");
+                      $("#section_body").html("");
+                    }
+                    $("#section_body").append(html);
+                  } else {
+                    $("#cargando").hide();
+                    $("#section_body").append(html);
                   }
-                }, true);
-              }, true);
-                
-              ////--------------------
-              window["scroll"] = undefined;
-            }, true);
-          });
+                  $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                })
+            }
+            promiseFunction();
+
+          }); // for
+        } else {
+          $("#section_body").removeClass("card-columns");
+          html += '<div class="p-4 mt-4">';
+            html += '<p class="m-0 text-uppercase text-center" style="font-size:1.3em">nada para mostrar</p>';
+            html += '<p class="text-uppercase text-center">sin noticias</p>'
+            html += '<img src="assets/img/notice-icon.png" class="w-50 d-block mx-auto"/>';
+          html += '</div>';
+          $("#section_body").html(html);
         }
       },true);
     }
     userDATOS.mostrar();
-	
+
     userDATOS.transfererDatosAGraficoUnMes = function(url){
-      
+
       // obtengo la unidad de analisis desde userDATOS
       s = userDATOS.session();
       ua = s.id_cliente;
@@ -201,7 +216,7 @@ if(userDATOS.verificar(1)) {
       if(dd<10) dd = '0'+dd
       if(mm<10) mm = '0'+mm
       str_lastmonth = yyyy + '-' + mm + '-' + dd;
-      
+
       var parametros = {"desde":str_lastmonth, "hasta":str_today, "ua":ua};
       window.parametros = parametros;
       window.open(`../${url}`,'blank');
@@ -209,37 +224,45 @@ if(userDATOS.verificar(1)) {
       localStorage.setItem("parametros", JSON.stringify(window.parametros));
     };
 
-    userDATOS.busqueda({"value":session.id_cliente,"entidad":"osai_grafico","column":"id_usuario_osai","retorno":0},function(data) {
+    userDATOS.busqueda({"value":session.id,"entidad":"osai_grafico","column":"id_usuario_osai","retorno":0},function(data) {
       html = "";
-      for(var i in data.data) {
-        html += '<div class="card rounded-0 position-relative">';
-          if(data.data[i]["image"] !== null)
-            html += '<img src="' + data.data[i]["image"] + '"  onError="this.src=\'../assets/images/no-img.png\'" class="w-100 border-0 bg-light card-img-top"/>';
-          html += '<div class="card-body">';
-            html += '<h5 class="card-title mb-0">' + data.data[i]["titulo"] + '</h5>';
-            html += '<p class="card-text">' + data.data[i]["descripcion"] + '</p>';
-            // html += '<a onclick="event.preventDefault()" target="blank" href="grafico#' + i + '" class="btn btn-primary">Ver gráfico</a>'
-            html += '<a onclick="event.preventDefault(); userDATOS.transfererDatosAGraficoUnMes(\'' + data.data[i]['url'] + '\')" href="#' + i + '" class="btn btn-primary">Ver gráfico</a>';
+      if(data.data.length == 0) {
+        $scope.metricas = true;
+        $scope.$digest();
+        $("#contenedorMetricas").addClass("align-items-center");
+      } else {
+        $("#contenedorMetricas").removeClass("align-items-center");
+        for(var i in data.data) {
+
+          html += '<div class="card rounded-0 position-relative">';
+            if(data.data[i]["image"] !== null)
+              html += '<img src="' + data.data[i]["image"] + '"  onError="this.src=\'../assets/images/no-img.png\'" class="w-100 border-0 bg-light card-img-top"/>';
+            html += '<div class="card-body">';
+              html += '<h5 class="card-title mb-0">' + data.data[i]["titulo"] + '</h5>';
+              html += '<p class="card-text">' + data.data[i]["descripcion"] + '</p>';
+              // html += '<a onclick="event.preventDefault()" target="blank" href="grafico#' + i + '" class="btn btn-primary">Ver gráfico</a>'
+              html += '<a onclick="event.preventDefault(); userDATOS.transfererDatosAGraficoUnMes(\'' + data.data[i]['url'] + '\')" href="#' + i + '" class="btn btn-primary">Ver gráfico</a>';
+            html += '</div>';
           html += '</div>';
-        html += '</div>';
+        }
+        if(window.innerWidth <= 768) $("#knowledgegraphcontent").addClass("card-columns")
+        $("#knowledgegraphcontent").html(html);
       }
-      if(window.innerWidth <= 768) $("#knowledgegraphcontent").addClass("card-columns")
-      $("#knowledgegraphcontent").html(html);
     }, true);
     function ejecutarGrafico(){
 			desde = document.getElementById("desde").value;
 			hasta = document.getElementById("hasta").value;
 			ua = document.getElementById("ua").value
-			
+
 			$.get("/lib/queryGraph.php?desde="+ desde + "&hasta="+ hasta + "&ua="+ ua,
 				function(data){
-					window.allData = JSON.parse( data ); 
+					window.allData = JSON.parse( data );
 					demoGraph( window.allData.grafico );
 				});
     }
     // $.get("/lib/queryGraph.php?desde=2018-11-28&hasta=2018-12-29&ua=12",
     //   function(data){
-    //     window.allData = JSON.parse( data ); 
+    //     window.allData = JSON.parse( data );
     //     demoGraph( window.allData.grafico );
     //   });
   });
@@ -257,7 +280,7 @@ if(userDATOS.verificar(1)) {
     let ARR_medios = {};
     if(window["name_perfil"] !== undefined) window["name_perfil"] = undefined;
     userDATOS.mostrar = function(append = false) {
-      let data = {"id_usuario_osai":session.id_cliente,"tipo_aviso":1};
+      let data = {"id_usuario_osai":session.id,"tipo_aviso":1};
       if(window["filtro"] !== undefined) {
         data = window["filtro"];
         data["tipo_aviso"] = 1;
@@ -274,137 +297,130 @@ if(userDATOS.verificar(1)) {
               html += '<p class="text-uppercase text-center">sin noticias</p>'
               html += '<img src="assets/img/notice-icon.png" class="w-50 d-block mx-auto"/>';
             html += '</div>';
-            $("#section_body").append(html);
+            $("#section_body").html(html);
           } else {
             // $("#section_body").addClass("card-columns");
             $.each( data.data, function( key, value ) {
-              userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
-                userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
-                  userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
-                    image = medio.data.image;
-                    seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
-                    date = value["autofecha"];
-                    tipo = value["tipo_aviso"];
-                    url = noticia.data.url;
-                    
-                    body = noticia.data.cuerpo;
-                    titulo = noticia.data.titulo;
-                    texto = $(body).text();
-                    texto = texto.trim();
-                    subtexto = texto.substring(0,200) + " [...]";
-                    if(seccion_.data === null) {
-                      if(ARR_secciones[1] === undefined) {
-                        ARR_secciones[1] = [];
-                        ARR_secciones[1]["nombre"] = seccion;
-                        ARR_secciones[1]["cantidad"] = 0;
-                      }
-                      ARR_secciones[1]["cantidad"] ++;
-                    } else {
-                      if(ARR_secciones[seccion_.data.id] === undefined) {
-                        ARR_secciones[seccion_.data.id] = [];
-                        ARR_secciones[seccion_.data.id]["nombre"] = seccion;
-                        ARR_secciones[seccion_.data.id]["cantidad"] = 0;
-                      }
-                      ARR_secciones[seccion_.data.id]["cantidad"] ++;
-                    }
-                    if(ARR_medios[medio.data.id] === undefined) {
-                      ARR_medios[medio.data.id] = [];
-                      ARR_medios[medio.data.id]["nombre"] = medio.data.medio;
-                      ARR_medios[medio.data.id]["cantidad"] = 0;
-                    }
-                    ARR_medios[medio.data.id]["cantidad"] ++;
-                    
-                    data = data = {
-                      "idUnidad": session.id_cliente,
-                      "idNoticia": noticia.data.id
-                    };
-                    userDATOS.ajax("verProceso",data,true,function(valores) {
-                      valoracion = 0;
-                      noticiasCliente = valores.data.noticiasCliente;
-                      for(var x in noticiasCliente.valoracion)
-                        valoracion += parseFloat(noticiasCliente.valoracion[x]["valoracion"]);
-                      if(valoracion > 0)
-                        span = "<span class='ml-2 badge badge-success'>POSITIVO</span>";
-                      else if(valoracion == 0)
-                        span = "<span class='ml-2 badge badge-warning'>NEUTRO</span>";
-                      else
-                        span = "<span class='ml-2 badge badge-danger'>NEGATIVO</span>";
-                      
-                        html = '<div class="card rounded-0 position-relative">';
-                          html += '<div class="card-body p-3">';
-                            html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
-                            html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + span + '</h5>';
-                            html += '<p class="card-text">' + subtexto + '</p>';
-                            html += '<hr/>';
-                            html += '<p class="card-text text-truncate">';
-                              html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+              let promise = new Promise(function (resolve, reject) {
+                userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
+                  userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
+                    userDATOS.busqueda({"value":noticia.data["id_medio"],"entidad":"medio"},function(medio) {
+                      data = data = {
+                        "idUnidad": session.id_cliente,
+                        "idNoticia": noticia.data.id
+                      };
+                      userDATOS.ajax("verProceso",data,true,function(valores) {
+                        valoracion = 0;
+                        image = medio.data.image;
+                        seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                        date = value["autofecha"];
+                        tipo = value["tipo_aviso"];
+                        url = noticia.data.url;
 
-                              if(url !== null) 
-                                html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                            html += '</p>';
-                          html += '</div>';
-                        html += '</div>';
-
-                        if(!append) {
-                          if($("#section_body").find(".loading").length) {
-                            htmlBody = "";
-                            htmlBody += "<div class='row'>";
-                              htmlBody += "<div class='col-12 col-lg-3'>";
-                                htmlBody += "<div class='row'>";
-                                  htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
-                                    htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-primary" data-toggle="collapse" data-target="#ulSeccion">secciones<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
-                                    htmlBody += "<ul id='ulSeccion' class='list-group collapse show'></ul>";
-                                  htmlBody += "</div>";
-                                  htmlBody += '<div class="w-100 pb-2 mb-2 d-none d-lg-block d-xl-none d-xl-block d-block d-sm-none"></div>';
-                                  htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
-                                    htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-success" data-toggle="collapse" data-target="#ulMedio">medios<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
-                                    htmlBody += "<ul id='ulMedio' class='list-group collapse show'></ul>";
-                                  htmlBody += "</div>";
-                                htmlBody += "</div>";
-                              htmlBody += "</div>";
-                              htmlBody += '<div class="w-100 border-bottom pb-3 mb-3 d-lg-none d-xl-none"></div>';
-                              htmlBody += "<div class='col-12 col-lg-9 card-columns'></div>";
-                            htmlBody += "</div>";
-                            $("#section_body").html(htmlBody);
+                        body = noticia.data.cuerpo;
+                        titulo = noticia.data.titulo;
+                        texto = $(body).text();
+                        texto = texto.trim();
+                        subtexto = texto.substring(0,200) + " [...]";
+                        if(seccion_.data === null) {
+                          if(ARR_secciones[1] === undefined) {
+                            ARR_secciones[1] = [];
+                            ARR_secciones[1]["nombre"] = seccion;
+                            ARR_secciones[1]["cantidad"] = 0;
                           }
-                          $("#section_body").find("> .row > div:last-child()").html(html);
+                          ARR_secciones[1]["cantidad"] ++;
                         } else {
-                          $("#cargando").hide();
-                          $("#section_body").find("> .row > div:last-child()").append(html);
+                          if(ARR_secciones[seccion_.data.id] === undefined) {
+                            ARR_secciones[seccion_.data.id] = [];
+                            ARR_secciones[seccion_.data.id]["nombre"] = seccion;
+                            ARR_secciones[seccion_.data.id]["cantidad"] = 0;
+                          }
+                          ARR_secciones[seccion_.data.id]["cantidad"] ++;
                         }
-                        $("#section_body").find('[data-toggle="tooltip"]').tooltip();
-                        $.each( ARR_secciones, function( k, v ) {
-                          if(!$("#ulSeccion").find("li[data-id='" + k + "']").length)
-                            $("#ulSeccion").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-primary badge-pill">' + v.cantidad + '</span></li>');
-                        });
-                        $.each( ARR_medios, function( k, v ) {
-                          if(!$("#ulMedio").find("li[data-id='" + k + "']").length)
-                            $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
-                        });
+                        if(ARR_medios[medio.data.id] === undefined) {
+                          ARR_medios[medio.data.id] = [];
+                          ARR_medios[medio.data.id]["nombre"] = medio.data.medio;
+                          ARR_medios[medio.data.id]["cantidad"] = 0;
+                        }
+                        ARR_medios[medio.data.id]["cantidad"] ++;
+                        noticiasCliente = valores.data.noticiasCliente;
+                        for(var x in noticiasCliente.valoracion)
+                          valoracion += parseFloat(noticiasCliente.valoracion[x]["valoracion"]);
+                        if(valoracion > 0)
+                          span = "<span class='ml-2 badge badge-success'>POSITIVO</span>";
+                        else if(valoracion == 0)
+                          span = "<span class='ml-2 badge badge-warning'>NEUTRO</span>";
+                        else
+                          span = "<span class='ml-2 badge badge-danger'>NEGATIVO</span>";
+
+                          html = '<div class="card rounded-0 position-relative">';
+                            html += '<div class="card-body p-3">';
+                              html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto my-1" style="height:24px; "/>';
+                              html += '<h5 class="card-title text-uppercase font-italic" style="font-size:90%">' + titulo + span + '</h5>';
+                              html += '<p class="card-text">' + subtexto + '</p>';
+                              html += '<hr/>';
+                              html += '<p class="card-text text-truncate">';
+                                html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                                html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+
+                                if(url !== null)
+                                  html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                                html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                              html += '</p>';
+                            html += '</div>';
+                          html += '</div>';
+
+                          resolve(html)
+                      });
+
                     });
-                    // html = "";
-                    // html = '<div class="card rounded-0 position-relative">';
-                    //   html += '<div class="card-body p-3">';
-                    //     html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="float-left mr-2 mt-2 mb-2" style="height:24px; "/>';
-                    //     html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
-                    //     html += '<p class="card-text">' + subtexto + '</p>';
-                    //     html += '<hr/>';
-                    //     html += '<p class="card-text text-truncate">';
-                    //       html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                    //       html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a href="noticia#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-file-alt mr-1"></i>proceso</a></small>';
-                    //       if(url !== null)
-                    //         html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                    //       html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                    //     html += '</p>';
-                    //   html += '</div>';
-                    // html += '</div>';
-                    
-                  });
-                }, true);
-                window["scroll"] = undefined;
-              },true);
+                  }, true);
+                  window["scroll"] = undefined;
+                },true);// busqueda NOTICIA
+              });//END PROMISE
+
+              promiseFunction = () => {
+                promise
+                  .then(function(html) {
+                    if(!append) {
+                      if($("#section_body").find(".loading").length) {
+                        htmlBody = "";
+                        htmlBody += "<div class='row'>";
+                          htmlBody += "<div class='col-12 col-lg-3'>";
+                            htmlBody += "<div class='row'>";
+                              htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
+                                htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-primary" data-toggle="collapse" data-target="#ulSeccion">secciones<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
+                                htmlBody += "<ul id='ulSeccion' class='list-group collapse show'></ul>";
+                              htmlBody += "</div>";
+                              htmlBody += '<div class="w-100 pb-2 mb-2 d-none d-lg-block d-xl-none d-xl-block d-block d-sm-none"></div>';
+                              htmlBody += "<div class='col-12 col-md-6 col-lg-12'>";
+                                htmlBody += '<h3 class="text-uppercase cursor-pointer mb-0 px-3 py-2 text-white bg-success" data-toggle="collapse" data-target="#ulMedio">medios<span class="float-right"><i class="fas fa-caret-up"></i></span></h3>';
+                                htmlBody += "<ul id='ulMedio' class='list-group collapse show'></ul>";
+                              htmlBody += "</div>";
+                            htmlBody += "</div>";
+                          htmlBody += "</div>";
+                          htmlBody += '<div class="w-100 border-bottom pb-3 mb-3 d-lg-none d-xl-none"></div>';
+                          htmlBody += "<div class='col-12 col-lg-9 card-columns'></div>";
+                        htmlBody += "</div>";
+                        $("#section_body").html(htmlBody);
+                      }
+                      $("#section_body").find("> .row > div:last-child()").append(html);
+                    } else {
+                      $("#cargando").hide();
+                      $("#section_body").find("> .row > div:last-child()").append(html);
+                    }
+                    $("#section_body").find('[data-toggle="tooltip"]').tooltip();
+                    $.each( ARR_secciones, function( k, v ) {
+                      if(!$("#ulSeccion").find("li[data-id='" + k + "']").length)
+                        $("#ulSeccion").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-primary badge-pill">' + v.cantidad + '</span></li>');
+                    });
+                    $.each( ARR_medios, function( k, v ) {
+                      if(!$("#ulMedio").find("li[data-id='" + k + "']").length)
+                        $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center">' + v.nombre + '<span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
+                    });
+                  })
+              }
+              promiseFunction();
             });
           }
         }
@@ -421,7 +437,7 @@ if(userDATOS.verificar(1)) {
           userDATOS.select2("#select_seccion",null,0,1);
           if(elemento.val().length != 0)
             userDATOS.select2("#select_seccion",data.data.seccion,1);
-          
+
           if(window.filtro !== undefined && window.filtroTrigger !== undefined) {
             $("#select_seccion").val(window.filtro.secciones);
           } else window.filtroTrigger = undefined;
@@ -524,7 +540,7 @@ if(userDATOS.verificar(1)) {
             html += '</div>';
           html += '</div>';
         html += '</fieldset>';
-        
+
         html += '<fieldset class="p-2 mt-3 border border-dark">';
           html += '<legend class="text-uppercase d-inline-block px-2 py-1 border border-dark" style="width:auto;"><i class="fas fa-newspaper"></i><i class="fas fa-tags ml-2"></i></legend>';
           html += '<div class="row">';
@@ -645,65 +661,77 @@ if(userDATOS.verificar(1)) {
             $("#section_body").append(html);
           } else {
             $.each( data.data, function( key, value ) {
-              userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
-                userDATOS.busqueda({"value":noticia.data.id_medio,"entidad":"medio"},function(medio) {
-                  userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
-                    seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
-                    date = value["autofecha"];
-                    tipo = value["tipo_aviso"];
-                    url = noticia.data.url;
-                    image = medio.data.image;
-                    body = noticia.data.cuerpo;
-                    titulo = noticia.data.titulo;
+              let promise = new Promise(function (resolve, reject) {
+                userDATOS.busqueda({"value":value["id_noticia"],"entidad":"noticia"},function(noticia) {
+                  userDATOS.busqueda({"value":noticia.data.id_medio,"entidad":"medio"},function(medio) {
+                    userDATOS.busqueda({"value":noticia.data.id_seccion,"entidad":"seccion"},function(seccion_) {
+                      seccion = (seccion_.data === null ? "SIN SECCIÓN" : seccion_.data.nombre);
+                      date = value["autofecha"];
+                      tipo = value["tipo_aviso"];
+                      url = noticia.data.url;
+                      image = medio.data.image;
+                      body = noticia.data.cuerpo;
+                      titulo = noticia.data.titulo;
 
-                    if(seccion_.data === null) {
-                      if(ARR_secciones[1] === undefined) {
-                        ARR_secciones[1] = [];
-                        ARR_secciones[1]["nombre"] = seccion;
-                        ARR_secciones[1]["cantidad"] = 0;
+                      if(seccion_.data === null) {
+                        if(ARR_secciones[1] === undefined) {
+                          ARR_secciones[1] = [];
+                          ARR_secciones[1]["nombre"] = seccion;
+                          ARR_secciones[1]["cantidad"] = 0;
+                        }
+                        ARR_secciones[1]["cantidad"] ++;
+                      } else {
+                        if(ARR_secciones[seccion_.data.id] === undefined) {
+                          ARR_secciones[seccion_.data.id] = [];
+                          ARR_secciones[seccion_.data.id]["nombre"] = seccion;
+                          ARR_secciones[seccion_.data.id]["cantidad"] = 0;
+                        }
+                        ARR_secciones[seccion_.data.id]["cantidad"] ++;
                       }
-                      ARR_secciones[1]["cantidad"] ++;
-                    } else {
-                      if(ARR_secciones[seccion_.data.id] === undefined) {
-                        ARR_secciones[seccion_.data.id] = [];
-                        ARR_secciones[seccion_.data.id]["nombre"] = seccion;
-                        ARR_secciones[seccion_.data.id]["cantidad"] = 0;
+                      if(ARR_medios[medio.data.id] === undefined) {
+                        ARR_medios[medio.data.id] = [];
+                        ARR_medios[medio.data.id]["nombre"] = medio.data.medio;
+                        ARR_medios[medio.data.id]["cantidad"] = 0;
                       }
-                      ARR_secciones[seccion_.data.id]["cantidad"] ++;
-                    }
-                    if(ARR_medios[medio.data.id] === undefined) {
-                      ARR_medios[medio.data.id] = [];
-                      ARR_medios[medio.data.id]["nombre"] = medio.data.medio;
-                      ARR_medios[medio.data.id]["cantidad"] = 0;
-                    }
-                    ARR_medios[medio.data.id]["cantidad"] ++;
+                      ARR_medios[medio.data.id]["cantidad"] ++;
 
-                    try {
-                      texto = $(body).text(); 
-                    } catch (error) {
-                      texto = body;
-                    }
-                    texto = texto.trim();
-                    if(texto.length > 200)
-                      subtexto = texto.substring(0,200) + " [...]";
-                    else
-                      subtexto = texto;
+                      try {
+                        texto = $(body).text();
+                      } catch (error) {
+                        texto = body;
+                      }
+                      texto = texto.trim();
+                      if(texto.length > 200)
+                        subtexto = texto.substring(0,200) + " [...]";
+                      else
+                        subtexto = texto;
 
-                    html = '<div class="card rounded-0 position-relative">';
-                      html += '<div class="card-body p-3">';
-                        html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto mb-2" style="height:24px; "/>';
-                        html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
-                        html += '<p class="card-text">' + subtexto + '</p>';
-                        html += '<hr/>';
-                        html += '<p class="card-text text-truncate">';
-                          html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
-                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a data-id="' + value["id"] + '" href="agenda#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
-                          if(url !== null)
-                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
-                          html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
-                        html += '</p>';
+                      html = '<div class="card rounded-0 position-relative">';
+                        html += '<div class="card-body p-3">';
+                          html += '<img src="' + image + '"  onError="this.src=\'../assets/images/no-img.png\'" class="d-block mx-auto mb-2" style="height:24px; "/>';
+                          html += '<h5 class="card-title text-uppercase font-italic">' + titulo + '</h5>';
+                          html += '<p class="card-text">' + subtexto + '</p>';
+                          html += '<hr/>';
+                          html += '<p class="card-text text-truncate">';
+                            html += '<small class="info-oculta text-muted border-right pr-2 mr-2"><i class="fas fa-globe-americas"></i><span class="ml-1">' + dates.string(new Date(date)) + '</span></small>';
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="VER NOTICIA" class="text-muted border-right pr-2 mr-2"><a data-id="' + value["id"] + '" href="agenda#' + value["id_noticia"] + '" data-link="interno" class="text-primary"><i class="fas fa-newspaper mr-1"></i>noticia</a></small>';
+                            if(url !== null)
+                              html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="IR A LA NOTICIA<br/>- link externo -" class="text-muted border-right pr-2 mr-2"><a data-link="externo" class="text-primary" href="' + url + '" target="blank"><i class="fas fa-external-link-alt mr-1"></i>noticia</a></small>';
+                            html += '<small data-animation="true" data-html="true" data-toggle="tooltip" data-placement="top" title="SECCIÓN: ' + seccion + '" class="info-oculta text-muted"><i class="fas fa-tag"></i><span class="ml-1">' + seccion + '</span></small>';
+                          html += '</p>';
+                        html += '</div>';
                       html += '</div>';
-                    html += '</div>';
+
+                      resolve(html);
+                    }, true);
+                  });
+                  window["scroll"] = undefined;
+                },true);
+              });//END PROMISE
+
+              promiseFunction = () => {
+                promise
+                  .then(function(html) {
                     if(!append) {
                       if($("#section_body").find(".loading").length) {
                         htmlBody = "";
@@ -745,10 +773,9 @@ if(userDATOS.verificar(1)) {
                         $("#ulMedio").append('<li data-id="' + k + '" class="list-group-item rounded-0 d-flex justify-content-between align-items-center"><span class="text-truncate">' + v.nombre + '</span><span class="badge badge-success badge-pill">' + v.cantidad + '</span></li>');
                     });
                     $("#section_body").find('[data-toggle="tooltip"]').tooltip();
-                  }, true);
-                });
-                window["scroll"] = undefined;
-              },true);
+                  })
+              }
+              promiseFunction();
             });
           }
         }
@@ -765,7 +792,7 @@ if(userDATOS.verificar(1)) {
           userDATOS.select2("#select_seccion",null,0,1);
           if(elemento.val().length != 0)
             userDATOS.select2("#select_seccion",data.data.seccion,1);
-          
+
           if(window.filtro !== undefined && window.filtroTrigger !== undefined) {
             $("#select_seccion").val(window.filtro.secciones);
           } else window.filtroTrigger = undefined;
@@ -873,7 +900,7 @@ if(userDATOS.verificar(1)) {
             html += '</div>';
           html += '</div>';
         html += '</fieldset>';
-        
+
         html += '<fieldset class="p-2 mt-3 border border-dark">';
           html += '<legend class="text-uppercase d-inline-block px-2 py-1 border border-dark" style="width:auto;"><i class="fas fa-newspaper"></i><i class="fas fa-tags ml-2"></i></legend>';
           html += '<div class="row">';
@@ -960,7 +987,7 @@ if(userDATOS.verificar(1)) {
      */
     if(window["name_notificacion"] !== undefined) window["name_notificacion"] = undefined;
     userDATOS.mostrar = function(append = false) {
-      let data = {"id_usuario_osai":session.id_cliente};
+      let data = {"id_usuario_osai":session.id};
       if(window["filtro"] !== undefined) {
         data = window["filtro"];
         data["id_usuario_osai"] = session.id_cliente;
@@ -1062,7 +1089,7 @@ if(userDATOS.verificar(1)) {
       $("#section_body").html('<div class="text-center d-flex justify-content-center"><span class="text-uppercase d-flex align-items-center">cargando</span><div class="loading"><div></div><div></div><div></div></div></div>');
       if(window["name_notificacion"] !== undefined) window["name_notificacion"] = undefined;
       userDATOS.mostrar();
-        
+
     }
     $("#select_tipoAlerta").on("change",function() {
       switch(parseInt($(this).val())) {
@@ -1156,7 +1183,7 @@ $(document).ready(function() {
     // ver#X -> solo trae datos básicos [OK]
     // agenda#X -> noticia con proceso de AGENDA NACIONAL
     e.preventDefault();
-    let cargador = '<div class="w-100 align-self-center text-uppercase text-center">cargando<img class="d-inline-block ml-2" src="http://93.188.164.27/assets/images/loading_notificacion.gif" style="height: 30px;"></div>';
+    let cargador = `<div class="w-100 align-self-center text-uppercase text-center">cargando<img class="d-inline-block ml-2" src="http://${servidor}/assets/images/loading_notificacion.gif" style="height: 30px;"></div>`;
     let value = $(this).attr("href");
     let aux = value.split("#");
     let noticias = null;
@@ -1167,13 +1194,13 @@ $(document).ready(function() {
     $("body").css({overflow:"hidden",paddingRight:"15px"});
     $("#noticiaProceso").show();
     $("#section_body").find('[data-toggle="tooltip"]').tooltip('dispose');
-    
+
     userDATOS.busqueda({"value":aux[1],"entidad":"noticias"},function(noticia) {
       noticias = noticia.data;
       try {
         noticias.data = userDATOS.parseJSON(noticias.data);
       } catch (error) {
-        
+
       }
 
       userDATOS.busqueda({"value":aux[1],"entidad":"noticia"},function(noticia) {
@@ -1213,7 +1240,7 @@ $(document).ready(function() {
               html += '<h2 class="mb-0 py-2 text-center">' + noticia.data.titulo + '</h2>';
               if(noticias.subtitulo !== undefined)
                 html += '<h3 class="mb-0 py-2 text-center">' + noticias.subtitulo + '</h3>';
-              
+
               html += '<p class="mb-0 text-center">' + medio.medio + ' | ' + seccion + ' | ' + periodista + ' | ' + dates.string(new Date(noticia.data.fecha),0) + (url != "" ? ' | ' + url : '') + '</p>';
             html += '</div>';
           html += '</div>';
@@ -1230,7 +1257,7 @@ $(document).ready(function() {
               html += '<h2 class="mb-0 py-2 text-center">' + noticia.data.titulo + '</h2>';
               if(noticias.subtitulo !== undefined)
                 html += '<h3 class="mb-0 py-2 text-center">' + noticias.subtitulo + '</h3>';
-              
+
               html += '<p class="mb-0 text-center">' + medio.medio + ' | ' + seccion + ' | ' + periodista + ' | ' + dates.string(new Date(noticia.data.fecha),0) + (url != "" ? ' | ' + url : '') + '</p>';
             html += '</div>';
           html += '</div>';
@@ -1273,7 +1300,7 @@ $(document).ready(function() {
     });
   });
 
-  
+
   /**
    * Eventos del SERVIDOR
    */
@@ -1295,7 +1322,7 @@ $(document).ready(function() {
 
     mensaje = aux.mensaje;
     mensaje += '<span class="text-truncate d-block">' + aux["mensajeBD"] + '</span>';
-    if(notificacion.find("> div ul li.nada").length) 
+    if(notificacion.find("> div ul li.nada").length)
       notificacion.find("> div ul").html('<li onclick="userDATOS.alerta(this);" data-id="' + e.lastEventId + '" class="list-group-item rounded-0 border-0">' + mensaje + '</li>');
     else
       notificacion.find("> div ul").append('<li onclick="userDATOS.alerta(this);" data-id="' + e.lastEventId + '" class="list-group-item rounded-0 border-0">' + mensaje + '</li>');

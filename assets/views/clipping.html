@@ -1,7 +1,6 @@
 <!-- PANTALLA MODAL -->
 <div class="position-fixed bg-light w-100 h-100 d-none" id="pantalla">
-  <div class="body-noticia position-absolute h-100 w-100 text-dark">
-    <span onclick="userDATOS.pantalla_cerrarSIMPLE()" class="close position-absolute" style="right:15px;top:5px;" aria-hidden="true">&times;</span>
+  <div class="body-noticia position-absolute h-100 text-dark">
     <div id="noticia-detalle" class="position-absolute d-none w-100 p-2 text-white">
       <div class="row justify-content-center">
         <div class="col col-12"></div>
@@ -27,6 +26,76 @@
             <div class="p-2" id="tipo_cuerpo" data-noticia data-tipo="cuerpo"></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="etiquetas border-left bg-white position-fixed text-dark">
+    <h2 class="text-center text-uppercase p-3 mb-0 shadow position-relative">etiquetas</h2>
+    <span onclick="userDATOS.pantalla_cerrar()" class="close position-absolute" aria-hidden="true">&times;</span>
+    <div class="scroll">
+      <div class="p-3">
+        <div class="input-group mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 w-100 bg-light" for="">Medio Emisor</label>
+          <select disabled="true" class="custom-select w-100 select__2" name="select_medio" id="select_medio"
+            data-allow-clear="true" data-placeholder="Seleccione">
+            <option value="">Cargando</option>
+          </select>
+        </div>
+        <div class="input-group d-flex mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Medio - Alcance</label>
+          <select class="custom-select w-100 select__2" name="select_medioAlcance" id="select_medioAlcance"
+            data-allow-clear="true" data-placeholder="Seleccione">
+            <option value="">Cargando</option>
+          </select>
+        </div>
+        <div class="input-group d-flex">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Medio - Tipo</label>
+          <select class="custom-select w-100 select__2" name="select_medioTipo" id="select_medioTipo" data-allow-clear="true"
+            data-placeholder="Seleccione">
+            <option value="">Cargando</option>
+          </select>
+        </div>
+        <hr>
+        <div class="input-group d-flex mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Destaque</label>
+          <select class="custom-select w-100 select__2" name="select_destaque" id="select_destaque" data-allow-clear="true"
+            data-placeholder="Seleccione"></select>
+        </div>
+        <div class="input-group d-flex mb-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Sección</label>
+          <select class="custom-select w-100 select__2" name="select_seccion" id="select_seccion" data-allow-clear="true"
+            data-placeholder="Seleccione"></select>
+        </div>
+        <div class="d-none" id="video_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Video</label>
+          <div class="border p-2 text-truncate"></div>
+        </div>
+        <div class="d-none mt-3" id="url_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Link</label>
+          <div class="border p-2 text-truncate"></div>
+        </div>
+        <div class="d-none mt-3" id="periodista_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Periodista</label>
+          <div class="border p-2 text-truncate w-100"></div>
+        </div>
+        <div class="input-group d-none mt-3">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Periodista</label>
+          <select class="custom-select w-100 select__2" name="select_periodista" id="select_periodista"
+            data-allow-clear="true" data-placeholder="Seleccione">
+            <option value="">Cargando</option>
+          </select>
+        </div>
+        <div class="d-none mt-3" id="fecha_noticia">
+          <label class="d-block border border-bottom-0 p-2 m-0 w-100 bg-light" for="">Fecha</label>
+          <div class="border p-2  w-100"><input type="datetime-local" class="form-control" name="frm_fecha" /></div>
+        </div>
+        <p class="p-2 bg-dark text-uppercase mb-0 mt-5 text-white text-center">atributos</p>
+        <div id="noticiaATTR" name="noticiaATTR" class="border border-dark p-2 d-flex align-content-around flex-wrap"
+          style="min-height:73px;"></div>
+        <!-- <form id="form_ATTR" onsubmit="event.preventDefault(); userDATOS.noticiaATTR(this)">
+          <input placeholder="Ingrese Etiqueta" type="text" class="form-control shadow-none border border-dark rounded-0"
+            style="margin-top:-1px">
+        </form> -->
       </div>
     </div>
   </div>

@@ -47,7 +47,7 @@ const translate_spanish = {
     "rows": { _: "%d filas seleccionadas", 0: "", 1: "" }
   },
 };
-const cliente_url = "http://93.188.164.27/lib/cliente.php";
+const cliente_url = `http://${servidor}/lib/cliente.php`;
 
 let userDATOS = {};
 
@@ -55,43 +55,43 @@ let userDATOS = {};
  * Función para concatenar 2 objetos
  */
 userDATOS.extend = function(obj, src) {
-   for (var key in src) {
-      if (src.hasOwnProperty(key)) obj[key] = src[key];
-   }
-   return obj;
+  for (var key in src) {
+    if (src.hasOwnProperty(key)) obj[key] = src[key];
+  }
+  return obj;
 }
 /**
  * Función para la info necesaria para los gráficos del sistema
  * @param tipo STRING - tipo de grafico
  * @param data OBJECT - Fechas a buscar
- * @return 
+ * @return
  */
-userDATOS.dataBD = function(tipo,data,loader = null) {
-  let element = null;
-  $.ajax({
-    type: 'POST',
-    url: cliente_url,
-    dataType: 'json',
-    async: false,
-    data: { "tipo": "query", "accion": "dataDB", "tipoBD": tipo, "data" : data },
-    beforeSend: function() {
-      if(loader !== null) $(loader).removeClass("d-none");
-    },
-    success: function(msg) {
-      if(loader !== null) $(loader).addClass("d-none");
-    }
-  }).done(function(msg) {
-    element = msg;
-  });
+// userDATOS.dataBD = function(tipo,data,loader = null) {
+//   let element = null;
+//   $.ajax({
+//     type: 'POST',
+//     url: cliente_url,
+//     dataType: 'json',
+//     async: false,
+//     data: { "tipo": "query", "accion": "dataDB", "tipoBD": tipo, "data" : data },
+//     beforeSend: function() {
+//       if(loader !== null) $(loader).removeClass("d-none");
+//     },
+//     success: function(msg) {
+//       if(loader !== null) $(loader).addClass("d-none");
+//     }
+//   }).done(function(msg) {
+//     element = msg;
+//   });
 
-  return element;
-}
+//   return element;
+// }
 /**
  * Filtrar y mostrar parámetros de búsqueda de las notificaciones
  * Solo aplicable en notificaciones viejas (ANTERIORES)
  * TODAS // VISTO // SIN LEER // RELEVADO // ELIMINADO
  * @param flag INT: 1 muestra modal con opciones / 0: busca los parámetros
- * @param target STRING: lugar donde 
+ * @param target STRING: lugar donde
  */
 userDATOS.filterNotificacion = function(flag, form = null, target = null) {
   let modal = $("#modalNotificacion");
@@ -223,7 +223,7 @@ userDATOS.verNotificacion = function(t) {
       userDATOS.change(idNotificacionUsuario,"notificacion_usuario","visto",1);
     }
     html = o.cuerpo;
-    
+
     var SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
     while (SCRIPT_REGEX.test(html))
         html = html.replace(SCRIPT_REGEX, "");
@@ -301,10 +301,11 @@ userDATOS.ultimaHora = function(id) {
 /**
  * Traer clientes finales, relacionado con unidades de análisis
  */
-userDATOS.busquedaUsuariosFinales = function(callbackOK, asy = false) {
+userDATOS.busquedaUsuariosFinales = function(callbackOK, asy = false, column = "id") {
   let data = {
-    "tipo": "query",
-    "accion": "usuariosFinales"
+    tipo: "query",
+    accion: "usuariosFinales",
+    column: column
   };
   $.ajax({
      type: 'POST',
@@ -585,17 +586,19 @@ userDATOS.user = function() {
 userDATOS.noticiaATTR = function(e) {//agregar si no encuentra y si no puede remarcar
   let x = $(e).find("input").val();
   if(x == "") return false;
+  if($(".note-editable").text() == "") return false;
   if(!$(".note-editable").buscar(x)) {
     userDATOS.notificacion(strings.attr.no);
     return false;
   }
   $("#noticiaATTR").append("<span class=\"bg-light border rounded p-2 m-2\">" + x + " <i class=\"fas fa-times-circle text-danger btn-click\" onclick=\"userDATOS.eliminarATTR(this)\"></i></span>");
   $(e).find("input").val("");
-  
+
   if(window.ARR_atributos === undefined) window.ARR_atributos = [];
   if(window.ARR_atributos[x] === undefined) {
     window.ARR_atributos[x] = "";
-    $(".note-editable").resaltar(x,"resaltarCLASS");
+    TextHighlighting(x,"resaltarCLASS");
+    // $(".note-editable").resaltar(x,"resaltarCLASS");
   }
 };
 /**
@@ -615,17 +618,19 @@ jQuery.fn.extend({
     // return nuevoHtml;
   },
   resaltarX: function(busqueda, valor) {
-    let html = this.html();
-    let regex = new RegExp(busqueda.replace(/([-.*+?^${}()|[\]\/\\])/g,"\\$1"), 'ig');
-    this.html(html.replace(regex, function(a, b, c){
-        return (a == busqueda) ? valor : a;
-    }));
+    let texto = this.html();
+    let regex = new RegExp(busqueda, 'ig');
+
+    texto = texto.replace(regex, valor)
+    console.log(texto)
+    this.html(texto);
     // return nuevoHtml;
   },
   buscar: function(busqueda) {
-    let regex = new RegExp(busqueda, 'ig');
-    let flag = regex.test(this.html())
-    return flag;
+    let regex = new RegExp(busqueda, 'g');
+    let texto = this.html();
+
+    return texto.match(regex) !== null;
   }
 });
 /**
@@ -637,7 +642,7 @@ userDATOS.eliminarATTR = function(e) {
   attr = attr.trim();
   delete window.ARR_atributos[attr];
   $(e).closest("span").remove();
-  let attr_HTML = "<span class=\"resaltarCLASS\">" + attr + "</span>";
+  let attr_HTML = "<span class=\"resaltarCLASS highlighter\">" + attr + "</span>";
   $(".note-editable").resaltarX(attr_HTML,attr)
 }
 /**
@@ -913,7 +918,7 @@ userDATOS.cambiarClave = function() {
     buttonDone  : strings.btn.cambiar,
     buttonFail  : strings.btn.cancelar,
     message : strings.usuario.contrasela,
-    input   : { 
+    input   : {
       inputPass     : {
         type         : "password",
         label        : "Contraseña actual (*):",
@@ -997,10 +1002,9 @@ userDATOS.logout = function() {
 userDATOS.listador = function(target,OBJ_pyrus,searching = true, id = 0, OBJ_btn = null, BTN_default = ["add","show","delete"]) {
 	let nombre_tabla = "tabla_" + id;
 	let column = OBJ_pyrus.columnaDT;
-  
+
   let order = OBJ_pyrus.order;
 	let ARR_btn = [];
-
   ///////
   if(OBJ_pyrus.entidad == "cliente") {
     console.log(column.length)
@@ -1008,7 +1012,7 @@ userDATOS.listador = function(target,OBJ_pyrus,searching = true, id = 0, OBJ_btn
       column.push({"title":"UNIDAD DE ANÁLISIS", "data":"nombre"});
       column.push({"title":"CLIENTE FINAL", "data":"user"});
       column.push({"title":"ESTADO C. FINAL", "data":"activo"});
-      
+
       order[0]["targets"].push(2);
       order[0]["targets"].push(3);
     }
@@ -1058,7 +1062,7 @@ userDATOS.listador = function(target,OBJ_pyrus,searching = true, id = 0, OBJ_btn
 				}
 			});
   }
-  
+
 	window[nombre_tabla] = $(target).DataTable({
     "processing": true,
     "pageLength": 10,
@@ -1274,7 +1278,7 @@ userDATOS.show__ = function(tabla,OBJ_pyrus) {
 	let adata = tabla.rows( { selected: true } );
 	let data = adata.data()[0];
   let id = data[0];
-  if(id === undefined) id = data.id;/// ---> OJO, solo seria para la tabla CLIENTE, "no lo maneja pyrus.js" 
+  if(id === undefined) id = data.id;/// ---> OJO, solo seria para la tabla CLIENTE, "no lo maneja pyrus.js"
 	modal.find(".modal-title").html("<strong>" + (ENTIDAD[OBJ_pyrus.entidad]["NOMBRE"]).toUpperCase() + "</strong>");
 
 	modal.find(".modal-body").html(OBJ_pyrus.formulario_OK());
@@ -1851,13 +1855,20 @@ userDATOS.dataTableNOTICIAS4 = function(target) {
   columns = [
     {"data":"fecha","title": "FECHA"},
     {"data":"fecha_clipping","title": "FECHA PUBLICADA"},
-    {"data":"cliente_final","title": "CLIENTE"},
+    {"data":"cliente_final","title": "CLIENTE FINAL"},
     {"data":"cliente","title": "U. ANÁLISIS"},
     {"data":"medio","title": "MEDIO"},
     {"data":"estado","title": "ESTADO"},
     {"data":"titulo","title": "TÍTULO"}
   ];
-
+  ARR_btn.push({
+      extend: 'selected',
+      text: '<i class="fas fa-eye"></i>',
+      className: 'btn-dark',
+      action: function ( e, dt, node, config ) {
+        userDATOS.distribuidorNOTICIA(5);
+      }
+    });
   ARR_btn.push({
       extend: 'selected',
       text: '<i class="fas fa-paperclip"></i>',
@@ -1956,7 +1967,7 @@ userDATOS.distribuidorNOTICIA = function(lugar = 0,elim = 0) {
 
   $("#div_img").addClass("d-flex").removeClass("d-none");
   setTimeout(function() {
-    userDATOS.distribuidorNOTICIA_behavior(lugar,elim);
+    window.apertura = userDATOS.distribuidorNOTICIA_behavior(lugar,elim);
   },100)
 }
 /**
@@ -1964,42 +1975,40 @@ userDATOS.distribuidorNOTICIA = function(lugar = 0,elim = 0) {
  */
 userDATOS.noticiaBasica = function(target, noticia, noticiaDATA) {
   let body = noticia.cuerpo;
-  let medio = null;
-  userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_medio,"tabla":"medio"}, function(d) {
-    medio = d;
-  });
-  var SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
-  while (SCRIPT_REGEX.test(body)) body = body.replace(SCRIPT_REGEX, "");
-  target.find("*[data-tipo=\"cuerpo\"]").html(body);
+  userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_medio,"tabla":"medio"}, function(medio) {
+    var SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
+    while (SCRIPT_REGEX.test(body)) body = body.replace(SCRIPT_REGEX, "");
+    target.find("*[data-tipo=\"cuerpo\"]").html(body);
 
-  $('#tipo_cuerpo').summernote({
-    toolbar: false,
-    airMode: false,
-    dialogsInBody: false,
-    popover: { image: [], link: [], air: [] }
-  });
-  $('#tipo_cuerpo').summernote('disable');
-  
-  target.find("*[data-tipo=\"titulo\"]").html("<div class='form-noticia'>" + noticia.titulo + "</div>");
-  if(noticiaDATA.bajada !== undefined) {
-    target.find("*[data-tipo=\"subtitulo\"]").parent().removeClass("d-none");
-    target.find("*[data-tipo=\"subtitulo\"]").html("<div class='form-noticia'>" + noticiaDATA.bajada + "</div>");
-  } else target.find("*[data-tipo=\"subtitulo\"]").parent().addClass("d-none");
-  if(noticiaDATA.data.imagen !== undefined) {
-    target.find("*[data-tipo=\"imagen\"]").parent().removeClass("d-none");
-    target.find("*[data-tipo=\"imagen\"]").attr("src",noticiaDATA.data.imagen);
-  } else target.find("*[data-tipo=\"imagen\"]").parent().addClass("d-none");
+    $('#tipo_cuerpo').summernote({
+      toolbar: false,
+      airMode: false,
+      dialogsInBody: false,
+      popover: { image: [], link: [], air: [] }
+    });
+    $('#tipo_cuerpo').summernote('disable');
 
-  $("#noticia-detalle").removeClass("d-none");
-  datoNoticia = "";
-  datoNoticia += "<p class='m-0 text-center'>";
-    datoNoticia += "<span class='border-right pr-3 mr-3'>" + medio.medio + "</span>";
-    if(window.noticiaSELECCIONADA.url !== null)
-      datoNoticia += "<a target='_blank' class='text-truncate w-50' href='" + window.noticiaSELECCIONADA.url + "'>" + window.noticiaSELECCIONADA.url + "<i class=\"fas ml-2 fa-external-link-alt\"></i></a>";
-    else datoNoticia += "-";
-    datoNoticia += "<span class='border-left pl-3 ml-3'>" + window.noticiaSELECCIONADA.fecha + "</span>";
-  datoNoticia += "</p>"
-  $("#noticia-detalle").find("> div div").html(datoNoticia);
+    target.find("*[data-tipo=\"titulo\"]").html("<div class='form-noticia'>" + noticia.titulo + "</div>");
+    if(noticiaDATA.data.bajada !== undefined) {
+      target.find("*[data-tipo=\"subtitulo\"]").parent().removeClass("d-none");
+      target.find("*[data-tipo=\"subtitulo\"]").html("<div class='form-noticia'>" + noticiaDATA.data.bajada + "</div>");
+    } else target.find("*[data-tipo=\"subtitulo\"]").parent().addClass("d-none");
+    if(noticiaDATA.data.imagen !== undefined) {
+      target.find("*[data-tipo=\"imagen\"]").parent().removeClass("d-none");
+      target.find("*[data-tipo=\"imagen\"]").attr("src",noticiaDATA.data.imagen);
+    } else target.find("*[data-tipo=\"imagen\"]").parent().addClass("d-none");
+
+    $("#noticia-detalle").removeClass("d-none");
+    datoNoticia = "";
+    datoNoticia += "<p class='m-0 text-center'>";
+      datoNoticia += "<span class='border-right pr-3 mr-3'>" + medio.medio + "</span>";
+      if(window.noticiaSELECCIONADA.url !== null)
+        datoNoticia += "<a target='_blank' class='text-truncate w-50' href='" + window.noticiaSELECCIONADA.url + "'>" + window.noticiaSELECCIONADA.url + "<i class=\"fas ml-2 fa-external-link-alt\"></i></a>";
+      else datoNoticia += "-";
+      datoNoticia += "<span class='border-left pl-3 ml-3'>" + window.noticiaSELECCIONADA.fecha + "</span>";
+    datoNoticia += "</p>"
+    $("#noticia-detalle").find("> div div").html(datoNoticia);
+  }, true);
 }
 userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
   let html = $("#pantalla");
@@ -2013,7 +2022,7 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
   if(parseInt(window.noticiaSELECCIONADA.elim)) {
     html.append("<button id='btn_restaurar' style='top:0; left:0;' onclick='userDATOS.restaurarNoticia(this)' class='btn rounded-0 btn-warning position-fixed text-uppercase'>restaurar</button>")
   }
-  
+
   let periodista = null;
   userDATOS.busquedaPeriodista(window.noticiaSELECCIONADA.id_noticia,function(d) {
     periodista = d;
@@ -2031,11 +2040,11 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
           window.ARR_cliente[relevo[i]["id_cliente"]]["tema"] = null
         }
       },true);
-      
+
       userDATOS.showNOTICIA(window.noticiaSELECCIONADA);
       $('periodista_noticia').removeClass('d-none');
       $("#url_noticia").find(".text-truncate").html("<a href='" + window.noticiaSELECCIONADA.url + "' target='blank'>" + window.noticiaSELECCIONADA.url + "</a>");
-
+      console.log(periodista)
       if(periodista === null) autor = "SIN IDENTIFICAR";
       else autor = periodista.nombre;
       $("#periodista_noticia").find(".text-truncate").html("<p class='m-0 text-uppercase'>" + autor + "</p>");
@@ -2047,7 +2056,7 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
         $("#select_periodista").val(periodista.id).trigger("change");
       }
 
-      if(window.noticiaSELECCIONADA.video !== null) {
+      if(window.noticiaSELECCIONADA.video != "" && window.noticiaSELECCIONADA.video !== null) {
         $("#video_noticia").removeClass("d-none");
         $("#video_noticia").find("div").html("<a href='" + window.noticiaSELECCIONADA.video + "' target='blank'>" + window.noticiaSELECCIONADA.video + "</a>")
       } else {
@@ -2070,7 +2079,7 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
         $("#select_seccion").closest(".input-group").removeClass("d-none").addClass("d-flex")
       }
 
-      if(window.noticiaSELECCIONADA.video === null) {
+      if(window.noticiaSELECCIONADA.video == "") {
         $("#video_noticia").removeClass("d-none");
         $("#video_noticia").find("div").html("<input placeholder='Link de video' name='frm_video' type='text' class='form-control' />");
       }
@@ -2080,9 +2089,12 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
       $("#fecha_noticia").addClass("d-none");
     break;
     case 4://procesada
-      console.log("NOTICIA PROCESADA");
-      
+    case 5:
+      console.log((lugar == 4 ? "NOTICIA PROCESADA" : "NOTICIA CLIPPING"));
+      console.log(window.noticiaSELECCIONADA)
       $("#select_medio").val(window.noticiaSELECCIONADA.id_medio).trigger("change");
+      $("#fecha_noticia input").attr("disabled",true);
+      $("#fecha_noticia input").val(window.noticiaSELECCIONADA.fecha.replace(" ","T")).trigger("change");
       userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"noticiasproceso","column":"id_noticia","retorno":1,"elim":elim}, function(proceso) {
         let procesoDATA = userDATOS.parseJSON(proceso.data);
         setTimeout(function() {
@@ -2092,6 +2104,7 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
               $("#" + i).attr("disabled",true)
             }
           }
+          $("#select_periodista,#select_seccion").attr("disabled",true);
         },500);
         ////
         ARR_attr = userDATOS.parseJSON(procesoDATA.noticiaATTR);
@@ -2121,19 +2134,20 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
         window.ARR_institucion = {};
         for(var i in instituciones) window.ARR_institucion[instituciones[i]["id_institucion"]] = userDATOS.parseJSON(instituciones[i]["data"]);
       }, true);
-      
+
       window.showNOTICIA = false;
       //-------------
-      if(parseInt(window.usuario.nivel) <= 3)//si es administrador y relevo, permito editar
-        $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-success position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
-      else {//Si es monitor, verificar que él haya hecho el proceso
-        u = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia",1,elim)
-        if(u !== null) {
-          if(u.id_usuario == window.window.user_id)
-            $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-primary position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
+      if(lugar == 4) {
+        if(parseInt(window.usuario.nivel) <= 3)//si es administrador y relevo, permito editar
+          $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-success position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
+        else {//Si es monitor, verificar que él haya hecho el proceso
+          u = userDATOS.busqueda(window.noticiaSELECCIONADA.id_noticia,"noticiasproceso",false,"id_noticia",1,elim)
+          if(u !== null) {
+            if(u.id_usuario == window.window.user_id)
+              $(".etiquetas h2").append('<button onclick="userDATOS.permitirEditar(this)" class="btn btn-sm btn-primary position-absolute" style="left: 15px;top: 20px;"><i class="fas fa-edit"></i></button>');
+          }
         }
       }
-      
       userDATOS.showNOTICIA(window.noticiaSELECCIONADA);
 
       userDATOS.busqueda({"value":window.noticiaSELECCIONADA.id_noticia,"tabla":"proceso","column":"id_noticia","elim":elim}, function(proceso) {
@@ -2159,18 +2173,24 @@ userDATOS.distribuidorNOTICIA_behavior = function(lugar,elim) {
       else
         $("#url_noticia").find(".text-truncate").html("<a href='" + window.noticiaSELECCIONADA.url + "' target='blank'>" + window.noticiaSELECCIONADA.url + "</a>");
 
-      if(periodista === null) autor = "SIN IDENTIFICAR";
-      else autor = periodista.nombre;
-      $("#periodista_noticia").find(".text-truncate").html("<p class='m-0 text-uppercase'>" + autor + "</p>");
-
-      $("#select_periodista").closest(".input-group").addClass("d-none");
-      $("#select_periodista").closest(".input-group").removeClass("d-flex");
-
-      if(periodista !== null) {
+      if(periodista === null) {
+        autor = "SIN IDENTIFICAR";
+        $("#select_periodista").closest(".input-group").addClass("d-none");
+        $("#select_periodista").closest(".input-group").removeClass("d-flex");
+        $("#periodista_noticia").find(".text-truncate").html("<p class='m-0 text-uppercase'>" + autor + "</p>");
+      } else {
+        $("#periodista_noticia").addClass("d-none");
+        $("#select_periodista").closest(".input-group").removeClass("d-none");
+        $("#select_periodista").closest(".input-group").addClass("d-flex");
         $("#select_periodista").val(periodista.id).trigger("change");
       }
 
-      if(window.noticiaSELECCIONADA.video !== null) {
+      $("#select_seccion").closest(".input-group").addClass("d-flex");
+      $("#select_seccion").closest(".input-group").removeClass("d-none");
+      if(parseInt(window.noticiaSELECCIONADA.id_seccion) == 0) {
+        $("#select_seccion").val(1).trigger("change");
+      }
+      if(window.noticiaSELECCIONADA.video != "" && window.noticiaSELECCIONADA.video !== null) {
         $("#video_noticia").removeClass("d-none");
         $("#video_noticia").find("div").html("<a href='" + window.noticiaSELECCIONADA.video + "' target='blank'>" + window.noticiaSELECCIONADA.video + "</a>")
       } else {
@@ -2199,9 +2219,6 @@ userDATOS.showNOTICIA = function(noticia) {
   let body_span = $(".body");
   let html = $("#pantalla");
   switch(parseInt(noticia.estado)) {
-    case 0:
-      
-    break;
     case 2:
       window.showNOTICIA = false;//aca
       $("#select_seccion").closest(".input-group").removeClass("d-flex");
@@ -2235,72 +2252,29 @@ userDATOS.permite = function(e,letras) {
 }
 
 userDATOS.procesar_noticia = function(callback) {
-  setTimeout(function() {
-    let CUERPO_noticia = $(".note-editable");
-    let OBJ = {};
-    let actores = null;
-    userDATOS.busquedaTabla("actor",function(d) {
-      actores = d;
-    });
-    let instituciones = null;
-    userDATOS.busquedaTabla("attr_institucion",function(d) {
-      instituciones = d;
-    });
-    OBJ["actores"] = undefined;
-    OBJ["instituciones"] = undefined;
-    if(!CUERPO_noticia.find("iframe").length) {
-      for(var i in actores) {
-        flag = false;
-        nombre = actores[i]["nombre"];
-        if(CUERPO_noticia.buscar(nombre)) {//BUSQUEDA de nombre completo
-          console.log("NOMBRE completo: " + nombre);
-          flag = true;
-          CUERPO_noticia.resaltar(nombre,"resaltarCLASS_nom");
-        }
-        if(!flag) {//busqueda de nombre separado
-          nombreARR = nombre.split(" ");
-          for(var x in nombreARR) {
-            if(nombreARR[x].length <= 2) continue;
-            console.log("NOMBRE parte: " + nombreARR[x]);
-            if(CUERPO_noticia.buscar(nombreARR[x])) {
-              flag = true;
-              CUERPO_noticia.resaltar(nombreARR[x],"resaltarCLASS_nom");
-            }
-          }
-        }
-        let attr = eval("(" + actores[i]["atributos"] + ")");//PARSEO atributos del actor
-        for(var i_attr in attr) {
-          if(CUERPO_noticia.buscar(attr[i_attr])) {
-            flag = true;
-            if(window.ARR_atributos === undefined) window.ARR_atributos = [];
-            if(window.ARR_atributos[attr[i_attr]] === undefined) {
-              window.ARR_atributos[attr[i_attr]] = "";
-              $("#noticiaATTR").append("<span class=\"bg-light border rounded p-2 m-2\">" + attr[i_attr] + " <i class=\"fas fa-times-circle text-danger btn-click\" onclick=\"userDATOS.eliminarATTR(this)\"></i></span>");
-            }
-            CUERPO_noticia.resaltar(attr[i_attr],"resaltarCLASS");
-          }
-        }
-        if(flag) {
-          if(window.ARR_actor === undefined) window.ARR_actor = {};
-          if(window.ARR_actor[actores[i]["id"]] === undefined)
-            window.ARR_actor[actores[i]["id"]] = {"frm_img": "0", "frm_emisor": "0", "frm_descripcion": ""};
-        }
-      }
-      for(var i in instituciones) {
-        if(CUERPO_noticia.buscar(instituciones[i]["nombre"])) {
-          CUERPO_noticia.resaltar(instituciones[i]["nombre"],"resaltarCLASS_ins");
+  // setTimeout(function() {
+  //   let CUERPO_noticia = $(".note-editable");
+  //   let OBJ = {};
 
-          if(window.ARR_institucion === undefined) window.ARR_institucion = {};
-          if(window.ARR_institucion[instituciones[i]["id"]] === undefined)
-            window.ARR_institucion[instituciones[i]["id"]] = {"frm_emisor": "0", "frm_descripcion": ""};
-        }
-      }
-    }
-    OBJ["actores"] = window.ARR_actor;
-    OBJ["instituciones"] = window.ARR_institucion;
-    callback(OBJ);
-  }, 0 | Math.random() * 100);
-  document.getElementById("div").classList.add("d-none");
+  //   OBJ["actores"] = undefined;
+  //   OBJ["instituciones"] = undefined;
+  //   if(!CUERPO_noticia.find("iframe").length) {
+
+  //     for(var i in instituciones) {
+  //       if(CUERPO_noticia.buscar(instituciones[i]["nombre"])) {
+  //         CUERPO_noticia.resaltar(instituciones[i]["nombre"],"resaltarCLASS_ins");
+
+  //         if(window.ARR_institucion === undefined) window.ARR_institucion = {};
+  //         if(window.ARR_institucion[instituciones[i]["id"]] === undefined)
+  //           window.ARR_institucion[instituciones[i]["id"]] = {"frm_emisor": "0", "frm_descripcion": ""};
+  //       }
+  //     }
+  //   }
+  //   OBJ["actores"] = window.ARR_actor;
+  //   OBJ["instituciones"] = window.ARR_institucion;
+  //   callback(OBJ);
+  // }, 0 | Math.random() * 100);
+  // document.getElementById("div").classList.add("d-none");
 }
 /**
  * Función para cerrar el modal personalizado
@@ -2474,7 +2448,7 @@ userDATOS.bloquearUsuario = function(tabla,OBJ_pyrus) {
     userDATOS.log(window.user_id,"Cambio de Estado de Usuario: " + o.user,0,o.id,"usuario");
     o.activo = (o.activo == "1" ? "0" : "1");
     OBJ_pyrus.guardar_1(o);
-    
+
     tabla.draw();
   });
 }
@@ -2521,7 +2495,7 @@ userDATOS.actorUnico = function(e,i) {
           delete window.ARR_actor[i];
         }
       }
-      
+
       table.find("td:nth-child(2) select").select2();
     }
     tr.find("td:last-child() input").removeAttr("disabled");
@@ -2566,7 +2540,7 @@ userDATOS.institucionUnico = function(e) {
       window.ARR_institucion[value]["frm_valor"] = null;
       // SACO opción de los selects
       table.find("td:nth-child(2) select").select2();
-      
+
       for(var i in window.ARR_institucion) {
         if(!table.find("td:nth-child(2) select option:selected[value='" + i + "']").length) {
           table.find("td:nth-child(2) select option:disabled[value='" + i + "']").removeAttr("disabled");
@@ -2613,13 +2587,13 @@ userDATOS.temaUnico = function(e,id) {
     tr.find("td:last-child() label:first-child()").addClass("bg-success");
     tr.find("td:last-child() label:nth-child(2)").addClass("bg-warning");
     tr.find("td:last-child() label:last-child()").addClass("bg-danger");
-    
+
     if(table.find(".temaActive").length) table.find(".temaActive").removeClass("temaActive");
     select.addClass("temaActive");
     if(window.ARR_cliente[id]["tema"]["frm_tema_" + value] === undefined) {
       window.ARR_cliente[id]["tema"]["frm_tema_" + value] = null;
       table.find("td:nth-child(2) select:not(.temaActive)").find("option[value='" + value + "']").attr("disabled",true);
-      
+
       for(var i in window.ARR_cliente[id]["tema"]) {
         if(i == "texto") continue;
         id_tema = i.substring(9);
@@ -2678,7 +2652,7 @@ userDATOS.unidadUnico = function(e) {
 
       table.find("td:nth-child(2) select:not(.unidadActive)")
         .find("option[value='" + value + "']").attr("disabled",true);
-      
+
       // SACO opción de los selects
       table.find("td:nth-child(2) select").select2();
     }
@@ -2711,7 +2685,7 @@ userDATOS.addActor = function() {
   tr[0].children[2].children[0].children[0].children[0].children[0].name = "frm_img-" + window.index_actor;
   tr[0].children[2].children[0].children[0].children[1].children[0].name = "frm_emisor-" + window.index_actor;
   //</checkbox>
-  tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_actor;
+  tr[0].children[2].children[0].children[1].children[0].children[0].name = "frm_valor-" + window.index_actor;
   tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_actor;
   tr[0].children[2].children[0].children[1].children[2].children[0].name = "frm_valor-" + window.index_actor;
 
@@ -2736,12 +2710,12 @@ userDATOS.addInstitucion = function() {
   $( "#modal-table-institucion tbody tr:first-child" ).find("select").select2("destroy")
   tr = $( "#modal-table-institucion tbody tr:first-child" ).clone();
   $( "#modal-table-institucion tbody tr:first-child" ).find("select").select2();
-  
+
   tr[0].children[1].children[0].name = "frm_institucion-" + window.index_institucion;
   //<checkbox>
   tr[0].children[2].children[0].children[0].children[0].children[0].name = "frm_emisor-" + window.index_institucion;
   //</checkbox>
-  tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_institucion;
+  tr[0].children[2].children[0].children[1].children[0].children[0].name = "frm_valor-" + window.index_institucion;
   tr[0].children[2].children[0].children[1].children[1].children[0].name = "frm_valor-" + window.index_institucion;
   tr[0].children[2].children[0].children[1].children[2].children[0].name = "frm_valor-" + window.index_institucion;
 
@@ -2818,11 +2792,11 @@ userDATOS.removeActor = function(e) {
     tr.remove();
     return false;
   }
-  $.MessageBox({
-    buttonDone  : strings.btn.si,
-    buttonFail  : strings.btn.no,
-    message   : strings.eliminar.actor
-  }).done(function(){
+  // $.MessageBox({
+  //   buttonDone  : strings.btn.si,
+  //   buttonFail  : strings.btn.no,
+  //   message   : strings.eliminar.actor
+  // }).done(function(){
     if(value != "") {
       delete window.ARR_actor[value];
       table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
@@ -2831,7 +2805,7 @@ userDATOS.removeActor = function(e) {
     if(table.find("tr").length == 1)
       userDATOS.addActor();
     tr.remove();
-  });
+  // });
 }
 /**
  * Función para eliminar instituciones
@@ -2847,11 +2821,11 @@ userDATOS.removeInstitucion = function(e) {
     tr.remove();
     return false;
   }
-  $.MessageBox({
-    buttonDone  : strings.btn.si,
-    buttonFail  : strings.btn.no,
-    message   : strings.eliminar.institucion
-  }).done(function(){
+  // $.MessageBox({
+  //   buttonDone  : strings.btn.si,
+  //   buttonFail  : strings.btn.no,
+  //   message   : strings.eliminar.institucion
+  // }).done(function(){
     if(value != "") {
       delete window.ARR_institucion[value];
       table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
@@ -2860,7 +2834,7 @@ userDATOS.removeInstitucion = function(e) {
     if(table.find("tr").length == 1)
       userDATOS.addInstitucion();
     tr.remove();
-  });
+  // });
 }
 
 /**
@@ -2878,11 +2852,11 @@ userDATOS.removeUnidad = function(e) {
     tr.remove();
     return false;
   }
-  $.MessageBox({
-    buttonDone  : strings.btn.si,
-    buttonFail  : strings.btn.no,
-    message   : strings.eliminar.unidad
-  }).done(function(){
+  // $.MessageBox({
+  //   buttonDone  : strings.btn.si,
+  //   buttonFail  : strings.btn.no,
+  //   message   : strings.eliminar.unidad
+  // }).done(function(){
     if(value != "") {
       delete window.ARR_cliente[value];
       table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
@@ -2891,7 +2865,7 @@ userDATOS.removeUnidad = function(e) {
     if(table.find("tr").length == 1)
       userDATOS.addUnidad();
     tr.remove();
-  });
+  // });
 }
 /**
  * Función para eliminar temas
@@ -2911,18 +2885,18 @@ userDATOS.removeTemas = function(e,id) {
     tr.remove();
     return false;
   }
-  $.MessageBox({
-    buttonDone  : strings.btn.si,
-    buttonFail  : strings.btn.no,
-    message   : strings.eliminar.tema
-  }).done(function(){
+  // $.MessageBox({
+  //   buttonDone  : strings.btn.si,
+  //   buttonFail  : strings.btn.no,
+  //   message   : strings.eliminar.tema
+  // }).done(function(){
     delete window.ARR_cliente[id]["tema"]["frm_tema_" + value]
     table.find("td:nth-child(2) select option[value='" + value + "']").removeAttr("disabled");
     table.find("td:nth-child(2) select").select2();
     if(table.find("tr").length == 1)
       userDATOS.addTema(id);
     tr.remove();
-  });
+  // });
 }
 /**
  * Función para limpiar lateral
@@ -3050,7 +3024,7 @@ userDATOS.updateUnidad = function(e) {
   	if(calificaciones[c.co] === undefined) calificaciones[c.co] = [];
     calificaciones[c.co].push({id:c.id,nombre:c.nombre,valor:c.valor})
   }
-  
+
   for(var i in window.ARR_cliente[id]["valoracion"]) {
     if(valoracion === null) valoracion = 0;
     valoracion += window.ARR_cliente[id]["valoracion"][i]
@@ -3075,7 +3049,7 @@ userDATOS.updateUnidad = function(e) {
                     html += '<div class="bg-success text-white p-2 text-center text-uppercase">positivo</div>';
                   else if(valoracion == 0)
                     html += '<div class="bg-warning text-dark p-2 text-center text-uppercase">neutro</div>'
-                  else  
+                  else
                     html += '<div class="bg-danger p-2 text-center text-white text-uppercase">negativo</div>'
                 html += '</div>';
               html += '</div>';
@@ -3144,7 +3118,7 @@ userDATOS.updateUnidad = function(e) {
                     html += "</select>";
                   html += '</div>';
                 html += '</div>';
-                
+
               html += '</div>';
             html += '</div>';
           html += '</div>';
@@ -3193,7 +3167,7 @@ userDATOS.updateUnidad = function(e) {
                     '<td class="' + (window.vista == "procesar" ? "px-0" : ((window.vista == "procesadas" && window.noticiaSELECCIONADAeditar === undefined) ? "pr-0" : "px-0")) + ' w-75">' + "<select class='select__2 w-100' data-allow-clear='true' data-placeholder='SELECCIONE TEMA' required='true' onchange='userDATOS.temaUnico(this," + id + ");' name='frm_tema-1'>" + selectTemas + '</td>' +
                     '<td>' + option + '</td>';
                 html += "</tr>";
-              
+
               html += "</tbody>";
             html += "</table>";
           html += '</div>';
@@ -3245,7 +3219,7 @@ userDATOS.optionTema = function(e) {
   let tema = tr.find("select").val();
   let value = radio.parent().find("input:checked").val();
   let id = $("#modal-table-unidad").find("select:disabled").val();
-  
+
   window.ARR_cliente[id]["tema"]["frm_tema_" + tema] = value;
 }
 /**
@@ -3358,13 +3332,15 @@ userDATOS.restaurarNoticia = function(e) {
  * @param data OBJECT -> {id:entidad, ...}
  */
 userDATOS.selectOption = function(id,entidad,column = "nombre") {
-  $.ajax({
+  let promise = $.ajax({
     type: 'POST',
     url: cliente_url,
     dataType: 'json',
     async: true,
     data: { "tipo": "query","accion": "selectOption","entidad":entidad,"column":column }
-  }).done(function(msg) {
+  });
+
+  promise.then(function(msg) {
     $("#" + id).html(msg.html);
     $("#" + id).select2();
   });
@@ -3413,4 +3389,109 @@ let dates = {
   compare:function(a,b) {
       return ((a.getTime() === b.getTime()) ? 0 : ((a.getTime() > b.getTime()) ? 1 : - 1));
   }
+}
+
+let InstantSearch = {
+  "highlight": function (container, highlightText, _className) {
+    let internalHighlighter = function (options) {
+    let id = {
+      container: "container",
+      tokens: "tokens",
+      all: "all",
+      token: "token",
+      className: "className",
+      sensitiveSearch: "sensitiveSearch"
+    },
+    tokens = options[id.tokens],
+    allClassName = options[id.all][id.className],
+    allSensitiveSearch = options[id.all][id.sensitiveSearch];
+
+    function checkAndReplace(node, tokenArr, classNameAll, sensitiveSearchAll) {
+      let nodeVal = node.nodeValue, parentNode = node.parentNode,
+        i, j, curToken, myToken, myClassName, mySensitiveSearch,
+        finalClassName, finalSensitiveSearch,
+        foundIndex, begin, matched, end,
+        textNode, span, isFirst;
+
+      for (i = 0, j = tokenArr.length; i < j; i++) {
+        curToken = tokenArr[i];
+        myToken = curToken[id.token];
+        myClassName = curToken[id.className];
+        mySensitiveSearch = curToken[id.sensitiveSearch];
+        finalClassName = (classNameAll ? myClassName + " " + classNameAll : myClassName);
+        finalSensitiveSearch = (typeof sensitiveSearchAll !== "undefined" ? sensitiveSearchAll : mySensitiveSearch);
+
+        isFirst = true;
+        while (true) {
+          if (finalSensitiveSearch)
+            foundIndex = nodeVal.indexOf(myToken);
+          else
+            foundIndex = nodeVal.toLowerCase().indexOf(myToken.toLowerCase());
+          if (foundIndex < 0) {
+            if (isFirst)
+              break;
+            if (nodeVal) {
+              textNode = document.createTextNode(nodeVal);
+              parentNode.insertBefore(textNode, node);
+            } // End if (nodeVal)
+              parentNode.removeChild(node);
+              break;
+            } // End if (foundIndex < 0)
+            isFirst = false;
+            begin = nodeVal.substring(0, foundIndex);
+            matched = nodeVal.substr(foundIndex, myToken.length);
+            if (begin) {
+              textNode = document.createTextNode(begin);
+              parentNode.insertBefore(textNode, node);
+            } // End if (begin)
+
+            span = document.createElement("span");
+            span.className += finalClassName;
+            span.appendChild(document.createTextNode(matched));
+            parentNode.insertBefore(span, node);
+
+            nodeVal = nodeVal.substring(foundIndex + myToken.length);
+          } // Whend
+
+        } // Next i
+      }; // End Function checkAndReplace
+
+      function iterator(p) {
+        if (p === null) return;
+        var children = Array.prototype.slice.call(p.childNodes), i, cur;
+        if (children.length) {
+          for (i = 0; i < children.length; i++) {
+            cur = children[i];
+            if (cur.nodeType === 3)
+              checkAndReplace(cur, tokens, allClassName, allSensitiveSearch);
+            else if (cur.nodeType === 1)
+              iterator(cur);
+          } // End fori
+        } // End if
+      }; // End Function iterator
+
+      iterator(options[id.container]);
+    }; // End Function highlighter
+
+    internalHighlighter(
+      {
+        container: container,
+        all: {
+          className: "highlighter"
+        },
+        tokens: [
+          {
+            token: highlightText,
+            className: _className,
+            sensitiveSearch: true
+          }
+        ]
+      }
+    ); // End Call internalHighlighter
+
+  } // End Function highlight
+};
+let TextHighlighting = function(highlightText,className) {
+    var container = document.getElementsByClassName("note-editable");
+    InstantSearch.highlight(container[0], highlightText, className);
 }

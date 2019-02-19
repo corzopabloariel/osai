@@ -1,5 +1,5 @@
 const url_query_local = "http://93.188.164.27/lib/query.php";
-
+const servidor = "93.188.164.27";
 /**
  * Funcion de consulta desde JS, se comunica con el servidor
  * y devuelve una respuesta acorde, uso generico.

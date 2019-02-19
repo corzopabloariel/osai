@@ -5,7 +5,7 @@ Lobibox.notify.OPTIONS.default.sound = "default";
 Lobibox.notify.OPTIONS.success.sound = "success";
 Lobibox.notify.OPTIONS.warning.sound = "warning";
 /** </VARIABLES> */
-const url_cliente = "http://93.188.164.27/cliente/lib/cliente.php";
+const url_cliente = `http://${servidor}/cliente/lib/cliente.php`;
 let userDATOS = {};
 
 // <BASICO> //
@@ -285,7 +285,7 @@ userDATOS.verProceso = function(t,id,idNoticia) {
     "idNoticia": idNoticia
   };
   elemento.remove();
-  contenedor.html('<div class="d-flex justify-content-center py-2 text-uppercase text-center">cargando<img class="d-inline-block ml-2" src="http://93.188.164.27/assets/images/loading_notificacion.gif" style="height: 30px;"></div>');
+  contenedor.html(`<div class="d-flex justify-content-center py-2 text-uppercase text-center">cargando<img class="d-inline-block ml-2" src="http://${servidor}/assets/images/loading_notificacion.gif" style="height: 30px;"></div>`);
 
   userDATOS.ajax("verProceso",data,true,function(valores) {
     let html = "";
